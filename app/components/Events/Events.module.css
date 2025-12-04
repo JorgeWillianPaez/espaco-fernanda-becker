@@ -1,0 +1,147 @@
+/* Events Section */
+.events {
+  padding: 80px 0;
+  background: white;
+}
+
+.events h2 {
+  text-align: center;
+  font-family: "Dancing Script", cursive;
+  font-size: 3rem;
+  color: #e91e63;
+  margin-bottom: 3rem;
+}
+
+.eventFilters {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  padding: 10px 20px;
+  background: transparent;
+  border: 2px solid #e91e63;
+  color: #e91e63;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.filterBtn.active,
+.filterBtn:hover {
+  background: #e91e63;
+  color: white;
+}
+
+.eventsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.eventCard {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.eventCard:hover {
+  transform: translateY(-10px);
+}
+
+.eventImage {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.eventContent {
+  padding: 1.5rem;
+}
+
+.eventDate {
+  color: #e91e63;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.eventTitle {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.eventDescription {
+  color: #666;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.eventStatus {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.statusPast {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.statusOpen {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.statusUpcoming {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.eventBtn {
+  display: inline-block;
+  background: linear-gradient(45deg, #e91e63, #9c27b0);
+  color: white;
+  padding: 10px 20px;
+  text-decoration: none;
+  border-radius: 25px;
+  font-weight: 500;
+  transition: transform 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.eventBtn:hover {
+  transform: translateY(-2px);
+}
+
+.eventBtn.secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .events h2 {
+    font-size: 2.5rem;
+  }
+
+  .eventsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .eventFilters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -1,0 +1,477 @@
+/* Aluno/Student Page Styles */
+.alunoLoginPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.alunoLoginContainer {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  max-width: 450px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.alunoLoginHeader h1 {
+  font-family: "Dancing Script", cursive;
+  color: #e91e63;
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.alunoLoginHeader p {
+  text-align: center;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.alunoLoginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formGroup {
+  position: relative;
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: #e91e63;
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+}
+
+.alunoLoginButton {
+  background: linear-gradient(45deg, #e91e63, #9c27b0);
+  color: white;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.alunoLoginButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(233, 30, 99, 0.3);
+}
+
+.alunoLoginBack {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.alunoLoginBack a {
+  color: #e91e63;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.alunoLoginBack a:hover {
+  color: #9c27b0;
+}
+
+/* Aluno Dashboard */
+.alunoContainer {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.alunoHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.alunoWelcome h1 {
+  font-family: "Dancing Script", cursive;
+  color: #e91e63;
+  font-size: 2.5rem;
+}
+
+.alunoWelcome p {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.logoutButton {
+  padding: 12px 24px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logoutButton:hover {
+  background: #d32f2f;
+  transform: translateY(-2px);
+}
+
+.alunoGrid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.alunoSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Profile Card */
+.profileCard {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.profileImageContainer {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid #e91e63;
+  position: relative;
+}
+
+.profileImage {
+  object-fit: cover;
+}
+
+.profileName {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 0.3rem;
+}
+
+.profileClass {
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.profileDetails {
+  text-align: left;
+}
+
+.profileDetailItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.profileDetailItem:last-child {
+  border-bottom: none;
+}
+
+.profileDetailItem i {
+  color: #e91e63;
+  width: 20px;
+}
+
+/* Schedule Card */
+.scheduleCard {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.scheduleCard h3 {
+  color: #e91e63;
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+}
+
+.classSchedule {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1.5rem;
+  border-radius: 15px;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.classSchedule:last-child {
+  margin-bottom: 0;
+}
+
+.classDay {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.classTime {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.9;
+}
+
+/* Main Content */
+.alunoMainContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Payment Section */
+.paymentSection {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.paymentSection h3 {
+  color: #e91e63;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  font-family: "Dancing Script", cursive;
+}
+
+.currentPayment {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  padding: 2rem;
+  border-radius: 15px;
+  color: white;
+  margin-bottom: 2rem;
+}
+
+.currentPaymentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.paymentMonth {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.paymentStatus {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.paymentAmount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.paymentDueDate {
+  opacity: 0.9;
+  font-size: 1.1rem;
+}
+
+.paymentButtons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.paymentButton {
+  flex: 1;
+  min-width: 150px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.paymentButton.pix {
+  background: white;
+  color: #00a884;
+}
+
+.paymentButton.boleto {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid white;
+}
+
+.paymentButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Payment History */
+.paymentHistory {
+  display: grid;
+  gap: 1rem;
+}
+
+.paymentHistoryItem {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 15px;
+  border-left: 4px solid #e91e63;
+  transition: all 0.3s ease;
+}
+
+.paymentHistoryItem:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.paymentHistoryMonth {
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.paymentHistoryAmount {
+  color: #666;
+  margin-bottom: 0.3rem;
+}
+
+.paymentHistoryDate {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+/* Quick Stats */
+.quickStats {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.quickStats h3 {
+  color: #e91e63;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.statItem {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  padding: 1.5rem;
+  border-radius: 15px;
+  color: white;
+  text-align: center;
+}
+
+.statItem.blue {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.statItem.green {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.statItem.purple {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.statValue {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.statLabel {
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .alunoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .alunoSidebar {
+    flex-direction: row;
+  }
+
+  .profileCard,
+  .scheduleCard {
+    flex: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .alunoSidebar {
+    flex-direction: column;
+  }
+
+  .alunoHeader {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .currentPaymentHeader {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .paymentButtons {
+    flex-direction: column;
+  }
+
+  .paymentButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}

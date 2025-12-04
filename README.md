@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Espaço de Dança Fernanda Becker - Next.js
 
-## Getting Started
+## 🎭 Sobre o Projeto
 
-First, run the development server:
+Site moderno e responsivo para a escola de dança Fernanda Becker, desenvolvido com Next.js, React e TypeScript.
+
+## ✨ Funcionalidades
+
+### Site Principal
+
+- 🏠 **Página Inicial** com carrossel de imagens
+- 📖 **Sobre** a escola e seus valores
+- 🎉 **Eventos** com filtros e modal de detalhes
+- 📞 **Contato** com formulário funcional
+- 👥 **Área do Aluno** com login
+
+### Área do Aluno (Nova!)
+
+- 👤 **Perfil Completo** com foto, dados pessoais e status
+- 📅 **Horários das Aulas** - Visualização clara dos dias e horários
+- 💳 **Gestão de Mensalidades** - Pagamento via PIX ou Boleto
+- 📊 **Histórico de Pagamentos** completo
+- 📈 **Estatísticas Rápidas** - Aulas, frequência e mais
+
+## 🚀 Como Executar
 
 ```bash
+# Instalar dependências (se necessário)
+npm install
+
+# Executar o servidor de desenvolvimento
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse: **http://localhost:3000**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔐 Credenciais de Teste
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Para acessar a **Área do Aluno**:
 
-## Learn More
+- **Matrícula:** 12345
+- **Senha:** 123456
 
-To learn more about Next.js, take a look at the following resources:
+## 📱 Responsivo
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+O site é totalmente responsivo e otimizado para:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- 📱 Smartphones
+- 📱 Tablets
+- 💻 Desktops
 
-## Deploy on Vercel
+## 🎨 Tecnologias Utilizadas
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Next.js 16** - Framework React
+- **React 19** - Biblioteca UI
+- **TypeScript** - Tipagem estática
+- **CSS3** - Estilização avançada
+- **Font Awesome** - Ícones
+- **Google Fonts** - Tipografia (Dancing Script e Open Sans)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📂 Estrutura do Projeto
+
+```
+app/
+├── components/          # Componentes reutilizáveis
+│   ├── Header.tsx      # Navegação principal
+│   ├── Hero.tsx        # Seção hero com carrossel
+│   ├── About.tsx       # Sobre a escola
+│   ├── Events.tsx      # Listagem de eventos
+│   ├── Contact.tsx     # Formulário de contato
+│   ├── StudentArea.tsx # Login na página inicial
+│   └── Footer.tsx      # Rodapé
+├── aluno/              # Área exclusiva do aluno
+│   └── page.tsx        # Dashboard completo do aluno
+├── globals.css         # Estilos globais
+├── types.ts            # Tipos TypeScript
+├── layout.tsx          # Layout principal
+└── page.tsx            # Página inicial
+
+public/
+└── images/             # Imagens do projeto
+```
+
+## 🎯 Próximos Passos
+
+- [ ] Integração com backend/API
+- [ ] Sistema de autenticação real
+- [ ] Gateway de pagamento (PIX/Boleto)
+- [ ] Upload de foto de perfil
+- [ ] Sistema de notificações
+- [ ] Relatórios de frequência
+- [ ] Área do professor
+
+## 📝 Notas
+
+- As credenciais de teste são apenas para demonstração
+- Os pagamentos são simulados (não há integração real)
+- As imagens de perfil usam imagens do projeto
+
+---
+
+Desenvolvido com 💜 para o Espaço de Dança Fernanda Becker
