@@ -1130,6 +1130,26 @@ body {
   transform: translateY(-2px);
 }
 
+.settings-button {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.settings-button:hover {
+  background: linear-gradient(135deg, #764ba2, #667eea);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
 .aluno-grid {
   display: grid;
   grid-template-columns: 350px 1fr;
@@ -1149,17 +1169,51 @@ body {
   padding: 2rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5rem;
 }
 
 .profile-image-container {
   position: relative;
   width: 150px;
   height: 150px;
-  margin: 0 auto 1.5rem;
   border-radius: 50%;
   overflow: hidden;
   border: 5px solid #e91e63;
   box-shadow: 0 5px 15px rgba(233, 30, 99, 0.3);
+}
+
+.camera-icon-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(135deg, #e91e63, #9c27b0);
+  border: 3px solid white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(233, 30, 99, 0.4);
+}
+
+.camera-icon-badge:hover {
+  transform: scale(1.1);
+  box-shadow: 0 5px 15px rgba(233, 30, 99, 0.6);
 }
 
 .profile-image {
@@ -1861,6 +1915,9 @@ body {
   border-radius: 15px;
   color: white;
   transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .class-card:hover {
@@ -1898,6 +1955,7 @@ body {
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1rem;
+  flex: 1;
 }
 
 .class-info-item {
@@ -1910,7 +1968,7 @@ body {
 .class-actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 1rem;
+  margin-top: auto;
 }
 
 .class-action-btn {
@@ -2119,11 +2177,203 @@ body {
 .form-select,
 .form-textarea {
   width: 100%;
-  padding: 12px;
+  padding: 12px 16px;
   border: 2px solid #e0e0e0;
   border-radius: 10px;
   font-size: 1rem;
   transition: all 0.3s ease;
+  height: 48px;
+  line-height: normal;
+  box-sizing: border-box;
+}
+
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e91e63' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.form-textarea {
+  height: auto;
+  min-height: 100px;
+  resize: vertical;
+  padding: 12px 16px;
+}
+
+/* Custom Date Picker */
+.custom-date-picker {
+  position: relative;
+}
+
+.date-display {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+  height: 48px;
+  box-sizing: border-box;
+}
+
+.date-display:hover {
+  border-color: #e91e63;
+}
+
+.date-display i {
+  color: #e91e63;
+  font-size: 1.1rem;
+}
+
+.calendar-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 15px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 1rem;
+  min-width: 320px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.calendar-dropdown .calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.calendar-month {
+  font-weight: 600;
+  color: #e91e63;
+  text-transform: capitalize;
+  font-size: 1.1rem;
+  flex: 1;
+  text-align: center;
+}
+
+.calendar-nav-btn {
+  background: none;
+  border: none;
+  color: #e91e63;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-nav-btn:hover {
+  background: rgba(233, 30, 99, 0.1);
+  transform: scale(1.1);
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.weekday {
+  text-align: center;
+  font-weight: 600;
+  color: #666;
+  font-size: 0.85rem;
+  padding: 8px 4px;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.date-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.date-cell:not(.empty):hover {
+  background: rgba(233, 30, 99, 0.1);
+  transform: scale(1.05);
+}
+
+.date-cell.selected {
+  background: linear-gradient(135deg, #e91e63, #9c27b0);
+  color: white;
+  font-weight: 700;
+}
+
+.date-cell.today {
+  border: 2px solid #e91e63;
+  font-weight: 700;
+}
+
+.date-cell.today.selected {
+  border: 2px solid white;
+}
+
+.date-cell.empty {
+  cursor: default;
+}
+
+.calendar-footer {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 2px solid #f0f0f0;
+  display: flex;
+  justify-content: center;
+}
+
+.calendar-today-btn {
+  background: linear-gradient(135deg, #e91e63, #9c27b0);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.calendar-today-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(233, 30, 99, 0.4);
 }
 
 .form-input[type="time"],
@@ -2132,13 +2382,52 @@ body {
   font-family: "Open Sans", sans-serif;
   cursor: pointer;
   color: #333;
+  height: 48px;
 }
 
 .form-input[type="time"]::-webkit-calendar-picker-indicator,
 .form-input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.date-input-wrapper {
+  position: relative;
   cursor: pointer;
-  filter: invert(35%) sepia(85%) saturate(2000%) hue-rotate(315deg);
-  padding: 5px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.date-input-wrapper:hover {
+  border-color: #e91e63;
+}
+
+.date-input-wrapper:focus-within {
+  border-color: #e91e63;
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+}
+
+.date-input-wrapper .form-input {
+  cursor: pointer;
+  padding: 12px 45px 12px 16px;
+  border: none;
+  box-shadow: none;
+  height: 48px;
+}
+
+.date-input-wrapper .form-input:focus {
+  border: none;
+  box-shadow: none;
+}
+
+.date-input-wrapper .date-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #e91e63;
+  pointer-events: none;
+  font-size: 1.1rem;
 }
 
 .form-input:focus,
@@ -2549,6 +2838,204 @@ body {
 .payment-status-badge.pending {
   background: #fff3cd;
   color: #856404;
+}
+
+/* Pagination Styles */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: white;
+  border-top: 1px solid #eee;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pagination-info {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pagination-btn {
+  min-width: 36px;
+  height: 36px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #333;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0 0.75rem;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #e91e63;
+  color: white;
+  border-color: #e91e63;
+  transform: translateY(-2px);
+}
+
+.pagination-btn.active {
+  background: linear-gradient(135deg, #e91e63, #9c27b0);
+  color: white;
+  border-color: #e91e63;
+  font-weight: 600;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+  padding: 0 0.5rem;
+  color: #999;
+}
+
+/* Revenue Chart Section */
+.revenue-chart-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 3rem;
+}
+
+.revenue-chart-section h3 {
+  color: #e91e63;
+  font-size: 1.6rem;
+  font-family: "Dancing Script", cursive;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.revenue-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 300px;
+  padding: 1rem;
+  gap: 1rem;
+  position: relative;
+}
+
+.chart-bar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  height: 100%;
+  position: relative;
+}
+
+.chart-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+  min-height: 20px;
+}
+
+.chart-bar {
+  width: 100%;
+  max-width: 60px;
+  background: linear-gradient(180deg, #e91e63, #9c27b0);
+  border-radius: 8px 8px 0 0;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.chart-bar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 -5px 20px rgba(233, 30, 99, 0.3);
+}
+
+.chart-bar.increasing {
+  background: linear-gradient(180deg, #4caf50, #2e7d32);
+}
+
+.chart-bar.decreasing {
+  background: linear-gradient(180deg, #f44336, #c62828);
+}
+
+.chart-bar.stable {
+  background: linear-gradient(180deg, #ff9800, #f57c00);
+}
+
+.trend-icon {
+  color: white;
+  font-size: 0.9rem;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.chart-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.legend-color.increasing {
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+}
+
+.legend-color.decreasing {
+  background: linear-gradient(135deg, #f44336, #c62828);
+}
+
+.legend-color.stable {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
 }
 
 /* Payment History Modal */
@@ -2984,6 +3471,23 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .revenue-chart {
+    height: 250px;
+    gap: 0.5rem;
+  }
+
+  .chart-bar {
+    max-width: 50px;
+  }
+
+  .chart-value {
+    font-size: 0.75rem;
+  }
+
+  .chart-legend {
+    gap: 1rem;
+  }
+
   .quick-info {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -3025,6 +3529,32 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .revenue-chart {
+    height: 220px;
+    padding: 0.5rem;
+  }
+
+  .chart-bar {
+    max-width: 40px;
+  }
+
+  .chart-value {
+    font-size: 0.7rem;
+  }
+
+  .chart-label {
+    font-size: 0.8rem;
+  }
+
+  .chart-legend {
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+
+  .legend-item {
+    font-size: 0.8rem;
+  }
+
   .student-payment-info {
     grid-template-columns: 1fr;
   }
@@ -3041,5 +3571,47 @@ body {
   .attendance-item {
     grid-template-columns: 1fr;
     gap: 0.5rem;
+  }
+
+  .pagination-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .pagination-info {
+    text-align: center;
+    width: 100%;
+  }
+
+  .pagination-controls {
+    width: 100%;
+    justify-content: center;
+    overflow-x: auto;
+  }
+
+  .pagination-btn {
+    min-width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+    padding: 0 0.5rem;
+  }
+
+  .calendar-dropdown {
+    min-width: 280px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .calendar-month {
+    font-size: 0.95rem;
+  }
+
+  .weekday {
+    font-size: 0.75rem;
+    padding: 6px 2px;
+  }
+
+  .date-cell {
+    font-size: 0.85rem;
   }
 }

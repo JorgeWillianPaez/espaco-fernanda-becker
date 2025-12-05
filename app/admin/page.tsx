@@ -535,6 +535,7 @@ export default function AdminPage() {
   >("overview");
   const [classes, setClasses] = useState<Class[]>(initialClasses);
   const [students, setStudents] = useState<AdminStudent[]>(initialStudents);
+  const [teacher, setTeacher] = useState<Teacher>(teacherData);
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [showModal, setShowModal] = useState<
     "class" | "student" | "payment" | "attendance" | null
@@ -546,6 +547,20 @@ export default function AdminPage() {
   const [selectedStudent, setSelectedStudent] = useState<AdminStudent | null>(
     null
   );
+  const [paymentsPage, setPaymentsPage] = useState(1);
+  const [paymentsPerPage, setPaymentsPerPage] = useState(10);
+  const [studentsPage, setStudentsPage] = useState(1);
+  const [studentsPerPage, setStudentsPerPage] = useState(10);
+  const [showAdminSettings, setShowAdminSettings] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [adminData, setAdminData] = useState({
+    name: "Administrador",
+    email: "admin@espacobecker.com",
+    phone: "(41) 99999-9999",
+    password: "admin123",
+    birthDate: "1985-05-15",
+    username: "admin",
+  });
   const router = useRouter();
 
   // Verificar se já está autenticado via sessionStorage
@@ -553,8 +568,36 @@ export default function AdminPage() {
     const isAuth = sessionStorage.getItem("adminAuth");
     if (isAuth === "true") {
       setIsLoggedIn(true);
+
+      // Carregar dados do admin salvos
+      const savedAdminData = sessionStorage.getItem("adminData");
+      if (savedAdminData) {
+        try {
+          setAdminData(JSON.parse(savedAdminData));
+        } catch (e) {
+          console.error("Erro ao carregar dados do admin", e);
+        }
+      }
     }
   }, []);
+
+  // Fechar calendário ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showCalendar && !target.closest(".custom-date-picker")) {
+        setShowCalendar(false);
+      }
+    };
+
+    if (showCalendar) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showCalendar]);
 
   // Estados para formulários
   const [newClass, setNewClass] = useState<Partial<Class>>({
@@ -563,7 +606,7 @@ export default function AdminPage() {
     maxStudents: 15,
     currentStudents: 0,
     schedule: [],
-    teacher: teacherData.name,
+    teacher: teacher.name,
     room: "",
   });
 
@@ -653,6 +696,49 @@ export default function AdminPage() {
     setUsername("");
     setPassword("");
     router.push("/login");
+  };
+
+  const handleTeacherPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("A imagem deve ter no máximo 5MB");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageUrl = reader.result as string;
+        setTeacher((prev) => ({ ...prev, profileImage: imageUrl }));
+        alert("Foto atualizada com sucesso!");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveAdminSettings = () => {
+    // Validar campos
+    if (
+      !adminData.name ||
+      !adminData.email ||
+      !adminData.username ||
+      !adminData.password
+    ) {
+      alert("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    // Validar email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(adminData.email)) {
+      alert("Por favor, insira um email válido.");
+      return;
+    }
+
+    // Salvar no sessionStorage
+    sessionStorage.setItem("adminData", JSON.stringify(adminData));
+    alert("Configurações salvas com sucesso!");
+    setShowAdminSettings(false);
   };
 
   const handleAddSchedule = () => {
@@ -916,12 +1002,21 @@ export default function AdminPage() {
           <div className="aluno-header">
             <div className="aluno-welcome">
               <h1>Painel Administrativo 🎭</h1>
-              <p>Bem-vindo(a), {teacherData.name}</p>
+              <p>Bem-vindo(a), {adminData.name}</p>
             </div>
-            <button className="logout-button" onClick={handleLogout}>
-              <i className="fas fa-sign-out-alt"></i>
-              Sair
-            </button>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                className="settings-button"
+                onClick={() => setShowAdminSettings(true)}
+              >
+                <i className="fas fa-cog"></i>
+                Configurações
+              </button>
+              <button className="logout-button" onClick={handleLogout}>
+                <i className="fas fa-sign-out-alt"></i>
+                Sair
+              </button>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -975,35 +1070,58 @@ export default function AdminPage() {
           {activeTab === "overview" && (
             <div className="overview-layout">
               <div className="teacher-profile-section">
-                <div className="profile-image-container">
-                  {teacherData.profileImage ? (
-                    <Image
-                      src={teacherData.profileImage}
-                      alt={teacherData.name}
-                      fill
-                      className="profile-image"
-                      style={{ objectFit: "cover" }}
+                <div className="avatar-wrapper">
+                  <div
+                    className="profile-image-container"
+                    onClick={() =>
+                      document.getElementById("teacher-photo-upload")?.click()
+                    }
+                    style={{ cursor: "pointer" }}
+                  >
+                    {teacher.profileImage ? (
+                      <Image
+                        src={teacher.profileImage}
+                        alt={teacher.name}
+                        fill
+                        className="profile-image"
+                        style={{ objectFit: "cover" }}
+                      />
+                    ) : (
+                      <div className="profile-icon-placeholder">
+                        <i className="fas fa-user-circle"></i>
+                      </div>
+                    )}
+                    <input
+                      id="teacher-photo-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleTeacherPhotoUpload}
+                      style={{ display: "none" }}
                     />
-                  ) : (
-                    <div className="profile-icon-placeholder">
-                      <i className="fas fa-user-circle"></i>
-                    </div>
-                  )}
+                  </div>
+                  <div
+                    className="camera-icon-badge"
+                    onClick={() =>
+                      document.getElementById("teacher-photo-upload")?.click()
+                    }
+                  >
+                    <i className="fas fa-camera"></i>
+                  </div>
                 </div>
-                <h2 className="profile-name">{teacherData.name}</h2>
-                <p className="profile-class">{teacherData.specialty}</p>
+                <h2 className="profile-name">{teacher.name}</h2>
+                <p className="profile-class">{teacher.specialty}</p>
                 <div className="profile-details">
                   <div className="profile-detail-item">
                     <i className="fas fa-envelope"></i>
-                    <span>{teacherData.email}</span>
+                    <span>{teacher.email}</span>
                   </div>
                   <div className="profile-detail-item">
                     <i className="fas fa-phone"></i>
-                    <span>{teacherData.phone}</span>
+                    <span>{teacher.phone}</span>
                   </div>
                   <div className="profile-detail-item">
                     <i className="fas fa-calendar"></i>
-                    <span>Desde {teacherData.startDate}</span>
+                    <span>Desde {teacher.startDate}</span>
                   </div>
                 </div>
               </div>
@@ -1244,6 +1362,42 @@ export default function AdminPage() {
                   </button>
                 </div>
 
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    <label style={{ fontSize: "0.9rem", color: "#666" }}>
+                      Mostrar:
+                    </label>
+                    <select
+                      className="form-select"
+                      value={studentsPerPage}
+                      onChange={(e) => {
+                        setStudentsPerPage(Number(e.target.value));
+                        setStudentsPage(1);
+                      }}
+                      style={{ width: "auto", padding: "0.5rem" }}
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={30}>30</option>
+                    </select>
+                    <span style={{ fontSize: "0.9rem", color: "#666" }}>
+                      por página
+                    </span>
+                  </div>
+                </div>
+
                 <div className="students-table-container">
                   <table className="students-table">
                     <thead>
@@ -1259,54 +1413,167 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {students.map((student) => (
-                        <tr key={student.id}>
-                          <td>
-                            {student.profileImage ? (
-                              <Image
-                                src={student.profileImage}
-                                alt={student.name}
-                                width={40}
-                                height={40}
-                                className="student-avatar"
-                              />
-                            ) : (
-                              <div className="avatar-icon-placeholder">
-                                <i className="fas fa-user-circle"></i>
-                              </div>
-                            )}
-                          </td>
-                          <td>{student.name}</td>
-                          <td>{student.id}</td>
-                          <td>{student.class}</td>
-                          <td>{student.email}</td>
-                          <td>{student.phone}</td>
-                          <td>
-                            <span
-                              className={`student-status-badge ${
-                                student.status === "Ativo"
-                                  ? "active"
-                                  : "inactive"
-                              }`}
-                            >
-                              {student.status}
-                            </span>
-                          </td>
-                          <td>
-                            <button className="table-action-btn">
-                              <i className="fas fa-edit"></i>
-                            </button>
-                            <button
-                              className="table-action-btn"
-                              onClick={() => handleDeleteStudent(student.id)}
-                            >
-                              <i className="fas fa-trash"></i>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {students
+                        .slice(
+                          (studentsPage - 1) * studentsPerPage,
+                          studentsPage * studentsPerPage
+                        )
+                        .map((student) => (
+                          <tr key={student.id}>
+                            <td>
+                              {student.profileImage ? (
+                                <Image
+                                  src={student.profileImage}
+                                  alt={student.name}
+                                  width={40}
+                                  height={40}
+                                  className="student-avatar"
+                                />
+                              ) : (
+                                <div className="avatar-icon-placeholder">
+                                  <i className="fas fa-user-circle"></i>
+                                </div>
+                              )}
+                            </td>
+                            <td>{student.name}</td>
+                            <td>{student.id}</td>
+                            <td>{student.class}</td>
+                            <td>{student.email}</td>
+                            <td>{student.phone}</td>
+                            <td>
+                              <span
+                                className={`student-status-badge ${
+                                  student.status === "Ativo"
+                                    ? "active"
+                                    : "inactive"
+                                }`}
+                              >
+                                {student.status}
+                              </span>
+                            </td>
+                            <td>
+                              <button className="table-action-btn">
+                                <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                className="table-action-btn"
+                                onClick={() => handleDeleteStudent(student.id)}
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Paginação */}
+                <div className="pagination-container">
+                  <div className="pagination-info">
+                    Mostrando{" "}
+                    {Math.min(
+                      (studentsPage - 1) * studentsPerPage + 1,
+                      students.length
+                    )}{" "}
+                    a{" "}
+                    {Math.min(studentsPage * studentsPerPage, students.length)}{" "}
+                    de {students.length} alunos
+                  </div>
+                  <div className="pagination-controls">
+                    <button
+                      className="pagination-btn"
+                      onClick={() => setStudentsPage(1)}
+                      disabled={studentsPage === 1}
+                    >
+                      <i className="fas fa-angle-double-left"></i>
+                    </button>
+                    <button
+                      className="pagination-btn"
+                      onClick={() =>
+                        setStudentsPage((prev) => Math.max(1, prev - 1))
+                      }
+                      disabled={studentsPage === 1}
+                    >
+                      <i className="fas fa-angle-left"></i>
+                    </button>
+                    {Array.from(
+                      { length: Math.ceil(students.length / studentsPerPage) },
+                      (_, i) => i + 1
+                    )
+                      .filter((page) => {
+                        const totalPages = Math.ceil(
+                          students.length / studentsPerPage
+                        );
+                        if (totalPages <= 7) return true;
+                        if (page === 1 || page === totalPages) return true;
+                        if (Math.abs(page - studentsPage) <= 1) return true;
+                        return false;
+                      })
+                      .map((page, index, array) => {
+                        if (index > 0 && array[index - 1] !== page - 1) {
+                          return [
+                            <span
+                              key={`ellipsis-${page}`}
+                              className="pagination-ellipsis"
+                            >
+                              ...
+                            </span>,
+                            <button
+                              key={page}
+                              className={`pagination-btn ${
+                                studentsPage === page ? "active" : ""
+                              }`}
+                              onClick={() => setStudentsPage(page)}
+                            >
+                              {page}
+                            </button>,
+                          ];
+                        }
+                        return (
+                          <button
+                            key={page}
+                            className={`pagination-btn ${
+                              studentsPage === page ? "active" : ""
+                            }`}
+                            onClick={() => setStudentsPage(page)}
+                          >
+                            {page}
+                          </button>
+                        );
+                      })}
+                    <button
+                      className="pagination-btn"
+                      onClick={() =>
+                        setStudentsPage((prev) =>
+                          Math.min(
+                            Math.ceil(students.length / studentsPerPage),
+                            prev + 1
+                          )
+                        )
+                      }
+                      disabled={
+                        studentsPage >=
+                        Math.ceil(students.length / studentsPerPage)
+                      }
+                    >
+                      <i className="fas fa-angle-right"></i>
+                    </button>
+                    <button
+                      className="pagination-btn"
+                      onClick={() =>
+                        setStudentsPage(
+                          Math.ceil(students.length / studentsPerPage)
+                        )
+                      }
+                      disabled={
+                        studentsPage >=
+                        Math.ceil(students.length / studentsPerPage)
+                      }
+                    >
+                      <i className="fas fa-angle-double-right"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -1380,9 +1647,106 @@ export default function AdminPage() {
                   </div>
                 </div>
 
+                {/* Gráfico de Receita Mensal */}
+                <div className="revenue-chart-section">
+                  <h3>Receita Mensal - Últimos 6 Meses</h3>
+                  <div className="revenue-chart">
+                    {[
+                      { month: "Jul", value: 2800, label: "R$ 2.800" },
+                      { month: "Ago", value: 3200, label: "R$ 3.200" },
+                      { month: "Set", value: 2950, label: "R$ 2.950" },
+                      { month: "Out", value: 3400, label: "R$ 3.400" },
+                      { month: "Nov", value: 3650, label: "R$ 3.650" },
+                      { month: "Dez", value: 3950, label: "R$ 3.950" },
+                    ].map((data, index, array) => {
+                      const maxValue = Math.max(...array.map((d) => d.value));
+                      const heightPercent = (data.value / maxValue) * 100;
+                      const prevValue =
+                        index > 0 ? array[index - 1].value : data.value;
+                      const isIncreasing = data.value > prevValue;
+                      const isDecreasing = data.value < prevValue;
+
+                      return (
+                        <div key={data.month} className="chart-bar-container">
+                          <div className="chart-value">{data.label}</div>
+                          <div
+                            className={`chart-bar ${
+                              isIncreasing
+                                ? "increasing"
+                                : isDecreasing
+                                ? "decreasing"
+                                : "stable"
+                            }`}
+                            style={{ height: `${heightPercent}%` }}
+                            title={`${data.month}: ${data.label}`}
+                          >
+                            {isIncreasing && (
+                              <i className="fas fa-arrow-up trend-icon"></i>
+                            )}
+                            {isDecreasing && (
+                              <i className="fas fa-arrow-down trend-icon"></i>
+                            )}
+                          </div>
+                          <div className="chart-label">{data.month}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="chart-legend">
+                    <div className="legend-item">
+                      <span className="legend-color increasing"></span>
+                      <span>Crescimento</span>
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-color decreasing"></span>
+                      <span>Queda</span>
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-color stable"></span>
+                      <span>Estável</span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Lista de Alunos e Status de Pagamento */}
                 <div className="payments-section">
-                  <h3>Status de Pagamentos por Aluno</h3>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "1.5rem",
+                    }}
+                  >
+                    <h3>Status de Pagamentos por Aluno</h3>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <label style={{ fontSize: "0.9rem", color: "#666" }}>
+                        Mostrar:
+                      </label>
+                      <select
+                        className="form-select"
+                        value={paymentsPerPage}
+                        onChange={(e) => {
+                          setPaymentsPerPage(Number(e.target.value));
+                          setPaymentsPage(1);
+                        }}
+                        style={{ width: "auto", padding: "0.5rem" }}
+                      >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={30}>30</option>
+                      </select>
+                      <span style={{ fontSize: "0.9rem", color: "#666" }}>
+                        por página
+                      </span>
+                    </div>
+                  </div>
                   <div className="payments-table-container">
                     <table className="students-table">
                       <thead>
@@ -1396,81 +1760,199 @@ export default function AdminPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {students.map((student) => {
-                          const currentPayment = student.payments[0];
-                          const pendingCount = student.payments.filter(
-                            (p) => p.status === "pending"
-                          ).length;
+                        {students
+                          .slice(
+                            (paymentsPage - 1) * paymentsPerPage,
+                            paymentsPage * paymentsPerPage
+                          )
+                          .map((student) => {
+                            const currentPayment = student.payments[0];
+                            const pendingCount = student.payments.filter(
+                              (p) => p.status === "pending"
+                            ).length;
 
-                          return (
-                            <tr key={student.id}>
-                              <td>
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "0.5rem",
-                                  }}
-                                >
-                                  {student.profileImage ? (
-                                    <Image
-                                      src={student.profileImage}
-                                      alt={student.name}
-                                      width={35}
-                                      height={35}
-                                      className="student-avatar"
-                                    />
+                            return (
+                              <tr key={student.id}>
+                                <td>
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "0.5rem",
+                                    }}
+                                  >
+                                    {student.profileImage ? (
+                                      <Image
+                                        src={student.profileImage}
+                                        alt={student.name}
+                                        width={35}
+                                        height={35}
+                                        className="student-avatar"
+                                      />
+                                    ) : (
+                                      <div
+                                        className="avatar-icon-placeholder"
+                                        style={{
+                                          width: "35px",
+                                          height: "35px",
+                                          fontSize: "35px",
+                                        }}
+                                      >
+                                        <i className="fas fa-user-circle"></i>
+                                      </div>
+                                    )}
+                                    <span>{student.name}</span>
+                                  </div>
+                                </td>
+                                <td>{student.class}</td>
+                                <td>{currentPayment?.amount}</td>
+                                <td>
+                                  {pendingCount > 0 ? (
+                                    <span className="payment-status-badge pending">
+                                      {pendingCount}{" "}
+                                      {pendingCount === 1 ? "mês" : "meses"}{" "}
+                                      pendente{pendingCount > 1 ? "s" : ""}
+                                    </span>
                                   ) : (
-                                    <div
-                                      className="avatar-icon-placeholder"
-                                      style={{
-                                        width: "35px",
-                                        height: "35px",
-                                        fontSize: "35px",
-                                      }}
-                                    >
-                                      <i className="fas fa-user-circle"></i>
-                                    </div>
+                                    <span className="payment-status-badge paid">
+                                      Em dia
+                                    </span>
                                   )}
-                                  <span>{student.name}</span>
-                                </div>
-                              </td>
-                              <td>{student.class}</td>
-                              <td>{currentPayment?.amount}</td>
-                              <td>
-                                {pendingCount > 0 ? (
-                                  <span className="payment-status-badge pending">
-                                    {pendingCount}{" "}
-                                    {pendingCount === 1 ? "mês" : "meses"}{" "}
-                                    pendente{pendingCount > 1 ? "s" : ""}
-                                  </span>
-                                ) : (
-                                  <span className="payment-status-badge paid">
-                                    Em dia
-                                  </span>
-                                )}
-                              </td>
-                              <td>
-                                {currentPayment?.status === "paid"
-                                  ? currentPayment.paidDate
-                                  : `Vence em ${currentPayment?.dueDate}`}
-                              </td>
-                              <td>
-                                <button
-                                  className="table-action-btn"
-                                  onClick={() => {
-                                    setSelectedStudent(student);
-                                    setShowModal("payment");
-                                  }}
-                                >
-                                  <i className="fas fa-eye"></i> Ver Histórico
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
+                                </td>
+                                <td>
+                                  {currentPayment?.status === "paid"
+                                    ? currentPayment.paidDate
+                                    : `Vence em ${currentPayment?.dueDate}`}
+                                </td>
+                                <td>
+                                  <button
+                                    className="table-action-btn"
+                                    onClick={() => {
+                                      setSelectedStudent(student);
+                                      setShowModal("payment");
+                                    }}
+                                  >
+                                    <i className="fas fa-eye"></i> Ver Histórico
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* Paginação */}
+                  <div className="pagination-container">
+                    <div className="pagination-info">
+                      Mostrando{" "}
+                      {Math.min(
+                        (paymentsPage - 1) * paymentsPerPage + 1,
+                        students.length
+                      )}{" "}
+                      a{" "}
+                      {Math.min(
+                        paymentsPage * paymentsPerPage,
+                        students.length
+                      )}{" "}
+                      de {students.length} alunos
+                    </div>
+                    <div className="pagination-controls">
+                      <button
+                        className="pagination-btn"
+                        onClick={() => setPaymentsPage(1)}
+                        disabled={paymentsPage === 1}
+                      >
+                        <i className="fas fa-angle-double-left"></i>
+                      </button>
+                      <button
+                        className="pagination-btn"
+                        onClick={() =>
+                          setPaymentsPage((prev) => Math.max(1, prev - 1))
+                        }
+                        disabled={paymentsPage === 1}
+                      >
+                        <i className="fas fa-angle-left"></i>
+                      </button>
+                      {Array.from(
+                        {
+                          length: Math.ceil(students.length / paymentsPerPage),
+                        },
+                        (_, i) => i + 1
+                      )
+                        .filter((page) => {
+                          const totalPages = Math.ceil(
+                            students.length / paymentsPerPage
+                          );
+                          if (totalPages <= 7) return true;
+                          if (page === 1 || page === totalPages) return true;
+                          if (Math.abs(page - paymentsPage) <= 1) return true;
+                          return false;
+                        })
+                        .map((page, index, array) => {
+                          if (index > 0 && array[index - 1] !== page - 1) {
+                            return [
+                              <span
+                                key={`ellipsis-${page}`}
+                                className="pagination-ellipsis"
+                              >
+                                ...
+                              </span>,
+                              <button
+                                key={page}
+                                className={`pagination-btn ${
+                                  paymentsPage === page ? "active" : ""
+                                }`}
+                                onClick={() => setPaymentsPage(page)}
+                              >
+                                {page}
+                              </button>,
+                            ];
+                          }
+                          return (
+                            <button
+                              key={page}
+                              className={`pagination-btn ${
+                                paymentsPage === page ? "active" : ""
+                              }`}
+                              onClick={() => setPaymentsPage(page)}
+                            >
+                              {page}
+                            </button>
+                          );
+                        })}
+                      <button
+                        className="pagination-btn"
+                        onClick={() =>
+                          setPaymentsPage((prev) =>
+                            Math.min(
+                              Math.ceil(students.length / paymentsPerPage),
+                              prev + 1
+                            )
+                          )
+                        }
+                        disabled={
+                          paymentsPage >=
+                          Math.ceil(students.length / paymentsPerPage)
+                        }
+                      >
+                        <i className="fas fa-angle-right"></i>
+                      </button>
+                      <button
+                        className="pagination-btn"
+                        onClick={() =>
+                          setPaymentsPage(
+                            Math.ceil(students.length / paymentsPerPage)
+                          )
+                        }
+                        disabled={
+                          paymentsPage >=
+                          Math.ceil(students.length / paymentsPerPage)
+                        }
+                      >
+                        <i className="fas fa-angle-double-right"></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1507,12 +1989,153 @@ export default function AdminPage() {
 
                   <div className="form-group">
                     <label className="form-label">Data da Aula</label>
-                    <input
-                      type="date"
-                      className="form-input"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                    />
+                    <div className="custom-date-picker">
+                      <div
+                        className="date-display"
+                        onClick={() => setShowCalendar(!showCalendar)}
+                      >
+                        <span>
+                          {new Date(
+                            selectedDate + "T00:00:00"
+                          ).toLocaleDateString("pt-BR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
+                        </span>
+                        <i className="fas fa-calendar-alt"></i>
+                      </div>
+                      {showCalendar && (
+                        <div className="calendar-dropdown">
+                          <div className="calendar-header">
+                            <button
+                              type="button"
+                              className="calendar-nav-btn"
+                              onClick={() => {
+                                const date = new Date(
+                                  selectedDate + "T00:00:00"
+                                );
+                                date.setMonth(date.getMonth() - 1);
+                                setSelectedDate(
+                                  date.toISOString().split("T")[0]
+                                );
+                              }}
+                            >
+                              <i className="fas fa-chevron-left"></i>
+                            </button>
+                            <span className="calendar-month">
+                              {new Date(
+                                selectedDate + "T00:00:00"
+                              ).toLocaleDateString("pt-BR", {
+                                month: "long",
+                                year: "numeric",
+                              })}
+                            </span>
+                            <button
+                              type="button"
+                              className="calendar-nav-btn"
+                              onClick={() => {
+                                const date = new Date(
+                                  selectedDate + "T00:00:00"
+                                );
+                                date.setMonth(date.getMonth() + 1);
+                                setSelectedDate(
+                                  date.toISOString().split("T")[0]
+                                );
+                              }}
+                            >
+                              <i className="fas fa-chevron-right"></i>
+                            </button>
+                          </div>
+                          <div className="calendar-weekdays">
+                            {[
+                              "Dom",
+                              "Seg",
+                              "Ter",
+                              "Qua",
+                              "Qui",
+                              "Sex",
+                              "Sáb",
+                            ].map((day) => (
+                              <div key={day} className="weekday">
+                                {day}
+                              </div>
+                            ))}
+                          </div>
+                          <div className="calendar-days">
+                            {(() => {
+                              const current = new Date(
+                                selectedDate + "T00:00:00"
+                              );
+                              const year = current.getFullYear();
+                              const month = current.getMonth();
+                              const firstDay = new Date(
+                                year,
+                                month,
+                                1
+                              ).getDay();
+                              const daysInMonth = new Date(
+                                year,
+                                month + 1,
+                                0
+                              ).getDate();
+                              const days = [];
+
+                              for (let i = 0; i < firstDay; i++) {
+                                days.push(
+                                  <div
+                                    key={`empty-${i}`}
+                                    className="date-cell empty"
+                                  ></div>
+                                );
+                              }
+
+                              for (let day = 1; day <= daysInMonth; day++) {
+                                const date = new Date(year, month, day);
+                                const dateStr = date
+                                  .toISOString()
+                                  .split("T")[0];
+                                const isSelected = dateStr === selectedDate;
+                                const isToday =
+                                  dateStr ===
+                                  new Date().toISOString().split("T")[0];
+
+                                days.push(
+                                  <div
+                                    key={day}
+                                    className={`date-cell ${
+                                      isSelected ? "selected" : ""
+                                    } ${isToday ? "today" : ""}`}
+                                    onClick={() => {
+                                      setSelectedDate(dateStr);
+                                      setShowCalendar(false);
+                                    }}
+                                  >
+                                    {day}
+                                  </div>
+                                );
+                              }
+
+                              return days;
+                            })()}
+                          </div>
+                          <div className="calendar-footer">
+                            <button
+                              type="button"
+                              className="calendar-today-btn"
+                              onClick={() => {
+                                setSelectedDate(
+                                  new Date().toISOString().split("T")[0]
+                                );
+                                setShowCalendar(false);
+                              }}
+                            >
+                              Hoje
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -2403,6 +3026,148 @@ export default function AdminPage() {
                   onClick={handleCreateStudent}
                 >
                   Cadastrar Aluno
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Configurações do Admin */}
+        {showAdminSettings && (
+          <div
+            className="modal-overlay"
+            onClick={() => setShowAdminSettings(false)}
+          >
+            <div
+              className="modal-container"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-header">
+                <h3>Configurações do Administrador</h3>
+                <button
+                  className="modal-close"
+                  onClick={() => setShowAdminSettings(false)}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="modal-body">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Nome Completo *</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={adminData.name}
+                      onChange={(e) =>
+                        setAdminData({ ...adminData, name: e.target.value })
+                      }
+                      placeholder="Seu nome completo"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Nome de Usuário *</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={adminData.username}
+                      onChange={(e) =>
+                        setAdminData({ ...adminData, username: e.target.value })
+                      }
+                      placeholder="Nome de usuário para login"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">E-mail *</label>
+                    <input
+                      type="email"
+                      className="form-input"
+                      value={adminData.email}
+                      onChange={(e) =>
+                        setAdminData({ ...adminData, email: e.target.value })
+                      }
+                      placeholder="seu@email.com"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Telefone</label>
+                    <input
+                      type="tel"
+                      className="form-input"
+                      value={adminData.phone}
+                      onChange={(e) =>
+                        setAdminData({ ...adminData, phone: e.target.value })
+                      }
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Data de Nascimento</label>
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={adminData.birthDate}
+                      onChange={(e) =>
+                        setAdminData({
+                          ...adminData,
+                          birthDate: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Nova Senha *</label>
+                    <input
+                      type="password"
+                      className="form-input"
+                      value={adminData.password}
+                      onChange={(e) =>
+                        setAdminData({ ...adminData, password: e.target.value })
+                      }
+                      placeholder="Digite uma nova senha"
+                    />
+                  </div>
+                </div>
+
+                <div
+                  className="form-note"
+                  style={{
+                    background: "#f0f8ff",
+                    padding: "1rem",
+                    borderRadius: "8px",
+                    marginTop: "1.5rem",
+                    fontSize: "0.9rem",
+                    color: "#666",
+                  }}
+                >
+                  <i
+                    className="fas fa-info-circle"
+                    style={{ color: "#2196f3", marginRight: "0.5rem" }}
+                  ></i>
+                  <strong>Nota:</strong> As configurações serão salvas
+                  localmente neste navegador. Use o novo nome de usuário e senha
+                  para fazer login nas próximas vezes.
+                </div>
+              </div>
+
+              <div className="form-buttons">
+                <button
+                  className="form-button secondary"
+                  onClick={() => setShowAdminSettings(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="form-button primary"
+                  onClick={handleSaveAdminSettings}
+                >
+                  <i className="fas fa-save"></i> Salvar Configurações
                 </button>
               </div>
             </div>

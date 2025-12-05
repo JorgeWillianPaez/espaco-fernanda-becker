@@ -146,6 +146,7 @@ export default function AlunoPage() {
   const [password, setPassword] = useState("");
   const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
   const [currentStudentId, setCurrentStudentId] = useState("");
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const router = useRouter();
 
   // Verificar se já está autenticado via sessionStorage
@@ -224,6 +225,28 @@ export default function AlunoPage() {
     return currentStudent.payments.filter((p) => p.status === "paid").length;
   };
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("A imagem deve ter no máximo 5MB");
+        return;
+      }
+
+      setIsUploadingPhoto(true);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageUrl = reader.result as string;
+        setCurrentStudent((prev) =>
+          prev ? { ...prev, profileImage: imageUrl } : null
+        );
+        setIsUploadingPhoto(false);
+        alert("Foto atualizada com sucesso!");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   if (!isLoggedIn) {
     return (
       <>
@@ -287,20 +310,43 @@ export default function AlunoPage() {
           <div className="aluno-grid">
             <aside className="aluno-sidebar">
               <div className="profile-card">
-                <div className="profile-image-container">
-                  {currentStudent.profileImage ? (
-                    <Image
-                      src={currentStudent.profileImage}
-                      alt={currentStudent.name}
-                      fill
-                      className="profile-image"
-                      style={{ objectFit: "cover" }}
+                <div className="avatar-wrapper">
+                  <div
+                    className="profile-image-container"
+                    onClick={() =>
+                      document.getElementById("student-photo-upload")?.click()
+                    }
+                    style={{ cursor: "pointer" }}
+                  >
+                    {currentStudent.profileImage ? (
+                      <Image
+                        src={currentStudent.profileImage}
+                        alt={currentStudent.name}
+                        fill
+                        className="profile-image"
+                        style={{ objectFit: "cover" }}
+                      />
+                    ) : (
+                      <div className="profile-icon-placeholder">
+                        <i className="fas fa-user-circle"></i>
+                      </div>
+                    )}
+                    <input
+                      id="student-photo-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      style={{ display: "none" }}
                     />
-                  ) : (
-                    <div className="profile-icon-placeholder">
-                      <i className="fas fa-user-circle"></i>
-                    </div>
-                  )}
+                  </div>
+                  <div
+                    className="camera-icon-badge"
+                    onClick={() =>
+                      document.getElementById("student-photo-upload")?.click()
+                    }
+                  >
+                    <i className="fas fa-camera"></i>
+                  </div>
                 </div>
                 <h2 className="profile-name">{currentStudent.name}</h2>
                 <p className="profile-class">{currentStudent.class}</p>
