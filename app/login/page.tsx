@@ -2,35 +2,49 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "../store/authStore";
 import Header from "../components/Header";
 import styles from "./login.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
+  const login = useAuthStore((state) => state.login);
+  const logout = useAuthStore((state) => state.logout);
   const [userType, setUserType] = useState<"aluno" | "professor">("aluno");
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = (e: FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-    if (userType === "aluno") {
-      // Login de aluno - e-mail e senha
-      if (username === "fernanda.becker@email.com" && password === "123456") {
-        sessionStorage.setItem("alunoAuth", "true");
-        sessionStorage.setItem("studentEmail", username);
-        router.push("/aluno");
-      } else {
-        alert("E-mail ou senha incorretos!");
+    try {
+      await login(email, password);
+
+      // Recuperar dados do usuário do store para saber a role
+      const user = useAuthStore.getState().user;
+      if (user) {
+        // Redirecionar baseado no tipo de usuário e role
+        if (userType === "aluno" && user.role === "student") {
+          router.push("/aluno");
+        } else if (
+          userType === "professor" &&
+          (user.role === "admin" || user.role === "teacher")
+        ) {
+          router.push("/admin");
+        } else {
+          setError("Tipo de usuário incorreto para este login");
+          // Fazer logout se o tipo não corresponder
+          logout();
+        }
       }
-    } else {
-      // Login de professor/admin
-      if (username === "admin" && password === "admin123") {
-        sessionStorage.setItem("adminAuth", "true");
-        router.push("/admin");
-      } else {
-        alert("Usuário ou senha incorretos!");
-      }
+    } catch (error: any) {
+      setError(error.message || "E-mail ou senha incorretos!");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -69,13 +83,28 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleLogin} className={styles.loginForm}>
+            {error && (
+              <div
+                style={{
+                  padding: "10px",
+                  marginBottom: "15px",
+                  backgroundColor: "#fee",
+                  color: "#c33",
+                  borderRadius: "5px",
+                  textAlign: "center",
+                }}
+              >
+                {error}
+              </div>
+            )}
             <div className="form-group">
               <input
-                type="text"
-                placeholder={userType === "aluno" ? "E-mail" : "Usuário"}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                type="email"
+                placeholder="E-mail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="form-group">
@@ -85,10 +114,15 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
-            <button type="submit" className={styles.loginButton}>
-              Entrar
+            <button
+              type="submit"
+              className={styles.loginButton}
+              disabled={isLoading}
+            >
+              {isLoading ? "Entrando..." : "Entrar"}
             </button>
           </form>
           <div className={styles.loginBack}>

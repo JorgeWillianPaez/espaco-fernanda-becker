@@ -4,6 +4,8 @@ import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Header from "../components/Header";
+import ProtectedRoute from "../components/ProtectedRoute";
+import { useAuthStore } from "../store/authStore";
 import ClassModal from "./components/ClassModal";
 import EditClassModal from "./components/EditClassModal";
 import StudentModal from "./components/StudentModal";
@@ -546,9 +548,8 @@ const initialStudents: AdminStudent[] = [
 ];
 
 export default function AdminPage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
   const [activeTab, setActiveTab] = useState<
     "overview" | "classes" | "students" | "payments" | "teachers" | "access"
   >("overview");
@@ -608,43 +609,11 @@ export default function AdminPage() {
     birthDate: "1985-05-15",
     username: "admin",
   });
-  const router = useRouter();
 
-  // Verificar se já está autenticado via sessionStorage
-  useEffect(() => {
-    const isAuth = sessionStorage.getItem("adminAuth");
-    if (isAuth === "true") {
-      setIsLoggedIn(true);
-
-      // Carregar dados do admin salvos
-      const savedAdminData = sessionStorage.getItem("adminData");
-      if (savedAdminData) {
-        try {
-          setAdminData(JSON.parse(savedAdminData));
-        } catch (e) {
-          console.error("Erro ao carregar dados do admin", e);
-        }
-      }
-    }
-  }, []);
-
-  // Fechar calendário ao clicar fora
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (showCalendar && !target.closest(".custom-date-picker")) {
-        setShowCalendar(false);
-      }
-    };
-
-    if (showCalendar) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showCalendar]);
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   // Estados para formulários
   const [newClass, setNewClass] = useState<Partial<Class>>({
@@ -726,26 +695,6 @@ export default function AdminPage() {
     endTime: "",
     room: "",
   });
-
-  const handleLogin = (e: FormEvent) => {
-    e.preventDefault();
-    if (username === "admin" && password === "admin123") {
-      sessionStorage.setItem("adminAuth", "true");
-      setIsLoggedIn(true);
-    } else {
-      alert(
-        "Usuário ou senha incorretos.\n\nPara demonstração, use:\nUsuário: admin\nSenha: admin123"
-      );
-    }
-  };
-
-  const handleLogout = () => {
-    sessionStorage.removeItem("adminAuth");
-    setIsLoggedIn(false);
-    setUsername("");
-    setPassword("");
-    router.push("/login");
-  };
 
   const handleTeacherPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1256,50 +1205,8 @@ export default function AdminPage() {
     }
   };
 
-  if (!isLoggedIn) {
-    return (
-      <>
-        <Header />
-        <div className={styles.alunoLoginPage}>
-          <div className={styles.alunoLoginContainer}>
-            <div className={styles.alunoLoginHeader}>
-              <h1>Área do Professor</h1>
-              <p>Acesse o painel administrativo</p>
-            </div>
-            <form onSubmit={handleLogin} className={styles.alunoLoginForm}>
-              <div className="form-group">
-                <input
-                  type="text"
-                  placeholder="Usuário"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <input
-                  type="password"
-                  placeholder="Senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <button type="submit" className={styles.alunoLoginButton}>
-                Entrar
-              </button>
-            </form>
-            <div className={styles.alunoLoginBack}>
-              <a href="/">Voltar ao site principal</a>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
   return (
-    <>
+    <ProtectedRoute allowedRoles={["admin", "teacher"]}>
       <Header />
       <div className={styles.adminPage}>
         <div className={styles.alunoContainer}>
@@ -2476,6 +2383,6 @@ export default function AdminPage() {
           onSave={handleSaveAdminSettings}
         />
       </div>
-    </>
+    </ProtectedRoute>
   );
 }

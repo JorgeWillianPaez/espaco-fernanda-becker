@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Header from "../components/Header";
+import ProtectedRoute from "../components/ProtectedRoute";
+import { useAuthStore } from "../store/authStore";
 import { Student, StudentsData } from "../types";
 import styles from "./aluno.module.css";
 
@@ -142,55 +144,37 @@ const studentsData: StudentsData = {
 };
 
 export default function AlunoPage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [studentId, setStudentId] = useState("");
-  const [password, setPassword] = useState("");
-  const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
-  const [currentStudentId, setCurrentStudentId] = useState("");
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
-  // Verificar se já está autenticado via sessionStorage
+  // Carregar dados do aluno baseado no usuário logado
   useEffect(() => {
-    const isAuth = sessionStorage.getItem("alunoAuth");
-    const savedStudentEmail = sessionStorage.getItem("studentEmail");
-
-    if (
-      isAuth === "true" &&
-      savedStudentEmail &&
-      studentsData[savedStudentEmail]
-    ) {
-      setCurrentStudent(studentsData[savedStudentEmail]);
-      setCurrentStudentId(savedStudentEmail);
-      setStudentId(savedStudentEmail);
-      setIsLoggedIn(true);
+    if (user && user.email) {
+      // Por enquanto usando dados mockados, mas você pode buscar do backend
+      if (studentsData[user.email]) {
+        setCurrentStudent(studentsData[user.email]);
+      } else {
+        // Se não encontrar nos dados mockados, criar um objeto básico
+        setCurrentStudent({
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          class: "Sem turma",
+          status: "Ativo",
+          profileImage: "",
+          enrollmentDate: new Date().toLocaleDateString("pt-BR"),
+          schedule: [],
+          payments: [],
+        });
+      }
     }
-  }, []);
-
-  const handleLogin = (e: FormEvent) => {
-    e.preventDefault();
-
-    if (studentsData[studentId] && password === "123456") {
-      sessionStorage.setItem("alunoAuth", "true");
-      sessionStorage.setItem("studentEmail", studentId);
-      setCurrentStudent(studentsData[studentId]);
-      setCurrentStudentId(studentId);
-      setIsLoggedIn(true);
-    } else {
-      alert(
-        "E-mail ou senha incorretos. \n\nPara demonstração, use:\nE-mail: fernanda.becker@email.com\nSenha: 123456"
-      );
-    }
-  };
+  }, [user]);
 
   const handleLogout = () => {
-    sessionStorage.removeItem("alunoAuth");
-    sessionStorage.removeItem("studentEmail");
-    setIsLoggedIn(false);
-    setStudentId("");
-    setPassword("");
-    setCurrentStudent(null);
-    setCurrentStudentId("");
+    logout();
     router.push("/login");
   };
 
@@ -252,52 +236,10 @@ export default function AlunoPage() {
     }
   };
 
-  if (!isLoggedIn) {
-    return (
-      <>
-        <Header />
-        <div className={styles.alunoLoginPage}>
-          <div className={styles.alunoLoginContainer}>
-            <div className={styles.alunoLoginHeader}>
-              <h1>Área do Aluno</h1>
-              <p>Acesse sua conta para gerenciar suas aulas e pagamentos</p>
-            </div>
-            <form onSubmit={handleLogin} className={styles.alunoLoginForm}>
-              <div className={styles.formGroup}>
-                <input
-                  type="text"
-                  placeholder="Número de matrícula"
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <input
-                  type="password"
-                  placeholder="Senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <button type="submit" className={styles.alunoLoginButton}>
-                Entrar
-              </button>
-            </form>
-            <div className={styles.alunoLoginBack}>
-              <Link href="/">Voltar ao site principal</Link>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
   if (!currentStudent) return null;
 
   return (
-    <>
+    <ProtectedRoute allowedRoles={["student"]}>
       <Header />
       <div className={styles.alunoPage}>
         <div className={styles.alunoContainer}>
@@ -362,7 +304,7 @@ export default function AlunoPage() {
                 <div className={styles.profileDetails}>
                   <div className={styles.profileDetailItem}>
                     <i className="fas fa-id-card"></i>
-                    <span>Matrícula: {currentStudentId}</span>
+                    <span>E-mail: {currentStudent.email}</span>
                   </div>
                   <div className={styles.profileDetailItem}>
                     <i className="fas fa-envelope"></i>
@@ -681,6 +623,6 @@ export default function AlunoPage() {
           </div>
         </div>
       </div>
-    </>
+    </ProtectedRoute>
   );
 }
