@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Event } from "../../types";
+import styles from "./Events.module.css";
 
 const eventsData: Event[] = [
   {
@@ -82,58 +83,76 @@ export default function Events() {
 
   return (
     <>
-      <section id="events" className="events">
+      <section id="events" className={styles.events}>
         <div className="container">
           <h2>Eventos</h2>
 
-          <div className="event-filters">
+          <div className={styles.eventFilters}>
             <button
-              className={`filter-btn ${filter === "all" ? "active" : ""}`}
+              className={`${styles.filterBtn} ${
+                filter === "all" ? styles.active : ""
+              }`}
               onClick={() => setFilter("all")}
             >
               Todos
             </button>
             <button
-              className={`filter-btn ${filter === "past" ? "active" : ""}`}
+              className={`${styles.filterBtn} ${
+                filter === "past" ? styles.active : ""
+              }`}
               onClick={() => setFilter("past")}
             >
               Eventos Passados
             </button>
             <button
-              className={`filter-btn ${filter === "open" ? "active" : ""}`}
+              className={`${styles.filterBtn} ${
+                filter === "open" ? styles.active : ""
+              }`}
               onClick={() => setFilter("open")}
             >
               Inscrições Abertas
             </button>
             <button
-              className={`filter-btn ${filter === "upcoming" ? "active" : ""}`}
+              className={`${styles.filterBtn} ${
+                filter === "upcoming" ? styles.active : ""
+              }`}
               onClick={() => setFilter("upcoming")}
             >
               Próximos Eventos
             </button>
           </div>
 
-          <div className="events-grid">
+          <div className={styles.eventsGrid}>
             {filteredEvents.length === 0 ? (
-              <p className="text-center">
+              <p className={styles.textCenter}>
                 Nenhum evento encontrado para este filtro.
               </p>
             ) : (
               filteredEvents.map((event) => (
-                <div key={event.id} className="event-card">
+                <div key={event.id} className={styles.eventCard}>
                   <Image
                     src={event.image}
                     alt={event.title}
                     width={400}
                     height={200}
-                    className="event-image"
+                    className={styles.eventImage}
                     style={{ objectFit: "cover" }}
                   />
-                  <div className="event-content">
-                    <div className="event-date">{event.date}</div>
-                    <h3 className="event-title">{event.title}</h3>
-                    <p className="event-description">{event.description}</p>
-                    <span className={`event-status status-${event.status}`}>
+                  <div className={styles.eventContent}>
+                    <div className={styles.eventDate}>{event.date}</div>
+                    <h3 className={styles.eventTitle}>{event.title}</h3>
+                    <p className={styles.eventDescription}>
+                      {event.description}
+                    </p>
+                    <span
+                      className={`${styles.eventStatus} ${
+                        styles[
+                          `status${event.status
+                            .charAt(0)
+                            .toUpperCase()}${event.status.slice(1)}`
+                        ]
+                      }`}
+                    >
                       {statusText[event.status]}
                     </span>
                     {event.price && (
@@ -142,8 +161,8 @@ export default function Events() {
                       </p>
                     )}
                     <button
-                      className={`event-btn ${
-                        event.status === "upcoming" ? "secondary" : ""
+                      className={`${styles.eventBtn} ${
+                        event.status === "upcoming" ? styles.secondary : ""
                       }`}
                       onClick={() => handleEventClick(event)}
                     >
@@ -162,12 +181,15 @@ export default function Events() {
       </section>
 
       {selectedEvent && (
-        <div className="modal show" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="close" onClick={closeModal}>
+        <div className={`${styles.modal} ${styles.show}`} onClick={closeModal}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className={styles.close} onClick={closeModal}>
               &times;
             </button>
-            <div className="modal-body">
+            <div className={styles.modalBody}>
               <h2>{selectedEvent.title}</h2>
               <p>
                 <strong>Data:</strong> {selectedEvent.date}
@@ -189,7 +211,7 @@ export default function Events() {
               {selectedEvent.photos && selectedEvent.photos.length > 0 && (
                 <>
                   <h3>Fotos do Evento</h3>
-                  <div className="modal-photos">
+                  <div className={styles.modalPhotos}>
                     {selectedEvent.photos.map((photo, index) => (
                       <Image
                         key={index}

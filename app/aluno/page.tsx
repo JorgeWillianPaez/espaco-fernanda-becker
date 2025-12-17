@@ -6,9 +6,10 @@ import Link from "next/link";
 import Image from "next/image";
 import Header from "../components/Header";
 import { Student, StudentsData } from "../types";
+import styles from "./aluno.module.css";
 
 const studentsData: StudentsData = {
-  "12345": {
+  "fernanda.becker@email.com": {
     name: "Fernanda Becker",
     email: "fernanda.becker@email.com",
     phone: "(41) 98765-4321",
@@ -152,12 +153,16 @@ export default function AlunoPage() {
   // Verificar se já está autenticado via sessionStorage
   useEffect(() => {
     const isAuth = sessionStorage.getItem("alunoAuth");
-    const savedStudentId = sessionStorage.getItem("studentId");
+    const savedStudentEmail = sessionStorage.getItem("studentEmail");
 
-    if (isAuth === "true" && savedStudentId && studentsData[savedStudentId]) {
-      setCurrentStudent(studentsData[savedStudentId]);
-      setCurrentStudentId(savedStudentId);
-      setStudentId(savedStudentId);
+    if (
+      isAuth === "true" &&
+      savedStudentEmail &&
+      studentsData[savedStudentEmail]
+    ) {
+      setCurrentStudent(studentsData[savedStudentEmail]);
+      setCurrentStudentId(savedStudentEmail);
+      setStudentId(savedStudentEmail);
       setIsLoggedIn(true);
     }
   }, []);
@@ -167,20 +172,20 @@ export default function AlunoPage() {
 
     if (studentsData[studentId] && password === "123456") {
       sessionStorage.setItem("alunoAuth", "true");
-      sessionStorage.setItem("studentId", studentId);
+      sessionStorage.setItem("studentEmail", studentId);
       setCurrentStudent(studentsData[studentId]);
       setCurrentStudentId(studentId);
       setIsLoggedIn(true);
     } else {
       alert(
-        "Matrícula ou senha incorretos. \n\nPara demonstração, use:\nMatrícula: 12345\nSenha: 123456"
+        "E-mail ou senha incorretos. \n\nPara demonstração, use:\nE-mail: fernanda.becker@email.com\nSenha: 123456"
       );
     }
   };
 
   const handleLogout = () => {
     sessionStorage.removeItem("alunoAuth");
-    sessionStorage.removeItem("studentId");
+    sessionStorage.removeItem("studentEmail");
     setIsLoggedIn(false);
     setStudentId("");
     setPassword("");
@@ -251,14 +256,14 @@ export default function AlunoPage() {
     return (
       <>
         <Header />
-        <div className="aluno-login-page">
-          <div className="aluno-login-container">
-            <div className="aluno-login-header">
+        <div className={styles.alunoLoginPage}>
+          <div className={styles.alunoLoginContainer}>
+            <div className={styles.alunoLoginHeader}>
               <h1>Área do Aluno</h1>
               <p>Acesse sua conta para gerenciar suas aulas e pagamentos</p>
             </div>
-            <form onSubmit={handleLogin} className="aluno-login-form">
-              <div className="form-group">
+            <form onSubmit={handleLogin} className={styles.alunoLoginForm}>
+              <div className={styles.formGroup}>
                 <input
                   type="text"
                   placeholder="Número de matrícula"
@@ -267,7 +272,7 @@ export default function AlunoPage() {
                   required
                 />
               </div>
-              <div className="form-group">
+              <div className={styles.formGroup}>
                 <input
                   type="password"
                   placeholder="Senha"
@@ -276,11 +281,11 @@ export default function AlunoPage() {
                   required
                 />
               </div>
-              <button type="submit" className="aluno-login-button">
+              <button type="submit" className={styles.alunoLoginButton}>
                 Entrar
               </button>
             </form>
-            <div className="aluno-login-back">
+            <div className={styles.alunoLoginBack}>
               <Link href="/">Voltar ao site principal</Link>
             </div>
           </div>
@@ -294,10 +299,10 @@ export default function AlunoPage() {
   return (
     <>
       <Header />
-      <div className="aluno-page">
-        <div className="aluno-container">
-          <div className="aluno-header">
-            <div className="aluno-welcome">
+      <div className={styles.alunoPage}>
+        <div className={styles.alunoContainer}>
+          <div className={styles.alunoHeader}>
+            <div className={styles.alunoWelcome}>
               <h1>Olá, {currentStudent.name}! 👋</h1>
               <p>Bem-vindo(a) de volta à sua área exclusiva</p>
             </div>
@@ -307,12 +312,12 @@ export default function AlunoPage() {
             </button>
           </div>
 
-          <div className="aluno-grid">
-            <aside className="aluno-sidebar">
-              <div className="profile-card">
-                <div className="avatar-wrapper">
+          <div className={styles.alunoGrid}>
+            <aside className={styles.alunoSidebar}>
+              <div className={styles.profileCard}>
+                <div className={styles.avatarWrapper}>
                   <div
-                    className="profile-image-container"
+                    className={styles.profileImageContainer}
                     onClick={() =>
                       document.getElementById("student-photo-upload")?.click()
                     }
@@ -323,11 +328,11 @@ export default function AlunoPage() {
                         src={currentStudent.profileImage}
                         alt={currentStudent.name}
                         fill
-                        className="profile-image"
+                        className={styles.profileImage}
                         style={{ objectFit: "cover" }}
                       />
                     ) : (
-                      <div className="profile-icon-placeholder">
+                      <div className={styles.profileIconPlaceholder}>
                         <i className="fas fa-user-circle"></i>
                       </div>
                     )}
@@ -340,7 +345,7 @@ export default function AlunoPage() {
                     />
                   </div>
                   <div
-                    className="camera-icon-badge"
+                    className={styles.cameraIconBadge}
                     onClick={() =>
                       document.getElementById("student-photo-upload")?.click()
                     }
@@ -348,49 +353,49 @@ export default function AlunoPage() {
                     <i className="fas fa-camera"></i>
                   </div>
                 </div>
-                <h2 className="profile-name">{currentStudent.name}</h2>
-                <p className="profile-class">{currentStudent.class}</p>
-                <span className="profile-status">
+                <h2 className={styles.profileName}>{currentStudent.name}</h2>
+                <p className={styles.profileClass}>{currentStudent.class}</p>
+                <span className={styles.profileStatus}>
                   <i className="fas fa-check-circle"></i>{" "}
                   {currentStudent.status}
                 </span>
-                <div className="profile-details">
-                  <div className="profile-detail-item">
+                <div className={styles.profileDetails}>
+                  <div className={styles.profileDetailItem}>
                     <i className="fas fa-id-card"></i>
                     <span>Matrícula: {currentStudentId}</span>
                   </div>
-                  <div className="profile-detail-item">
+                  <div className={styles.profileDetailItem}>
                     <i className="fas fa-envelope"></i>
                     <span>{currentStudent.email}</span>
                   </div>
-                  <div className="profile-detail-item">
+                  <div className={styles.profileDetailItem}>
                     <i className="fas fa-phone"></i>
                     <span>{currentStudent.phone}</span>
                   </div>
-                  <div className="profile-detail-item">
+                  <div className={styles.profileDetailItem}>
                     <i className="fas fa-calendar"></i>
                     <span>Matrícula desde {currentStudent.enrollmentDate}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="schedule-card">
+              <div className={styles.scheduleCard}>
                 <h3>
                   <i className="fas fa-clock"></i>
                   Horários das Aulas
                 </h3>
-                <div className="schedule-list">
+                <div className={styles.scheduleList}>
                   {currentStudent.schedule.map((schedule, index) => (
-                    <div key={index} className="schedule-item">
-                      <div className="schedule-day">
+                    <div key={index} className={styles.scheduleItem}>
+                      <div className={styles.scheduleDay}>
                         <i className="fas fa-calendar-day"></i>
                         {schedule.day}
                       </div>
-                      <div className="schedule-time">
+                      <div className={styles.scheduleTime}>
                         <i className="fas fa-clock"></i> {schedule.startTime} -{" "}
                         {schedule.endTime}
                       </div>
-                      <div className="schedule-room">
+                      <div className={styles.scheduleRoom}>
                         <i className="fas fa-door-open"></i>
                         {schedule.room}
                       </div>
@@ -399,61 +404,71 @@ export default function AlunoPage() {
                 </div>
               </div>
 
-              <div className="quick-stats-sidebar">
+              <div className={styles.quickStatsSidebar}>
                 <h3>Estatísticas</h3>
-                <div className="stats-vertical">
-                  <div className="stat-item-vertical purple">
+                <div className={styles.statsVertical}>
+                  <div
+                    className={`${styles.statItemVertical} ${styles.purple}`}
+                  >
                     <i className="fas fa-calendar-week"></i>
-                    <div className="stat-content">
-                      <div className="stat-value">
+                    <div className={styles.statContent}>
+                      <div className={styles.statValue}>
                         {currentStudent.schedule.length}
                       </div>
-                      <div className="stat-label">Aulas por Semana</div>
+                      <div className={styles.statLabel}>Aulas por Semana</div>
                     </div>
                   </div>
-                  <div className="stat-item-vertical blue">
+                  <div className={`${styles.statItemVertical} ${styles.blue}`}>
                     <i className="fas fa-calendar-alt"></i>
-                    <div className="stat-content">
-                      <div className="stat-value">
+                    <div className={styles.statContent}>
+                      <div className={styles.statValue}>
                         {calculateMonthsEnrolled()}
                       </div>
-                      <div className="stat-label">Meses de Matrícula</div>
+                      <div className={styles.statLabel}>Meses de Matrícula</div>
                     </div>
                   </div>
-                  <div className="stat-item-vertical green">
+                  <div className={`${styles.statItemVertical} ${styles.green}`}>
                     <i className="fas fa-check-circle"></i>
-                    <div className="stat-content">
-                      <div className="stat-value">
+                    <div className={styles.statContent}>
+                      <div className={styles.statValue}>
                         {calculatePaymentsMade()}
                       </div>
-                      <div className="stat-label">Pagamentos Realizados</div>
+                      <div className={styles.statLabel}>
+                        Pagamentos Realizados
+                      </div>
                     </div>
                   </div>
-                  <div className="stat-item-vertical orange">
+                  <div
+                    className={`${styles.statItemVertical} ${styles.orange}`}
+                  >
                     <i className="fas fa-chart-line"></i>
-                    <div className="stat-content">
-                      <div className="stat-value">100%</div>
-                      <div className="stat-label">Frequência Média</div>
+                    <div className={styles.statContent}>
+                      <div className={styles.statValue}>100%</div>
+                      <div className={styles.statLabel}>Frequência Média</div>
                     </div>
                   </div>
                 </div>
               </div>
             </aside>
 
-            <main className="aluno-main">
-              <section className="payment-section">
+            <main className={styles.alunoMain}>
+              <section className={styles.paymentSection}>
                 <h3>
                   <i className="fas fa-credit-card"></i>
                   Gerenciar Mensalidades
                 </h3>
 
-                <div className="current-payment">
-                  <div className="current-payment-header">
-                    <div className="current-payment-month">
+                <div className={styles.currentPayment}>
+                  <div className={styles.currentPaymentHeader}>
+                    <div className={styles.currentPaymentMonth}>
                       {currentStudent.payments[0].month}
                     </div>
                     <span
-                      className={`payment-status-badge ${currentStudent.payments[0].status}`}
+                      className={`${styles.paymentStatusBadge} ${
+                        currentStudent.payments[0].status === "paid"
+                          ? styles.paid
+                          : styles.pending
+                      }`}
                     >
                       {currentStudent.payments[0].status === "paid"
                         ? "✓ Pago"
@@ -461,17 +476,17 @@ export default function AlunoPage() {
                     </span>
                   </div>
 
-                  <div className="current-payment-info">
-                    <div className="payment-info-item">
+                  <div className={styles.currentPaymentInfo}>
+                    <div className={styles.paymentInfoItem}>
                       <h4>Valor</h4>
                       <p>{currentStudent.payments[0].amount}</p>
                     </div>
-                    <div className="payment-info-item">
+                    <div className={styles.paymentInfoItem}>
                       <h4>Vencimento</h4>
                       <p>{currentStudent.payments[0].dueDate}</p>
                     </div>
                     {currentStudent.payments[0].paidDate && (
-                      <div className="payment-info-item">
+                      <div className={styles.paymentInfoItem}>
                         <h4>Data do Pagamento</h4>
                         <p>{currentStudent.payments[0].paidDate}</p>
                       </div>
@@ -479,23 +494,23 @@ export default function AlunoPage() {
                   </div>
 
                   {currentStudent.payments[0].status === "pending" && (
-                    <div className="payment-buttons">
+                    <div className={styles.paymentButtons}>
                       <button
-                        className="payment-button primary"
+                        className={`${styles.paymentButton} ${styles.primary}`}
                         onClick={handlePayPix}
                       >
                         <i className="fas fa-qrcode"></i>
                         Pagar com PIX
                       </button>
                       <button
-                        className="payment-button secondary"
+                        className={`${styles.paymentButton} ${styles.secondary}`}
                         onClick={handleGenerateBoleto}
                       >
                         <i className="fas fa-barcode"></i>
                         Gerar Boleto
                       </button>
                       <button
-                        className="payment-button secondary"
+                        className={`${styles.paymentButton} ${styles.secondary}`}
                         onClick={handleViewHistory}
                       >
                         <i className="fas fa-history"></i>
@@ -505,18 +520,21 @@ export default function AlunoPage() {
                   )}
                 </div>
 
-                <div className="payment-history-section" id="payment-history">
+                <div
+                  className={styles.paymentHistorySection}
+                  id="payment-history"
+                >
                   <h4>Histórico de Pagamentos</h4>
-                  <div className="payment-history-grid">
+                  <div className={styles.paymentHistoryGrid}>
                     {currentStudent.payments.slice(1).map((payment, index) => (
-                      <div key={index} className="payment-history-item">
-                        <div className="payment-history-month">
+                      <div key={index} className={styles.paymentHistoryItem}>
+                        <div className={styles.paymentHistoryMonth}>
                           {payment.month}
                         </div>
-                        <div className="payment-history-amount">
+                        <div className={styles.paymentHistoryAmount}>
                           {payment.amount}
                         </div>
-                        <div className="payment-history-date">
+                        <div className={styles.paymentHistoryDate}>
                           {payment.status === "paid"
                             ? `✓ Pago em ${payment.paidDate}`
                             : `⚠ Vencimento: ${payment.dueDate}`}
@@ -527,7 +545,7 @@ export default function AlunoPage() {
                 </div>
               </section>
 
-              <section className="attendance-section">
+              <section className={styles.attendanceSection}>
                 <h3>
                   <i className="fas fa-clipboard-check"></i>
                   Histórico de Presenças
@@ -537,61 +555,69 @@ export default function AlunoPage() {
                 currentStudent.attendances.length > 0 ? (
                   <>
                     {/* Resumo de Presenças */}
-                    <div className="attendance-summary-student">
-                      <div className="attendance-stat-student present">
+                    <div className={styles.attendanceSummaryStudent}>
+                      <div
+                        className={`${styles.attendanceStatStudent} ${styles.present}`}
+                      >
                         <i className="fas fa-check-circle"></i>
                         <div>
-                          <div className="stat-value">
+                          <div className={styles.statValue}>
                             {
                               currentStudent.attendances.filter(
                                 (att) => att.status === "present"
                               ).length
                             }
                           </div>
-                          <div className="stat-label">Presenças</div>
+                          <div className={styles.statLabel}>Presenças</div>
                         </div>
                       </div>
-                      <div className="attendance-stat-student absent">
+                      <div
+                        className={`${styles.attendanceStatStudent} ${styles.absent}`}
+                      >
                         <i className="fas fa-times-circle"></i>
                         <div>
-                          <div className="stat-value">
+                          <div className={styles.statValue}>
                             {
                               currentStudent.attendances.filter(
                                 (att) => att.status === "absent"
                               ).length
                             }
                           </div>
-                          <div className="stat-label">Faltas</div>
+                          <div className={styles.statLabel}>Faltas</div>
                         </div>
                       </div>
-                      <div className="attendance-stat-student late">
+                      <div
+                        className={`${styles.attendanceStatStudent} ${styles.late}`}
+                      >
                         <i className="fas fa-clock"></i>
                         <div>
-                          <div className="stat-value">
+                          <div className={styles.statValue}>
                             {
                               currentStudent.attendances.filter(
                                 (att) => att.status === "late"
                               ).length
                             }
                           </div>
-                          <div className="stat-label">Atrasos</div>
+                          <div className={styles.statLabel}>Atrasos</div>
                         </div>
                       </div>
-                      <div className="attendance-stat-student total">
+                      <div
+                        className={`${styles.attendanceStatStudent} ${styles.total}`}
+                      >
                         <i className="fas fa-calendar-check"></i>
                         <div>
-                          <div className="stat-value">
+                          <div className={styles.statValue}>
                             {currentStudent.attendances.length}
                           </div>
-                          <div className="stat-label">Total de Aulas</div>
+                          <div className={styles.statLabel}>Total de Aulas</div>
                         </div>
                       </div>
                     </div>
 
                     {/* Lista de Presenças */}
-                    <div className="attendance-list-student">
+                    <div className={styles.attendanceListStudent}>
                       <h4>Registro de Presenças</h4>
-                      <div className="attendance-items">
+                      <div className={styles.attendanceItems}>
                         {currentStudent.attendances
                           .sort(
                             (a, b) =>
@@ -599,8 +625,8 @@ export default function AlunoPage() {
                               new Date(a.date).getTime()
                           )
                           .map((attendance, index) => (
-                            <div key={index} className="attendance-item">
-                              <div className="attendance-date">
+                            <div key={index} className={styles.attendanceItem}>
+                              <div className={styles.attendanceDate}>
                                 <i className="fas fa-calendar"></i>
                                 {new Date(attendance.date).toLocaleDateString(
                                   "pt-BR",
@@ -611,12 +637,14 @@ export default function AlunoPage() {
                                   }
                                 )}
                               </div>
-                              <div className="attendance-class">
+                              <div className={styles.attendanceClass}>
                                 <i className="fas fa-chalkboard-teacher"></i>
                                 {attendance.className}
                               </div>
                               <div
-                                className={`attendance-status ${attendance.status}`}
+                                className={`${styles.attendanceStatus} ${
+                                  styles[attendance.status]
+                                }`}
                               >
                                 {attendance.status === "present" && (
                                   <>
@@ -643,7 +671,7 @@ export default function AlunoPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="no-attendance">
+                  <div className={styles.noAttendance}>
                     <i className="fas fa-clipboard-check"></i>
                     <p>Nenhuma presença registrada ainda.</p>
                   </div>

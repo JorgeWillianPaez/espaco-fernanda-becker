@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import styles from "./Hero.module.css";
 
 interface Slide {
   src: string;
@@ -64,24 +65,24 @@ export default function Hero() {
   };
 
   return (
-    <section id="home" className="hero">
-      <div className="hero-content">
+    <section id="home" className={styles.hero}>
+      <div className={styles.heroContent}>
         <h1>Bem-vindos ao Espaço de Dança Fernanda Becker</h1>
         <p>
           Onde a paixão pela dança ganha vida através do movimento e da arte
         </p>
-        <button onClick={scrollToAbout} className="cta-button">
+        <button onClick={scrollToAbout} className={styles.ctaButton}>
           Conheça Nossa Escola
         </button>
       </div>
 
-      <div className="carousel-container">
-        <div className="carousel">
+      <div className={styles.carouselContainer}>
+        <div className={styles.carousel}>
           {slides.map((slide, index) => (
             <div
               key={index}
-              className={`carousel-slide ${
-                index === currentSlide ? "active" : ""
+              className={`${styles.carouselSlide} ${
+                index === currentSlide ? styles.active : ""
               }`}
             >
               <Image
@@ -91,24 +92,32 @@ export default function Hero() {
                 style={{ objectFit: "cover" }}
                 priority={index === 0}
               />
-              <div className="carousel-caption">
+              <div className={styles.carouselCaption}>
                 <h3>{slide.title}</h3>
                 <p>{slide.description}</p>
               </div>
             </div>
           ))}
         </div>
-        <button className="carousel-btn prev" onClick={prevSlide}>
+        <button
+          className={`${styles.carouselBtn} ${styles.prev}`}
+          onClick={prevSlide}
+        >
           <i className="fas fa-chevron-left"></i>
         </button>
-        <button className="carousel-btn next" onClick={nextSlide}>
+        <button
+          className={`${styles.carouselBtn} ${styles.next}`}
+          onClick={nextSlide}
+        >
           <i className="fas fa-chevron-right"></i>
         </button>
-        <div className="carousel-indicators">
+        <div className={styles.carouselIndicators}>
           {slides.map((_, index) => (
             <span
               key={index}
-              className={`indicator ${index === currentSlide ? "active" : ""}`}
+              className={`${styles.indicator} ${
+                index === currentSlide ? styles.active : ""
+              }`}
               onClick={() => setCurrentSlide(index)}
             ></span>
           ))}

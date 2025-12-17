@@ -54,6 +54,8 @@ export interface Student {
   disabilityDescription?: string;
   takesMedication?: boolean;
   medicationDescription?: string;
+  paymentMethods?: string[];
+  guardian?: string;
 }
 
 export interface StudentsData {

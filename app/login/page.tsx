@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, FormEvent } from "react";
+import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
+import styles from "./login.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,13 +15,13 @@ export default function LoginPage() {
     e.preventDefault();
 
     if (userType === "aluno") {
-      // Login de aluno - matrícula e senha
-      if (username === "12345" && password === "123456") {
+      // Login de aluno - e-mail e senha
+      if (username === "fernanda.becker@email.com" && password === "123456") {
         sessionStorage.setItem("alunoAuth", "true");
-        sessionStorage.setItem("studentId", username);
+        sessionStorage.setItem("studentEmail", username);
         router.push("/aluno");
       } else {
-        alert("Matrícula ou senha incorretos!");
+        alert("E-mail ou senha incorretos!");
       }
     } else {
       // Login de professor/admin
@@ -36,19 +37,19 @@ export default function LoginPage() {
   return (
     <>
       <Header />
-      <div className="aluno-login-page">
-        <div className="aluno-login-container">
-          <div className="aluno-login-header">
+      <div className={styles.loginPage}>
+        <div className={styles.loginContainer}>
+          <div className={styles.loginHeader}>
             <h1>Área de Acesso 🎭</h1>
             <p>Faça login para acessar sua área</p>
           </div>
 
           {/* Seletor de tipo de usuário */}
-          <div className="user-type-selector">
+          <div className={styles.userTypeSelector}>
             <button
               type="button"
-              className={`user-type-btn ${
-                userType === "aluno" ? "active" : ""
+              className={`${styles.userTypeBtn} ${
+                userType === "aluno" ? styles.active : ""
               }`}
               onClick={() => setUserType("aluno")}
             >
@@ -57,8 +58,8 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
-              className={`user-type-btn ${
-                userType === "professor" ? "active" : ""
+              className={`${styles.userTypeBtn} ${
+                userType === "professor" ? styles.active : ""
               }`}
               onClick={() => setUserType("professor")}
             >
@@ -67,11 +68,11 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <form onSubmit={handleLogin} className="aluno-login-form">
+          <form onSubmit={handleLogin} className={styles.loginForm}>
             <div className="form-group">
               <input
                 type="text"
-                placeholder={userType === "aluno" ? "Matrícula" : "Usuário"}
+                placeholder={userType === "aluno" ? "E-mail" : "Usuário"}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -86,11 +87,11 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <button type="submit" className="aluno-login-button">
+            <button type="submit" className={styles.loginButton}>
               Entrar
             </button>
           </form>
-          <div className="aluno-login-back">
+          <div className={styles.loginBack}>
             <a href="/">Voltar ao site principal</a>
           </div>
         </div>

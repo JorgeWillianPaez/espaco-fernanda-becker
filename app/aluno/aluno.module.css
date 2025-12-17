@@ -199,6 +199,529 @@
   border-bottom: none;
 }
 
+.profileStatus {
+  display: inline-block;
+  padding: 8px 20px;
+  background: #d4edda;
+  color: #155724;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.avatarWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.profileIconPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #e91e63, #9c27b0);
+  color: white;
+  font-size: 5rem;
+}
+
+.cameraIconBadge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: #e91e63;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(233, 30, 99, 0.4);
+}
+
+.cameraIconBadge:hover {
+  background: #9c27b0;
+  transform: scale(1.1);
+}
+
+.scheduleList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.scheduleItem {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1.5rem;
+  border-radius: 15px;
+  color: white;
+  transition: transform 0.3s ease;
+}
+
+.scheduleItem:hover {
+  transform: translateX(5px);
+}
+
+.scheduleDay {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.scheduleTime {
+  font-size: 1rem;
+  margin-bottom: 0.3rem;
+  opacity: 0.9;
+}
+
+.scheduleRoom {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Quick Stats Sidebar */
+.quickStatsSidebar {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  margin-top: 1.5rem;
+}
+
+.quickStatsSidebar h3 {
+  color: #e91e63;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.statsVertical {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.statItemVertical {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem;
+  border-radius: 12px;
+  transition: transform 0.3s ease;
+}
+
+.statItemVertical:hover {
+  transform: translateX(5px);
+}
+
+.statItemVertical i {
+  font-size: 2rem;
+  min-width: 40px;
+  text-align: center;
+}
+
+.statItemVertical.purple {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.statItemVertical.blue {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.statItemVertical.green {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: white;
+}
+
+.statItemVertical.orange {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: white;
+}
+
+.statContent {
+  flex: 1;
+}
+
+.statValue {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.statLabel {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Aluno Main Content */
+.alunoMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.alunoPage {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding-top: 100px;
+  padding-bottom: 40px;
+}
+
+/* Payment Section */
+.paymentSection {
+  background: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.paymentSection h3 {
+  color: #e91e63;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.currentPayment {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  border-radius: 15px;
+  color: white;
+  margin-bottom: 2rem;
+}
+
+.currentPaymentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.currentPaymentMonth {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.paymentStatusBadge {
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.paymentStatusBadge.paid {
+  background: #d4edda;
+  color: #155724;
+}
+
+.paymentStatusBadge.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.currentPaymentInfo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.paymentInfoItem h4 {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.paymentInfoItem p {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.paymentButtons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.paymentButton {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.paymentButton.primary {
+  background: white;
+  color: #667eea;
+}
+
+.paymentButton.secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid white;
+}
+
+.paymentButton:hover {
+  transform: translateY(-2px);
+}
+
+.paymentHistorySection {
+  margin-top: 2rem;
+}
+
+.paymentHistorySection h4 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+}
+
+.paymentHistoryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.paymentHistoryItem {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 15px;
+  border-left: 4px solid #e91e63;
+  transition: all 0.3s ease;
+}
+
+.paymentHistoryItem:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.paymentHistoryMonth {
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.paymentHistoryAmount {
+  color: #666;
+  margin-bottom: 0.3rem;
+}
+
+.paymentHistoryDate {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+/* Attendance Section */
+.attendanceSection {
+  background: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+}
+
+.attendanceSection h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #e91e63;
+  margin-bottom: 1.5rem;
+}
+
+.attendanceSummaryStudent {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.attendanceStatStudent {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 1.5rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.attendanceStatStudent i {
+  font-size: 2rem;
+}
+
+.attendanceStatStudent.present {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+}
+
+.attendanceStatStudent.present i {
+  color: #4caf50;
+}
+
+.attendanceStatStudent.absent {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+}
+
+.attendanceStatStudent.absent i {
+  color: #f44336;
+}
+
+.attendanceStatStudent.late {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+}
+
+.attendanceStatStudent.late i {
+  color: #ff9800;
+}
+
+.attendanceStatStudent.total {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+}
+
+.attendanceStatStudent.total i {
+  color: #667eea;
+}
+
+.attendanceListStudent {
+  margin-top: 2rem;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.attendanceListStudent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.attendanceListStudent::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.attendanceListStudent::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+.attendanceListStudent::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
+}
+
+.attendanceListStudent h4 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.attendanceItems {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.attendanceItem {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.attendanceItem:hover {
+  background: #f0f0f0;
+  transform: translateX(5px);
+}
+
+.attendanceDate {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.attendanceDate i {
+  color: #667eea;
+}
+
+.attendanceClass {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #666;
+}
+
+.attendanceClass i {
+  color: #e91e63;
+}
+
+.attendanceStatus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.attendanceStatus.present {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+
+.attendanceStatus.absent {
+  background: #ffebee;
+  color: #f44336;
+}
+
+.attendanceStatus.late {
+  background: #fff3e0;
+  color: #ff9800;
+}
+
+.noAttendance {
+  text-align: center;
+  padding: 3rem;
+  color: #999;
+}
+
+.noAttendance i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+.noAttendance p {
+  font-size: 1.1rem;
+}
+
 .profileDetailItem i {
   color: #e91e63;
   width: 20px;

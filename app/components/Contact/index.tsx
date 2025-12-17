@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import styles from "./Contact.module.css";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -18,22 +19,22 @@ export default function Contact() {
   };
 
   return (
-    <section id="contact" className="contact">
+    <section id="contact" className={styles.contact}>
       <div className="container">
         <h2>Entre em Contato</h2>
-        <div className="contact-content">
-          <div className="contact-info">
+        <div className={styles.contactContent}>
+          <div className={styles.contactInfo}>
             <h3>Fale Conosco</h3>
             <p>
               Tem alguma dúvida ou quer conhecer melhor nossa escola? Entre em
               contato!
             </p>
-            <div className="contact-methods">
+            <div className={styles.contactMethods}>
               <a
                 href="https://wa.me/5511999999999"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="contact-btn whatsapp"
+                className={`${styles.contactBtn} ${styles.whatsapp}`}
               >
                 <i className="fab fa-whatsapp"></i>
                 WhatsApp
@@ -42,14 +43,14 @@ export default function Contact() {
                 href="https://www.instagram.com/espaco.ferbecker/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="contact-btn instagram"
+                className={`${styles.contactBtn} ${styles.instagram}`}
               >
                 <i className="fab fa-instagram"></i>
                 Instagram
               </a>
             </div>
           </div>
-          <div className="contact-form">
+          <div className={styles.contactForm}>
             <h3>Envie uma Mensagem</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -85,7 +86,7 @@ export default function Contact() {
                   required
                 ></textarea>
               </div>
-              <button type="submit" className="submit-btn">
+              <button type="submit" className={styles.submitBtn}>
                 Enviar Mensagem
               </button>
             </form>
