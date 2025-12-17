@@ -1,0 +1,55 @@
+.financialSummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.financialCard {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.3s;
+}
+
+.financialCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.financialCard i {
+  font-size: 2.5rem;
+}
+
+.financialCard.paid i {
+  color: #4caf50;
+}
+
+.financialCard.pending i {
+  color: #ff9800;
+}
+
+.financialCard.overdue i {
+  color: #f44336;
+}
+
+.financialCard.total i {
+  color: #2196f3;
+}
+
+.financialValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  line-height: 1.2;
+}
+
+.financialLabel {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
