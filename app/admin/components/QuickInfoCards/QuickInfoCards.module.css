@@ -1,0 +1,41 @@
+.quickInfo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.infoCard {
+  background: white;
+  padding: 2rem;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.infoCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.infoCard i {
+  font-size: 2rem;
+  color: #e91e63;
+  opacity: 0.8;
+}
+
+.infoValue {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.infoLabel {
+  font-size: 0.85rem;
+  color: #777;
+  margin-top: 0.25rem;
+}

@@ -1,0 +1,110 @@
+.revenueChartSection {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.revenueChartSection h3 {
+  margin: 0 0 2rem 0;
+  font-size: 1.3rem;
+  color: #333;
+}
+
+.revenueChart {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  height: 300px;
+  padding: 1rem 0;
+  margin-bottom: 1rem;
+  background: linear-gradient(to top, #f5f5f5 0%, transparent 100%);
+  border-radius: 8px;
+}
+
+.chartBarContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  min-width: 80px;
+  gap: 0.5rem;
+}
+
+.chartValue {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: auto;
+  padding-top: 0.5rem;
+}
+
+.chartBar {
+  width: 50px;
+  min-height: 20px;
+  border-radius: 8px 8px 0 0;
+  transition: all 0.3s;
+  cursor: pointer;
+  position: relative;
+}
+
+.chartBar:hover {
+  transform: scaleY(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.chartBar.increasing {
+  background: linear-gradient(180deg, #4caf50 0%, #66bb6a 100%);
+}
+
+.chartBar.decreasing {
+  background: linear-gradient(180deg, #f44336 0%, #ef5350 100%);
+}
+
+.chartBar.stable {
+  background: linear-gradient(180deg, #2196f3 0%, #42a5f5 100%);
+}
+
+.chartLabel {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.chartLegend {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.legendColor {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.legendColor.increasing {
+  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+}
+
+.legendColor.decreasing {
+  background: linear-gradient(135deg, #f44336 0%, #ef5350 100%);
+}
+
+.legendColor.stable {
+  background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%);
+}

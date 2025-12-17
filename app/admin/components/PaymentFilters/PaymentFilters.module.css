@@ -1,0 +1,39 @@
+.filtersContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.filterLabel {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.filterInput,
+.filterSelect {
+  width: 100%;
+  padding: 0.5rem;
+  height: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.3s;
+}
+
+.filterInput:focus,
+.filterSelect:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.filterSelect {
+  cursor: pointer;
+  background-color: white;
+}

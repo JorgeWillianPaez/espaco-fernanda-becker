@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { Student, StudentsData } from "../../types";
+import styles from "./StudentArea.module.css";
 
 const studentsData: StudentsData = {
   "12345": {
@@ -86,13 +87,13 @@ export default function StudentArea() {
   };
 
   return (
-    <section id="student-area" className="student-area">
+    <section id="student-area" className={styles.studentArea}>
       <div className="container">
         <h2>Área do Aluno</h2>
 
         {!isLoggedIn ? (
-          <div className="student-login">
-            <div className="login-form">
+          <div className={styles.studentLogin}>
+            <div className={styles.loginForm}>
               <h3>Acesso Exclusivo para Alunos</h3>
               <form onSubmit={handleLogin}>
                 <div className="form-group">
@@ -113,7 +114,7 @@ export default function StudentArea() {
                     required
                   />
                 </div>
-                <button type="submit" className="login-btn">
+                <button type="submit" className={styles.loginBtn}>
                   Entrar
                 </button>
               </form>
@@ -121,20 +122,20 @@ export default function StudentArea() {
           </div>
         ) : (
           currentStudent && (
-            <div className="student-dashboard">
-              <div className="dashboard-header">
+            <div className={styles.studentDashboard}>
+              <div className={styles.dashboardHeader}>
                 <h3>
                   Olá, <span>{currentStudent.name}</span>!
                 </h3>
-                <button className="logout-btn" onClick={handleLogout}>
+                <button className={styles.logoutBtn} onClick={handleLogout}>
                   Sair
                 </button>
               </div>
 
-              <div className="dashboard-content">
-                <div className="student-info">
+              <div className={styles.dashboardContent}>
+                <div className={styles.studentInfo}>
                   <h4>Informações da Matrícula</h4>
-                  <div className="info-card">
+                  <div className={styles.infoCard}>
                     <p>
                       <strong>Matrícula:</strong> {currentStudentId}
                     </p>
@@ -146,30 +147,32 @@ export default function StudentArea() {
                     </p>
                     <p>
                       <strong>Status:</strong>{" "}
-                      <span className="status-active">
+                      <span className={styles.statusActive}>
                         {currentStudent.status}
                       </span>
                     </p>
                   </div>
                 </div>
 
-                <div className="payment-info">
+                <div className={styles.paymentInfo}>
                   <h4>Gerenciar Mensalidades</h4>
-                  <div className="payment-card">
-                    <div className="payment-status">
+                  <div className={styles.paymentCard}>
+                    <div className={styles.paymentStatus}>
                       <h5>Status da Mensalidade</h5>
-                      <p className="current-month">
+                      <p className={styles.currentMonth}>
                         {currentStudent.payments[0].month}
                       </p>
                       <span
-                        className={`payment-badge ${currentStudent.payments[0].status}`}
+                        className={`${styles.paymentBadge} ${
+                          styles[currentStudent.payments[0].status]
+                        }`}
                       >
                         {currentStudent.payments[0].status === "paid"
                           ? "Pago"
                           : "Pendente"}
                       </span>
                     </div>
-                    <div className="payment-details">
+                    <div className={styles.paymentDetails}>
                       <p>
                         <strong>Valor:</strong>{" "}
                         {currentStudent.payments[0].amount}
@@ -185,7 +188,7 @@ export default function StudentArea() {
                         </p>
                       )}
                     </div>
-                    <div className="payment-actions">
+                    <div className={styles.paymentActions}>
                       <button
                         className="payment-btn"
                         onClick={handleGenerateBoleto}
@@ -201,13 +204,13 @@ export default function StudentArea() {
                     </div>
                   </div>
 
-                  <div className="payment-history">
+                  <div className={styles.paymentHistory}>
                     <h5>Últimos Pagamentos</h5>
-                    <div className="history-list">
+                    <div className={styles.historyList}>
                       {currentStudent.payments
                         .slice(1)
                         .map((payment, index) => (
-                          <div key={index} className="history-item">
+                          <div key={index} className={styles.historyItem}>
                             <span>{payment.month}</span>
                             <span className="paid">
                               {payment.status === "paid" ? "Pago" : "Pendente"}

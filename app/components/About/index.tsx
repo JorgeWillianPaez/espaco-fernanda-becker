@@ -1,10 +1,12 @@
+import styles from "./About.module.css";
+
 export default function About() {
   return (
-    <section id="about" className="about">
+    <section id="about" className={styles.about}>
       <div className="container">
         <h2>Sobre Nossa Escola</h2>
-        <div className="about-content">
-          <div className="about-text">
+        <div className={styles.aboutContent}>
+          <div className={styles.aboutText}>
             <p>
               O Espaço de Dança Fernanda Becker é mais que uma escola de dança -
               é um lugar onde sonhos se tornam realidade através do movimento.
@@ -25,29 +27,29 @@ export default function About() {
               e amizades que durarão para toda a vida.
             </p>
           </div>
-          <div className="about-features">
-            <div className="feature">
+          <div className={styles.aboutFeatures}>
+            <div className={styles.feature}>
               <i className="fas fa-heart"></i>
               <div>
                 <h3>Paixão</h3>
                 <p>Amor pela dança em cada aula</p>
               </div>
             </div>
-            <div className="feature">
+            <div className={styles.feature}>
               <i className="fas fa-hands-helping"></i>
               <div>
                 <h3>Inclusão</h3>
                 <p>Atendimento especializado para alunos especiais</p>
               </div>
             </div>
-            <div className="feature">
+            <div className={styles.feature}>
               <i className="fas fa-users"></i>
               <div>
                 <h3>Comunidade</h3>
                 <p>Uma família de dançarinos</p>
               </div>
             </div>
-            <div className="feature">
+            <div className={styles.feature}>
               <i className="fas fa-star"></i>
               <div>
                 <h3>Excelência</h3>

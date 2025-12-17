@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import styles from "./Header.module.css";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -29,20 +30,22 @@ export default function Header() {
 
   return (
     <header>
-      <nav className="navbar">
-        <div className="nav-container">
-          <div className="logo">
+      <nav className={styles.navbar}>
+        <div className={styles.navContainer}>
+          <div className={styles.logo}>
             <h1>
               Espaço de Dança <span>Fernanda Becker</span>
             </h1>
           </div>
-          <ul className={`nav-menu ${isMenuOpen ? "active" : ""}`}>
+          <ul
+            className={`${styles.navMenu} ${isMenuOpen ? styles.active : ""}`}
+          >
             {!isAlunoPage && !isAdminPage && !isLoginPage && (
               <>
                 <li>
                   <a
                     onClick={() => scrollToSection("home")}
-                    className="nav-link"
+                    className={styles.navLink}
                   >
                     Início
                   </a>
@@ -50,7 +53,7 @@ export default function Header() {
                 <li>
                   <a
                     onClick={() => scrollToSection("about")}
-                    className="nav-link"
+                    className={styles.navLink}
                   >
                     Sobre
                   </a>
@@ -58,7 +61,7 @@ export default function Header() {
                 <li>
                   <a
                     onClick={() => scrollToSection("events")}
-                    className="nav-link"
+                    className={styles.navLink}
                   >
                     Eventos
                   </a>
@@ -66,7 +69,7 @@ export default function Header() {
                 <li>
                   <a
                     onClick={() => scrollToSection("contact")}
-                    className="nav-link"
+                    className={styles.navLink}
                   >
                     Contato
                   </a>
@@ -74,7 +77,7 @@ export default function Header() {
                 <li>
                   <Link
                     href="/login"
-                    className="nav-link"
+                    className={styles.navLink}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Área de Acesso
@@ -84,12 +87,12 @@ export default function Header() {
             )}
           </ul>
           <div
-            className={`hamburger ${isMenuOpen ? "active" : ""}`}
+            className={`${styles.hamburger} ${isMenuOpen ? styles.active : ""}`}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <span className="bar"></span>
-            <span className="bar"></span>
-            <span className="bar"></span>
+            <span className={styles.bar}></span>
+            <span className={styles.bar}></span>
+            <span className={styles.bar}></span>
           </div>
         </div>
       </nav>
