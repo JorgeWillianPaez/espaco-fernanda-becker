@@ -1,11 +1,18 @@
+export interface EventPhoto {
+  id: number;
+  eventId: number;
+  url: string;
+  caption?: string;
+  displayOrder: number;
+  createdAt: Date;
+}
+
 export interface Event {
   id: number;
   title: string;
   date: string;
-  description: string;
   status: "past" | "open" | "upcoming";
   image: string;
-  photos: string[];
   price?: string;
 }
 
@@ -87,4 +94,104 @@ export interface Teacher {
 export interface AdminStudent extends Student {
   id: string;
   classId: string;
+}
+
+// ========== TURMAS (CLASSES) ==========
+
+export interface ClassData {
+  id: number;
+  name: string;
+  roomId?: number | null;
+  room?: {
+    id: number;
+    name: string;
+  } | null;
+  startTime: string;
+  endTime: string;
+  dayOfWeek:
+    | "monday"
+    | "tuesday"
+    | "wednesday"
+    | "thursday"
+    | "friday"
+    | "saturday"
+    | "sunday";
+  teacherId?: number | null;
+  maxStudents: number;
+  active: boolean;
+  teacher?: {
+    id: number;
+    name: string;
+    email: string;
+  } | null;
+  teacherName?: string; // Helper para acessar direto
+  students?: Array<{
+    id: number;
+    name: string;
+    email: string;
+    enrolledAt: Date | null;
+  }>;
+  studentCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ClassFormData {
+  name: string;
+  roomId?: number;
+  startTime: string;
+  endTime: string;
+  dayOfWeek: string;
+  teacherId?: number;
+  maxStudents?: number;
+  active?: boolean;
+}
+
+// ========== USER DATA ==========
+
+export interface UserData {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  birthDate: Date;
+  cpf: string;
+  rg: string;
+  roleId: number;
+  groupId?: number;
+  addressId?: number;
+  guardian?: string;
+  hasDisability?: boolean;
+  disabilityDescription?: string;
+  takesMedication?: boolean;
+  medicationDescription?: string;
+  paymentMethods?: string[];
+  address?: {
+    id?: number;
+    cep: string;
+    street: string;
+    number: string;
+    complement?: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+  };
+  createdAt: Date;
+}
+
+export interface UserFormData {
+  name?: string;
+  email?: string;
+  phone?: string;
+  birthDate?: string;
+  cpf?: string;
+  rg?: string;
+  guardian?: string;
+  role?: string;
+  classId?: string;
+  hasDisability?: boolean;
+  disabilityDescription?: string;
+  takesMedication?: boolean;
+  medicationDescription?: string;
+  paymentMethods?: string[];
 }

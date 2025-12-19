@@ -37,11 +37,50 @@
   color: white;
 }
 
-.eventsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
+.eventsCarousel {
+  position: relative;
+  width: 100%;
+  padding: 2rem 70px 3rem 70px;
+}
+
+.swiperContainer {
+  padding: 1rem 0;
+}
+
+/* Botões de navegação personalizados */
+.navButtonPrev,
+.navButtonNext {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #e91e63;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+  transition: all 0.3s ease;
+}
+
+.navButtonPrev:hover,
+.navButtonNext:hover {
+  background: #c2185b;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 20px rgba(233, 30, 99, 0.5);
+}
+
+.navButtonPrev {
+  left: 0;
+}
+
+.navButtonNext {
+  right: 0;
 }
 
 .eventCard {
@@ -49,11 +88,39 @@
   border-radius: 15px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .eventCard:hover {
-  transform: translateY(-10px);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(233, 30, 99, 0.2);
+}
+
+/* Customização Swiper - Paginação */
+.swiperContainer :global(.swiper-pagination) {
+  bottom: 0 !important;
+  position: relative;
+  margin-top: 20px;
+}
+
+.swiperContainer :global(.swiper-pagination-bullet) {
+  width: 14px;
+  height: 14px;
+  background: #d1d1d1;
+  opacity: 1;
+  transition: all 0.3s ease;
+  margin: 0 8px !important;
+}
+
+.swiperContainer :global(.swiper-pagination-bullet-active) {
+  background: linear-gradient(45deg, #e91e63, #9c27b0);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
 }
 
 .eventImage {
@@ -64,6 +131,9 @@
 
 .eventContent {
   padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .eventDate {
@@ -77,12 +147,6 @@
   font-size: 1.3rem;
   margin-bottom: 1rem;
   color: #333;
-}
-
-.eventDescription {
-  color: #666;
-  margin-bottom: 1.5rem;
-  line-height: 1.6;
 }
 
 .eventStatus {
@@ -110,25 +174,256 @@
 }
 
 .eventBtn {
-  display: inline-block;
-  background: linear-gradient(45deg, #e91e63, #9c27b0);
+  display: block;
+  width: 100%;
+  background: #e91e63;
   color: white;
-  padding: 10px 20px;
+  padding: 12px 20px;
   text-decoration: none;
   border-radius: 25px;
   font-weight: 500;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
   border: none;
   cursor: pointer;
+  text-align: center;
+  margin-top: auto;
 }
 
 .eventBtn:hover {
+  background: #c2185b;
   transform: translateY(-2px);
 }
 
-.eventBtn.secondary {
-  background: #f0f0f0;
+.textCenter {
+  text-align: center;
+  color: #666;
+  font-size: 1.1rem;
+  grid-column: 1 / -1;
+}
+
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  overflow: auto;
+}
+
+.modal.show {
+  display: block;
+}
+
+.modalContent {
+  background-color: white;
+  margin: 5% auto;
+  padding: 0;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 700px;
+  position: relative;
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.close {
+  position: absolute;
+  right: 20px;
+  top: 15px;
+  color: #666;
+  font-size: 35px;
+  font-weight: bold;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 1;
+  transition: color 0.3s ease;
+}
+
+.close:hover {
+  color: #e91e63;
+}
+
+.modalBody {
+  padding: 2rem;
+}
+
+.modalBody h2 {
+  color: #e91e63;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.modalBody h3 {
   color: #333;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.modalBody p {
+  color: #666;
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+.modalBody p strong {
+  color: #333;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.eventDateModal {
+  color: #e91e63;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+/* Photo Gallery Styles */
+.loadingPhotos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: #666;
+}
+
+.noPhotos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: #666;
+  background: #f5f5f5;
+  border-radius: 10px;
+}
+
+.photoGallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.photoItem {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  cursor: pointer;
+  aspect-ratio: 3 / 2;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.photoItem:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(233, 30, 99, 0.3);
+}
+
+.photoThumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Photo Viewer (Lightbox) */
+.photoViewer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photoViewerClose {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 50px;
+  cursor: pointer;
+  z-index: 2001;
+  transition: color 0.3s ease;
+}
+
+.photoViewerClose:hover {
+  color: #e91e63;
+}
+
+.photoViewerContent {
+  max-width: 90%;
+  max-height: 85%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.photoViewerImage {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.photoCaption {
+  color: white;
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 1.1rem;
+}
+
+.photoCounter {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.photoNavBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  font-size: 60px;
+  cursor: pointer;
+  padding: 20px 15px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  z-index: 2001;
+}
+
+.photoNavBtn:hover {
+  background: rgba(233, 30, 99, 0.5);
+}
+
+.photoNavPrev {
+  left: 20px;
+}
+
+.photoNavNext {
+  right: 20px;
 }
 
 @media (max-width: 768px) {
@@ -136,12 +431,91 @@
     font-size: 2.5rem;
   }
 
-  .eventsGrid {
-    grid-template-columns: 1fr;
+  .eventsCarousel {
+    padding: 1rem 0 2rem 0;
+  }
+
+  .swiperContainer {
+    padding: 1rem 0.5rem;
+  }
+
+  .navButtonPrev,
+  .navButtonNext {
+    display: none;
+  }
+
+  .swiperContainer :global(.swiper-pagination) {
+    bottom: 0 !important;
+    margin-top: 15px;
+  }
+
+  .eventCard {
+    min-height: 420px;
   }
 
   .eventFilters {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .modalContent {
+    width: 95%;
+    margin: 10% auto;
+  }
+
+  .modalBody {
+    padding: 1.5rem;
+  }
+
+  .modalBody h2 {
+    font-size: 1.5rem;
+  }
+
+  .modalPhotos {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+
+  .photoGallery {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .photoNavBtn {
+    font-size: 40px;
+    padding: 15px 10px;
+  }
+
+  .photoNavPrev {
+    left: 5px;
+  }
+
+  .photoNavNext {
+    right: 5px;
+  }
+
+  .photoViewerClose {
+    top: 10px;
+    right: 15px;
+    font-size: 40px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .eventsCarousel {
+    padding: 2rem 0 3rem 0;
+  }
+
+  .navButtonPrev,
+  .navButtonNext {
+    width: 44px;
+    height: 44px;
+  }
+
+  .navButtonPrev {
+    left: 5px;
+  }
+
+  .navButtonNext {
+    right: 5px;
   }
 }

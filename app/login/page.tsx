@@ -27,12 +27,13 @@ export default function LoginPage() {
       // Recuperar dados do usuário do store para saber a role
       const user = useAuthStore.getState().user;
       if (user) {
-        // Redirecionar baseado no tipo de usuário e role
-        if (userType === "aluno" && user.role === "student") {
+        // Redirecionar baseado no tipo de usuário e roleId
+        // 1 = Administrador, 2 = Professor, 3 = Aluno
+        if (userType === "aluno" && user.roleId === 3) {
           router.push("/aluno");
         } else if (
           userType === "professor" &&
-          (user.role === "admin" || user.role === "teacher")
+          (user.roleId === 1 || user.roleId === 2)
         ) {
           router.push("/admin");
         } else {

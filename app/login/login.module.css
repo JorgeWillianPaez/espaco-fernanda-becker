@@ -86,7 +86,10 @@
 .loginForm {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+}
+
+.loginForm .form-group {
+  margin-bottom: 0;
 }
 
 .loginForm input {
@@ -121,6 +124,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-family: "Open Sans", sans-serif;
+  margin-top: 0.5rem;
 }
 
 .loginButton:hover {

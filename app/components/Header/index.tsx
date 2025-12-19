@@ -1,18 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./Header.module.css";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
   const isAlunoPage = pathname === "/aluno";
   const isAdminPage = pathname === "/admin";
   const isLoginPage = pathname === "/login";
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const scrollToSection = (sectionId: string) => {
+    if (typeof window === "undefined") return;
+
     const element = document.getElementById(sectionId);
     if (element) {
       const headerOffset = 80;
@@ -29,7 +36,7 @@ export default function Header() {
   };
 
   return (
-    <header>
+    <header suppressHydrationWarning>
       <nav className={styles.navbar}>
         <div className={styles.navContainer}>
           <div className={styles.logo}>

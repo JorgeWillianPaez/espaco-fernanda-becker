@@ -67,7 +67,7 @@
 
 .addButton {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(45deg, #e91e63, #9c27b0);
+  background: #e91e63;
   color: white;
   border: none;
   border-radius: 25px;
@@ -454,7 +454,7 @@
 
 .settingsButton {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(45deg, #667eea, #764ba2);
+  background: #667eea;
   color: white;
   border: none;
   border-radius: 25px;
@@ -467,6 +467,7 @@
 }
 
 .settingsButton:hover {
+  background: #5568d3;
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
@@ -565,7 +566,7 @@
 
 .addButton {
   padding: 12px 24px;
-  background: linear-gradient(45deg, #e91e63, #9c27b0);
+  background: #e91e63;
   color: white;
   border: none;
   border-radius: 25px;
@@ -1834,4 +1835,48 @@
 .permissionToggle input:disabled + .toggleSlider {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Estados de Loading e Vazio */
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: #666;
+}
+
+.emptyState i {
+  font-size: 4rem;
+  color: #e0e0e0;
+  margin-bottom: 1rem;
+}
+
+.emptyState p {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  color: #999;
+}
+
+.deleteBtn {
+  background: #dc2626 !important;
+  color: white !important;
+  border-color: #dc2626 !important;
+}
+
+.deleteBtn:hover {
+  background: #b91c1c !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3) !important;
 }

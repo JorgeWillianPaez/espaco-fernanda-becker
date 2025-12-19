@@ -19,11 +19,25 @@ import PaymentFilters from "./components/PaymentFilters";
 import PaymentsTable from "./components/PaymentsTable";
 import Pagination from "./components/Pagination";
 import StudentFilters from "./components/StudentFilters";
+import TeacherFilters from "./components/TeacherFilters";
 import StudentsTable from "./components/StudentsTable";
+import TeachersTable from "./components/TeachersTable";
 import TeacherProfile from "./components/TeacherProfile";
+import AdminProfile from "./components/AdminProfile";
+import EventsManagement from "./components/EventsManagement";
 import QuickInfoCards from "./components/QuickInfoCards";
 import WeeklySchedule from "./components/WeeklySchedule";
 import ClassesSummary from "./components/ClassesSummary";
+import ClassManagementModal from "./components/ClassManagementModal";
+import UserModal from "./components/UserModal";
+import UsersTable from "./components/UsersTable";
+import RolesTable from "./components/RolesTable";
+import ToastContainer from "../components/ToastContainer";
+import ConfirmModal from "../components/ConfirmModal";
+import { useToast } from "../hooks/useToast";
+import { removeMask } from "../utils/masks";
+import apiService from "@/lib/api";
+import { Role, NewRole, Module } from "../types/role";
 import styles from "./admin.module.css";
 import {
   Teacher,
@@ -31,6 +45,10 @@ import {
   AdminStudent,
   ClassSchedule,
   Attendance,
+  ClassData,
+  ClassFormData,
+  UserData,
+  UserFormData,
 } from "../types";
 
 // Dados mockados
@@ -550,13 +568,87 @@ const initialStudents: AdminStudent[] = [
 export default function AdminPage() {
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
+  const token = useAuthStore((state) => state.token);
+  const user = useAuthStore((state) => state.user);
+  const hasModuleAccess = useAuthStore((state) => state.hasModuleAccess);
+  const toast = useToast();
+
+  // Mapeamento de abas para nomes de módulos
+  const TAB_MODULE_MAP = {
+    overview: "overview",
+    classes: "classes",
+    students: "students",
+    teachers: "teachers",
+    users: "users",
+    payments: "payments",
+    events: "events",
+    access: "access",
+  };
+
+  // Função para verificar se uma aba deve ser exibida
+  const shouldShowTab = (tabName: keyof typeof TAB_MODULE_MAP) => {
+    const moduleName = TAB_MODULE_MAP[tabName];
+    return hasModuleAccess(moduleName, "read");
+  };
+
+  // Obter primeira aba disponível para o usuário
+  const getFirstAvailableTab = () => {
+    const tabs: Array<keyof typeof TAB_MODULE_MAP> = [
+      "overview",
+      "classes",
+      "students",
+      "teachers",
+      "users",
+      "payments",
+      "events",
+      "access",
+    ];
+    const firstAvailable = tabs.find((tab) => shouldShowTab(tab));
+    return firstAvailable || "overview";
+  };
+
   const [activeTab, setActiveTab] = useState<
-    "overview" | "classes" | "students" | "payments" | "teachers" | "access"
-  >("overview");
-  const [classes, setClasses] = useState<Class[]>(initialClasses);
-  const [students, setStudents] = useState<AdminStudent[]>(initialStudents);
-  const [teachers, setTeachers] = useState<Teacher[]>([teacherData]);
-  const [teacher, setTeacher] = useState<Teacher>(teacherData);
+    | "overview"
+    | "classes"
+    | "students"
+    | "teachers"
+    | "users"
+    | "payments"
+    | "events"
+    | "access"
+  >(getFirstAvailableTab());
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [realClasses, setRealClasses] = useState<ClassData[]>([]);
+  const [isLoadingClasses, setIsLoadingClasses] = useState(false);
+  const [showClassModal, setShowClassModal] = useState(false);
+  const [editingRealClass, setEditingRealClass] = useState<
+    ClassData | undefined
+  >(undefined);
+  const [allTeachers, setAllTeachers] = useState<UserData[]>([]);
+  const [students, setStudents] = useState<AdminStudent[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [teacher, setTeacher] = useState<Teacher | null>(null);
+  const [isLoadingStudents, setIsLoadingStudents] = useState(false);
+  const [isLoadingAdmin, setIsLoadingAdmin] = useState(false);
+
+  // Estados para gerenciamento de roles
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [isLoadingRoles, setIsLoadingRoles] = useState(false);
+  const [isLoadingModules, setIsLoadingModules] = useState(false);
+  const [isSavingRole, setIsSavingRole] = useState(false);
+  const [roleToast, setRoleToast] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({ show: false, message: "", type: "success" });
+  const [roleFormData, setRoleFormData] = useState<NewRole>({
+    name: "",
+    description: "",
+    permissions: [],
+  });
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [showModal, setShowModal] = useState<
     | "class"
@@ -601,13 +693,19 @@ export default function AdminPage() {
     status: "",
     id: "",
   });
+  const [teacherFilters, setTeacherFilters] = useState({
+    name: "",
+    status: "",
+  });
   const [adminData, setAdminData] = useState({
-    name: "Administrador",
-    email: "admin@espacobecker.com",
-    phone: "(41) 99999-9999",
-    password: "admin123",
-    birthDate: "1985-05-15",
-    username: "admin",
+    name: user?.name || "Administrador",
+    email: user?.email || "admin@espacobecker.com",
+    phone: user?.phone || "",
+    password: "",
+    birthDate: user?.birthDate
+      ? new Date(user.birthDate).toISOString().split("T")[0]
+      : "",
+    username: user?.email?.split("@")[0] || "admin",
   });
 
   const handleLogout = () => {
@@ -622,7 +720,7 @@ export default function AdminPage() {
     maxStudents: 15,
     currentStudents: 0,
     schedule: [],
-    teacher: teacher.name,
+    teacher: teacher?.name || "",
     room: "",
   });
 
@@ -657,6 +755,30 @@ export default function AdminPage() {
   });
 
   const [loadingCep, setLoadingCep] = useState(false);
+
+  // Estados para gerenciamento de usuários
+  const [allUsers, setAllUsers] = useState<UserData[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
+  const [userData, setUserData] = useState<UserFormData>({
+    name: "",
+    email: "",
+    phone: "",
+    birthDate: "",
+    cpf: "",
+    rg: "",
+    guardian: "",
+    role: "",
+    classId: "",
+    hasDisability: false,
+    disabilityDescription: "",
+    takesMedication: false,
+    medicationDescription: "",
+    paymentMethods: [],
+  });
 
   const handleCepSearch = async (cep: string) => {
     const cleanCep = cep.replace(/\D/g, "");
@@ -707,7 +829,10 @@ export default function AdminPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const imageUrl = reader.result as string;
-        setTeacher((prev) => ({ ...prev, profileImage: imageUrl }));
+        setTeacher((prev) => {
+          if (!prev) return prev;
+          return { ...prev, profileImage: imageUrl };
+        });
         alert("Foto atualizada com sucesso!");
       };
       reader.readAsDataURL(file);
@@ -769,7 +894,7 @@ export default function AdminPage() {
         maxStudents: newClass.maxStudents || 15,
         currentStudents: 0,
         schedule: newClass.schedule || [],
-        teacher: teacherData.name,
+        teacher: teacher?.name || "Sem professor",
         room: newClass.room!,
       };
       setClasses([...classes, classToAdd]);
@@ -780,7 +905,7 @@ export default function AdminPage() {
         maxStudents: 15,
         currentStudents: 0,
         schedule: [],
-        teacher: teacherData.name,
+        teacher: teacher?.name || "",
         room: "",
       });
     } else {
@@ -812,6 +937,18 @@ export default function AdminPage() {
       }, ${addressData.neighborhood}, ${addressData.city} - ${
         addressData.state
       }, CEP: ${addressData.cep}`;
+
+      // Remover máscaras antes de enviar ao backend
+      const cleanData = {
+        ...newStudent,
+        phone: removeMask(newStudent.phone!),
+        cpf: removeMask(newStudent.cpf!),
+        rg: removeMask(newStudent.rg!),
+        address: {
+          ...addressData,
+          zip_code: removeMask(addressData.cep),
+        },
+      };
 
       const studentToAdd: AdminStudent = {
         id: `student-${Date.now()}`,
@@ -882,7 +1019,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleDeleteClass = (classId: string) => {
+  const handleDeleteOldClass = (classId: string) => {
     if (confirm("Tem certeza que deseja excluir esta turma?")) {
       setClasses(classes.filter((c) => c.id !== classId));
     }
@@ -1205,9 +1342,512 @@ export default function AdminPage() {
     }
   };
 
+  // ========== FUNÇÕES DE GERENCIAMENTO DE ROLES ==========
+
+  // Funções para gerenciar turmas reais
+  const fetchRealClasses = async () => {
+    if (!token) return;
+
+    try {
+      setIsLoadingClasses(true);
+      const response = await apiService.getClasses(token);
+      setRealClasses(response.data as ClassData[]);
+    } catch (error) {
+      console.error("Erro ao carregar turmas:", error);
+    } finally {
+      setIsLoadingClasses(false);
+    }
+  };
+
+  const fetchTeachers = async () => {
+    if (!token) return;
+
+    try {
+      const response = await apiService.getAllUsers(token);
+      // Filtrar apenas professores (roleId === 2)
+      const teachersData = response.data.filter((u) => u.roleId === 2);
+      setAllTeachers(teachersData);
+    } catch (error) {
+      console.error("Erro ao carregar professores:", error);
+    }
+  };
+
+  const handleOpenClassModal = (classData?: ClassData) => {
+    setEditingRealClass(classData);
+    setShowClassModal(true);
+  };
+
+  const handleSaveClass = async (formData: ClassFormData) => {
+    if (!token) return;
+
+    try {
+      if (editingRealClass) {
+        // Atualizar turma existente
+        await apiService.updateClass(editingRealClass.id, formData, token);
+      } else {
+        // Criar nova turma
+        await apiService.createClass(formData, token);
+      }
+
+      // Recarregar lista de turmas
+      await fetchRealClasses();
+      setShowClassModal(false);
+      setEditingRealClass(undefined);
+    } catch (error) {
+      toast.error("Erro ao salvar turma. Por favor, tente novamente.");
+    }
+  };
+
+  const handleDeleteClass = async (classId: number) => {
+    if (!token) return;
+    if (!confirm("Tem certeza que deseja excluir esta turma?")) return;
+
+    try {
+      await apiService.deleteClass(classId, token);
+      await fetchRealClasses();
+    } catch (error) {
+      toast.error("Erro ao excluir turma. Por favor, tente novamente.");
+    }
+  };
+
+  // ========== FUNÇÕES DE GERENCIAMENTO DE USUÁRIOS ==========
+
+  const fetchAllUsers = async () => {
+    if (!token) {
+      setIsLoadingUsers(false);
+      return;
+    }
+
+    try {
+      setIsLoadingUsers(true);
+      const response = await apiService.getAllUsers(token);
+      setAllUsers(response.data);
+    } catch (error) {
+      toast.error("Erro ao carregar usuários. Por favor, tente novamente.");
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!token) return;
+
+    // Validar campos obrigatórios
+    if (
+      !userData.name ||
+      !userData.email ||
+      !userData.phone ||
+      !userData.birthDate ||
+      !userData.cpf ||
+      !userData.rg ||
+      !userData.role ||
+      !addressData.cep ||
+      !addressData.street ||
+      !addressData.number ||
+      !addressData.neighborhood ||
+      !addressData.city ||
+      !addressData.state
+    ) {
+      toast.error("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    // Validar campos específicos para alunos
+    if (userData.role === "aluno") {
+      if (
+        !userData.classId ||
+        !userData.paymentMethods ||
+        userData.paymentMethods.length === 0
+      ) {
+        toast.error(
+          "Para alunos, é necessário selecionar uma turma e ao menos um método de pagamento"
+        );
+        return;
+      }
+    }
+
+    try {
+      // Mapear role para roleId
+      const roleIdMap: { [key: string]: number } = {
+        admin: 1,
+        professor: 2,
+        aluno: 3,
+      };
+
+      const roleId = roleIdMap[userData.role];
+
+      // Preparar dados do endereço
+      const address = {
+        zip_code: removeMask(addressData.cep),
+        street: addressData.street,
+        number: addressData.number,
+        complement: addressData.complement || undefined,
+        neighborhood: addressData.neighborhood,
+        city: addressData.city,
+        state: addressData.state,
+      };
+
+      // Preparar dados do usuário
+      const userPayload = {
+        name: userData.name,
+        email: userData.email,
+        password: "senha123", // Senha padrão - o usuário deve alterar no primeiro login
+        phone: removeMask(userData.phone),
+        birth_date: userData.birthDate,
+        cpf: removeMask(userData.cpf),
+        rg: removeMask(userData.rg),
+        role: roleId,
+        address,
+      };
+
+      await apiService.register(userPayload, token);
+
+      toast.success("Usuário criado com sucesso!");
+      setShowUserModal(false);
+
+      // Resetar formulário
+      setUserData({
+        name: "",
+        email: "",
+        phone: "",
+        birthDate: "",
+        cpf: "",
+        rg: "",
+        guardian: "",
+        role: "",
+        classId: "",
+        hasDisability: false,
+        disabilityDescription: "",
+        takesMedication: false,
+        medicationDescription: "",
+        paymentMethods: [],
+      });
+      setAddressData({
+        cep: "",
+        street: "",
+        number: "",
+        complement: "",
+        neighborhood: "",
+        city: "",
+        state: "",
+      });
+
+      // Recarregar lista de usuários
+      await fetchAllUsers();
+
+      // Se for aluno ou professor, recarregar também as respectivas listas
+      if (userData.role === "aluno") {
+        await fetchStudents();
+      }
+    } catch (error: any) {
+      const errorMessage =
+        error.message ||
+        error.response?.data?.message ||
+        "Erro ao criar usuário. Por favor, tente novamente.";
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleEditUser = (user: UserData) => {
+    setEditingUser(user);
+
+    // Preencher formulário com dados do usuário
+    const roleMap: { [key: number]: string } = {
+      1: "admin",
+      2: "professor",
+      3: "aluno",
+    };
+
+    setUserData({
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      birthDate: user.birthDate
+        ? new Date(user.birthDate).toISOString().split("T")[0]
+        : "",
+      cpf: user.cpf,
+      rg: user.rg,
+      guardian: user.guardian,
+      role: roleMap[user.roleId] || "",
+      classId: user.groupId?.toString() || "",
+    });
+
+    if (user.address) {
+      setAddressData({
+        cep: user.address.cep,
+        street: user.address.street,
+        number: user.address.number,
+        complement: user.address.complement || "",
+        neighborhood: user.address.neighborhood,
+        city: user.address.city,
+        state: user.address.state,
+      });
+    }
+
+    setShowUserModal(true);
+  };
+
+  const handleDeleteUser = async (userId: number) => {
+    setUserToDelete(userId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!token || !userToDelete) return;
+
+    try {
+      await apiService.deleteUser(userToDelete, token);
+      toast.success("Usuário excluído com sucesso!");
+
+      setShowDeleteConfirm(false);
+      setUserToDelete(null);
+
+      // Recarregar lista de usuários
+      await fetchAllUsers();
+
+      // Recarregar também a lista de alunos se necessário
+      await fetchStudents();
+      await fetchTeachers();
+    } catch (error) {
+      console.error("Erro ao excluir usuário:", error);
+      toast.error("Erro ao excluir usuário. Por favor, tente novamente.");
+      setShowDeleteConfirm(false);
+      setUserToDelete(null);
+    }
+  };
+
+  // ========== FUNÇÕES DE GERENCIAMENTO DE ROLES ==========
+
+  // Definir aba inicial baseada nas permissões do usuário
+  useEffect(() => {
+    if (user?.permissions) {
+      const firstTab = getFirstAvailableTab();
+      setActiveTab(firstTab);
+    }
+  }, [user?.permissions]);
+
+  useEffect(() => {
+    if (activeTab === "access") {
+      fetchModules();
+      fetchRoles();
+    } else if (activeTab === "students") {
+      fetchStudents();
+    } else if (activeTab === "teachers") {
+      fetchTeachers();
+    } else if (activeTab === "classes") {
+      fetchRealClasses();
+      fetchTeachers();
+    } else if (activeTab === "users") {
+      fetchAllUsers();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    // Buscar dados do admin ao carregar
+    fetchAdminData();
+  }, [user?.id, token]);
+
+  const fetchStudents = async () => {
+    if (!token) {
+      setIsLoadingStudents(false);
+      return;
+    }
+
+    try {
+      setIsLoadingStudents(true);
+      const response = await apiService.getAllUsers(token);
+
+      // Filtrar apenas estudantes e converter para formato AdminStudent
+      const studentsData = response.data
+        .filter((u) => u.roleId === 3)
+        .map((u) => ({
+          id: u.id.toString(),
+          name: u.name,
+          email: u.email,
+          phone: u.phone,
+          class: "", // TODO: Buscar da relação com grupo
+          classId: u.groupId?.toString() || "",
+          status: "Ativo",
+          profileImage: "",
+          enrollmentDate: new Date(u.createdAt).toLocaleDateString("pt-BR"),
+          schedule: [],
+          payments: [], // TODO: Buscar pagamentos
+        }));
+
+      setStudents(studentsData);
+    } catch (error: any) {
+      console.error("Erro ao carregar alunos:", error);
+    } finally {
+      setIsLoadingStudents(false);
+    }
+  };
+
+  const fetchAdminData = async () => {
+    if (!user?.id || !token) return;
+
+    try {
+      setIsLoadingAdmin(true);
+      const response = await apiService.getUserById(user.id, token);
+
+      setAdminData({
+        name: response.data.name,
+        email: response.data.email,
+        phone: response.data.phone,
+        password: "",
+        birthDate: response.data.birthDate
+          ? new Date(response.data.birthDate).toISOString().split("T")[0]
+          : "",
+        username: response.data.email.split("@")[0],
+      });
+    } catch (error: any) {
+      console.error("Erro ao carregar dados do admin:", error);
+    } finally {
+      setIsLoadingAdmin(false);
+    }
+  };
+
+  const fetchModules = async () => {
+    if (!token) {
+      setIsLoadingModules(false);
+      return;
+    }
+
+    try {
+      setIsLoadingModules(true);
+      const response = await apiService.getModules(token);
+      setModules(response.data);
+    } catch (error: any) {
+      console.error("Erro ao carregar módulos:", error);
+      showRoleToast(error.message || "Erro ao carregar módulos", "error");
+    } finally {
+      setIsLoadingModules(false);
+    }
+  };
+
+  const fetchRoles = async () => {
+    if (!token) {
+      setIsLoadingRoles(false);
+      return;
+    }
+
+    try {
+      setIsLoadingRoles(true);
+      const response = await apiService.getRoles(token);
+      setRoles(response.data);
+    } catch (error: any) {
+      console.error("Erro ao carregar roles:", error);
+      showRoleToast(error.message || "Erro ao carregar roles", "error");
+    } finally {
+      setIsLoadingRoles(false);
+    }
+  };
+
+  const showRoleToast = (message: string, type: "success" | "error") => {
+    setRoleToast({ show: true, message, type });
+    setTimeout(() => {
+      setRoleToast({ show: false, message: "", type: "success" });
+    }, 3000);
+  };
+
+  const handleOpenRoleModal = (role?: Role) => {
+    if (role) {
+      setEditingRole(role);
+      setRoleFormData({
+        name: role.name,
+        description: role.description || "",
+        permissions: role.permissions.map((p) => ({
+          moduleId: p.moduleId,
+          canRead: p.canRead,
+          canWrite: p.canWrite,
+        })),
+      });
+    } else {
+      setEditingRole(null);
+      // Inicializar com todos os módulos sem permissões
+      setRoleFormData({
+        name: "",
+        description: "",
+        permissions: modules.map((m) => ({
+          moduleId: m.id,
+          canRead: false,
+          canWrite: false,
+        })),
+      });
+    }
+    setShowRoleModal(true);
+  };
+
+  const handleCloseRoleModal = () => {
+    setShowRoleModal(false);
+    setEditingRole(null);
+    setRoleFormData({
+      name: "",
+      description: "",
+      permissions: [],
+    });
+  };
+
+  const handleSaveRole = async () => {
+    if (!roleFormData.name.trim()) {
+      showRoleToast("Nome da função é obrigatório", "error");
+      return;
+    }
+
+    if (!token) {
+      showRoleToast("Token de autenticação não encontrado", "error");
+      return;
+    }
+
+    try {
+      setIsSavingRole(true);
+      const apiData = {
+        name: roleFormData.name,
+        description: roleFormData.description,
+        permissions: roleFormData.permissions,
+      };
+
+      if (editingRole) {
+        await apiService.updateRole(editingRole.id, apiData, token);
+        showRoleToast("Função atualizada com sucesso!", "success");
+      } else {
+        await apiService.createRole(apiData, token);
+        showRoleToast("Função criada com sucesso!", "success");
+      }
+
+      handleCloseRoleModal();
+      await fetchRoles();
+    } catch (error: any) {
+      console.error("Erro ao salvar função:", error);
+      showRoleToast(error.message || "Erro ao salvar função", "error");
+    } finally {
+      setIsSavingRole(false);
+    }
+  };
+
+  const handleDeleteRole = async (roleId: number) => {
+    if (!confirm("Tem certeza que deseja excluir esta role?")) {
+      return;
+    }
+
+    if (!token) {
+      showRoleToast("Token de autenticação não encontrado", "error");
+      return;
+    }
+
+    try {
+      await apiService.deleteRole(roleId, token);
+      await fetchRoles();
+      showRoleToast("Role deletada com sucesso!", "success");
+    } catch (error: any) {
+      console.error("Erro ao deletar role:", error);
+      showRoleToast(error.message || "Erro ao deletar role", "error");
+    }
+  };
+
   return (
-    <ProtectedRoute allowedRoles={["admin", "teacher"]}>
+    <ProtectedRoute allowedRoles={[1, 2]}>
       <Header />
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
       <div className={styles.adminPage}>
         <div className={styles.alunoContainer}>
           <div className={styles.alunoHeader}>
@@ -1232,69 +1872,109 @@ export default function AdminPage() {
 
           {/* Tabs */}
           <div className={styles.adminTabs}>
-            <button
-              className={`${styles.adminTab} ${
-                activeTab === "overview" ? styles.active : ""
-              }`}
-              onClick={() => setActiveTab("overview")}
-            >
-              <i className="fas fa-chart-line"></i>
-              Visão Geral
-            </button>
-            <button
-              className={`${styles.adminTab} ${
-                activeTab === "classes" ? styles.active : ""
-              }`}
-              onClick={() => setActiveTab("classes")}
-            >
-              <i className="fas fa-chalkboard-teacher"></i>
-              Turmas
-            </button>
-            <button
-              className={`${styles.adminTab} ${
-                activeTab === "students" ? styles.active : ""
-              }`}
-              onClick={() => setActiveTab("students")}
-            >
-              <i className="fas fa-user-graduate"></i>
-              Alunos
-            </button>
-            <button
-              className={`${styles.adminTab} ${
-                activeTab === "payments" ? styles.active : ""
-              }`}
-              onClick={() => setActiveTab("payments")}
-            >
-              <i className="fas fa-money-bill-wave"></i>
-              Financeiro
-            </button>
-            <button
-              className={`${styles.adminTab} ${
-                activeTab === "teachers" ? styles.active : ""
-              }`}
-              onClick={() => setActiveTab("teachers")}
-            >
-              <i className="fas fa-chalkboard-teacher"></i>
-              Professores
-            </button>
-            <button
-              className={`${styles.adminTab} ${
-                activeTab === "access" ? styles.active : ""
-              }`}
-              onClick={() => setActiveTab("access")}
-            >
-              <i className="fas fa-shield-alt"></i>
-              Acessos
-            </button>
+            {shouldShowTab("overview") && (
+              <button
+                className={`${styles.adminTab} ${
+                  activeTab === "overview" ? styles.active : ""
+                }`}
+                onClick={() => setActiveTab("overview")}
+              >
+                <i className="fas fa-chart-line"></i>
+                Visão Geral
+              </button>
+            )}
+            {shouldShowTab("classes") && (
+              <button
+                className={`${styles.adminTab} ${
+                  activeTab === "classes" ? styles.active : ""
+                }`}
+                onClick={() => setActiveTab("classes")}
+              >
+                <i className="fas fa-chalkboard-teacher"></i>
+                Turmas
+              </button>
+            )}
+            {shouldShowTab("students") && (
+              <button
+                className={`${styles.adminTab} ${
+                  activeTab === "students" ? styles.active : ""
+                }`}
+                onClick={() => setActiveTab("students")}
+              >
+                <i className="fas fa-user-graduate"></i>
+                Alunos
+              </button>
+            )}
+            {shouldShowTab("teachers") && (
+              <button
+                className={`${styles.adminTab} ${
+                  activeTab === "teachers" ? styles.active : ""
+                }`}
+                onClick={() => setActiveTab("teachers")}
+              >
+                <i className="fas fa-chalkboard-teacher"></i>
+                Professores
+              </button>
+            )}
+            {shouldShowTab("users") && (
+              <button
+                className={`${styles.adminTab} ${
+                  activeTab === "users" ? styles.active : ""
+                }`}
+                onClick={() => setActiveTab("users")}
+              >
+                <i className="fas fa-users"></i>
+                Usuários
+              </button>
+            )}
+            {shouldShowTab("payments") && (
+              <button
+                className={`${styles.adminTab} ${
+                  activeTab === "payments" ? styles.active : ""
+                }`}
+                onClick={() => setActiveTab("payments")}
+              >
+                <i className="fas fa-money-bill-wave"></i>
+                Financeiro
+              </button>
+            )}
+            {shouldShowTab("events") && (
+              <button
+                className={`${styles.adminTab} ${
+                  activeTab === "events" ? styles.active : ""
+                }`}
+                onClick={() => setActiveTab("events")}
+              >
+                <i className="fas fa-calendar-alt"></i>
+                Eventos
+              </button>
+            )}
+            {shouldShowTab("access") && (
+              <button
+                className={`${styles.adminTab} ${
+                  activeTab === "access" ? styles.active : ""
+                }`}
+                onClick={() => setActiveTab("access")}
+              >
+                <i className="fas fa-shield-alt"></i>
+                Acessos
+              </button>
+            )}
           </div>
 
-          {/* Perfil do Professor e Cards - Layout lado a lado */}
+          {/* Perfil do Usuário e Cards - Layout lado a lado */}
           {activeTab === "overview" && (
             <div className={styles.overviewLayout}>
-              <TeacherProfile
-                teacher={teacher}
-                onPhotoUpload={handleTeacherPhotoUpload}
-              />
+              {user?.roleId === 1 ? (
+                <AdminProfile user={user} />
+              ) : (
+                teacher && (
+                  <TeacherProfile
+                    teacher={teacher}
+                    onPhotoUpload={handleTeacherPhotoUpload}
+                  />
+                )
+              )}
               <QuickInfoCards classes={classes} students={students} />
             </div>
           )}
@@ -1312,62 +1992,74 @@ export default function AdminPage() {
                   <h2>Gerenciar Turmas</h2>
                   <button
                     className={styles.addButton}
-                    onClick={() => setShowModal("class")}
+                    onClick={() => handleOpenClassModal()}
                   >
                     <i className="fas fa-plus"></i>
                     Nova Turma
                   </button>
                 </div>
 
-                <div className={styles.classesGrid}>
-                  {classes.map((classItem) => (
-                    <div key={classItem.id} className={styles.classCard}>
-                      <div className={styles.classCardHeader}>
-                        <div>
-                          <div className={styles.className}>
-                            {classItem.name}
+                {isLoadingClasses ? (
+                  <div className={styles.loadingContainer}>
+                    <p>Carregando turmas...</p>
+                  </div>
+                ) : realClasses.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <i className="fas fa-chalkboard-teacher"></i>
+                    <p>Nenhuma turma cadastrada</p>
+                  </div>
+                ) : (
+                  <div className={styles.classesGrid}>
+                    {realClasses.map((classItem) => (
+                      <div key={classItem.id} className={styles.classCard}>
+                        <div className={styles.classCardHeader}>
+                          <div>
+                            <div className={styles.className}>
+                              {classItem.name}
+                            </div>
                           </div>
-                          <div className={styles.classLevel}>
-                            {classItem.level}
+                          <div className={styles.classStudentsBadge}>
+                            {classItem.studentCount || 0}/
+                            {classItem.maxStudents}
                           </div>
                         </div>
-                        <div className={styles.classStudentsBadge}>
-                          {classItem.currentStudents}/{classItem.maxStudents}
-                        </div>
-                      </div>
-                      <div className={styles.classInfo}>
-                        <div className={styles.classInfoItem}>
-                          <i className="fas fa-door-open"></i>
-                          {classItem.room}
-                        </div>
-                        {classItem.schedule.map((sch, idx) => (
-                          <div key={idx} className={styles.classInfoItem}>
+                        <div className={styles.classInfo}>
+                          <div className={styles.classInfoItem}>
+                            <i className="fas fa-door-open"></i>
+                            {classItem.room?.name || "Sem sala"}
+                          </div>
+                          <div className={styles.classInfoItem}>
                             <i className="fas fa-calendar"></i>
-                            {sch.day} - {sch.startTime} às {sch.endTime}
+                            {classItem.dayOfWeek} - {classItem.startTime} às{" "}
+                            {classItem.endTime}
                           </div>
-                        ))}
+                          {classItem.teacher?.name && (
+                            <div className={styles.classInfoItem}>
+                              <i className="fas fa-chalkboard-teacher"></i>
+                              {classItem.teacher.name}
+                            </div>
+                          )}
+                        </div>
+                        <div className={styles.classActions}>
+                          <button
+                            className={styles.classActionBtn}
+                            onClick={() => handleOpenClassModal(classItem)}
+                          >
+                            <i className="fas fa-edit"></i> Editar
+                          </button>
+                          {user?.roleId === 1 && (
+                            <button
+                              className={`${styles.classActionBtn} ${styles.deleteBtn}`}
+                              onClick={() => handleDeleteClass(classItem.id)}
+                            >
+                              <i className="fas fa-trash"></i> Excluir
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className={styles.classActions}>
-                        <button
-                          className={styles.classActionBtn}
-                          onClick={() => handleEditClass(classItem)}
-                        >
-                          <i className="fas fa-edit"></i> Editar
-                        </button>
-                        <button
-                          className={`${styles.classActionBtn} ${
-                            expandedClassId === classItem.id
-                              ? styles.active
-                              : ""
-                          }`}
-                          onClick={() => toggleClassAttendance(classItem.id)}
-                        >
-                          <i className="fas fa-clipboard-check"></i> Presenças
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Container de Controle de Presenças */}
                 {expandedClassId && (
@@ -1701,13 +2393,6 @@ export default function AdminPage() {
               <div>
                 <div className={styles.adminSectionHeader}>
                   <h2>Gerenciar Alunos</h2>
-                  <button
-                    className={styles.addButton}
-                    onClick={() => setShowModal("student")}
-                  >
-                    <i className="fas fa-user-plus"></i>
-                    Novo Aluno
-                  </button>
                 </div>
 
                 {/* Filtros */}
@@ -1718,42 +2403,19 @@ export default function AdminPage() {
                 />
 
                 <StudentsTable
-                  students={students}
-                  filters={studentFilters}
-                  currentPage={studentsPage}
-                  itemsPerPage={studentsPerPage}
+                  students={students.filter((s) => {
+                    const matchesName = s.name
+                      .toLowerCase()
+                      .includes(studentFilters.name.toLowerCase());
+                    const matchesClass =
+                      !studentFilters.class || s.class === studentFilters.class;
+                    const matchesStatus =
+                      !studentFilters.status ||
+                      s.status === studentFilters.status;
+                    return matchesName && matchesClass && matchesStatus;
+                  })}
                   onEditStudent={handleEditStudent}
                   onDeleteStudent={handleDeleteStudent}
-                />
-
-                {/* Paginação */}
-                <Pagination
-                  currentPage={studentsPage}
-                  totalItems={
-                    students.filter((student) => {
-                      if (
-                        studentFilters.name &&
-                        !student.name
-                          .toLowerCase()
-                          .includes(studentFilters.name.toLowerCase())
-                      )
-                        return false;
-                      if (
-                        studentFilters.class &&
-                        student.class !== studentFilters.class
-                      )
-                        return false;
-                      if (
-                        studentFilters.status &&
-                        student.status !== studentFilters.status
-                      )
-                        return false;
-                      return true;
-                    }).length
-                  }
-                  itemsPerPage={studentsPerPage}
-                  onPageChange={setStudentsPage}
-                  onItemsPerPageChange={setStudentsPerPage}
                 />
               </div>
             )}
@@ -1817,447 +2479,157 @@ export default function AdminPage() {
               <div>
                 <div className={styles.adminSectionHeader}>
                   <h2>Gerenciar Professores</h2>
+                </div>
+
+                {/* Filtros */}
+                <TeacherFilters
+                  filters={teacherFilters}
+                  onFiltersChange={setTeacherFilters}
+                />
+
+                {isLoadingStudents ? (
+                  <div style={{ textAlign: "center", padding: "2rem" }}>
+                    <p>Carregando professores...</p>
+                  </div>
+                ) : (
+                  <TeachersTable
+                    teachers={allTeachers.filter((t) => {
+                      const matchesName = t.name
+                        .toLowerCase()
+                        .includes(teacherFilters.name.toLowerCase());
+                      return matchesName;
+                    })}
+                    onEditTeacher={handleEditUser}
+                    onDeleteTeacher={handleDeleteUser}
+                  />
+                )}
+              </div>
+            )}
+
+            {activeTab === "users" && (
+              <div>
+                <div className={styles.adminSectionHeader}>
+                  <h2>Gerenciar Usuários</h2>
                   <button
                     className={styles.addButton}
-                    onClick={() => setShowModal("teacher")}
+                    onClick={() => {
+                      setEditingUser(null);
+                      setUserData({
+                        name: "",
+                        email: "",
+                        phone: "",
+                        birthDate: "",
+                        cpf: "",
+                        rg: "",
+                        guardian: "",
+                        role: "",
+                        classId: "",
+                        hasDisability: false,
+                        disabilityDescription: "",
+                        takesMedication: false,
+                        medicationDescription: "",
+                        paymentMethods: [],
+                      });
+                      setAddressData({
+                        cep: "",
+                        street: "",
+                        number: "",
+                        complement: "",
+                        neighborhood: "",
+                        city: "",
+                        state: "",
+                      });
+                      setShowUserModal(true);
+                    }}
                   >
                     <i className="fas fa-user-plus"></i>
-                    Novo Professor
+                    Novo Usuário
                   </button>
                 </div>
 
-                <div className={styles.classesGrid}>
-                  {teachers.map((teacherItem) => (
-                    <div key={teacherItem.id} className={styles.classCard}>
-                      <div className={styles.classHeader}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "1rem",
-                          }}
-                        >
-                          {teacherItem.profileImage ? (
-                            <Image
-                              src={teacherItem.profileImage}
-                              alt={teacherItem.name}
-                              width={60}
-                              height={60}
-                              style={{ borderRadius: "50%" }}
-                            />
-                          ) : (
-                            <div
-                              className={styles.avatarIconPlaceholder}
-                              style={{
-                                width: "60px",
-                                height: "60px",
-                                fontSize: "60px",
-                              }}
-                            >
-                              <i className="fas fa-user-circle"></i>
-                            </div>
-                          )}
-                          <div>
-                            <h3>{teacherItem.name}</h3>
-                            <span className={styles.classLevel}>
-                              {teacherItem.specialty}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                {isLoadingUsers ? (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "3rem",
+                      color: "#666",
+                    }}
+                  >
+                    <i
+                      className="fas fa-spinner fa-spin"
+                      style={{ fontSize: "2rem", marginBottom: "1rem" }}
+                    ></i>
+                    <p>Carregando usuários...</p>
+                  </div>
+                ) : (
+                  <UsersTable
+                    users={allUsers.map((u) => ({
+                      id: u.id,
+                      name: u.name,
+                      email: u.email,
+                      phone: u.phone,
+                      cpf: u.cpf,
+                      role:
+                        u.roleId === 1
+                          ? "admin"
+                          : u.roleId === 2
+                          ? "professor"
+                          : "aluno",
+                      createdAt: u.createdAt.toString(),
+                    }))}
+                    onEditUser={(user) => {
+                      const fullUser = allUsers.find((u) => u.id === user.id);
+                      if (fullUser) {
+                        handleEditUser(fullUser);
+                      }
+                    }}
+                    onDeleteUser={handleDeleteUser}
+                  />
+                )}
+              </div>
+            )}
 
-                      <div className={styles.classInfo}>
-                        <div className={styles.infoRow}>
-                          <i className="fas fa-envelope"></i>
-                          <span>{teacherItem.email}</span>
-                        </div>
-                        <div className={styles.infoRow}>
-                          <i className="fas fa-phone"></i>
-                          <span>{teacherItem.phone}</span>
-                        </div>
-                        <div className={styles.infoRow}>
-                          <i className="fas fa-calendar"></i>
-                          <span>Desde {teacherItem.startDate}</span>
-                        </div>
-                        <div className={styles.infoRow}>
-                          <i className="fas fa-chalkboard"></i>
-                          <span>{teacherItem.classes.length} turma(s)</span>
-                        </div>
-                      </div>
-
-                      <div className={styles.classActions}>
-                        <button className={styles.actionButton}>
-                          <i className="fas fa-edit"></i>
-                          Editar
-                        </button>
-                        <button
-                          className={`${styles.actionButton} ${styles.danger}`}
-                          onClick={() => {
-                            if (
-                              confirm(
-                                `Tem certeza que deseja excluir o professor ${teacherItem.name}?`
-                              )
-                            ) {
-                              setTeachers(
-                                teachers.filter((t) => t.id !== teacherItem.id)
-                              );
-                            }
-                          }}
-                        >
-                          <i className="fas fa-trash"></i>
-                          Excluir
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            {activeTab === "events" && (
+              <div>
+                <EventsManagement token={token || ""} />
               </div>
             )}
 
             {activeTab === "access" && (
               <div>
                 <div className={styles.adminSectionHeader}>
-                  <h2>Controle de Acessos</h2>
+                  <h2>Gerenciamento de Funções</h2>
+                  <button
+                    className={styles.addButton}
+                    onClick={() => handleOpenRoleModal()}
+                  >
+                    <i className="fas fa-plus"></i>
+                    Nova Função
+                  </button>
                 </div>
 
-                <p style={{ color: "#666", marginBottom: "2rem" }}>
-                  Configure as permissões de acesso para cada tipo de usuário.
-                  Defina quais módulos cada perfil pode visualizar e editar.
+                <p style={{ color: "#666", marginBottom: "1.5rem" }}>
+                  Gerencie as funções e permissões do sistema. Defina quem pode
+                  ler e editar informações.
                 </p>
 
-                {/* Administrador */}
-                <div className={styles.accessTypeCard}>
-                  <div className={styles.accessTypeHeader}>
-                    <h3>
-                      <i className="fas fa-user-shield"></i>
-                      Administrador
-                    </h3>
-                    <span
-                      className={`${styles.accessTypeBadge} ${styles.admin}`}
-                    >
-                      Acesso Total
-                    </span>
+                {isLoadingRoles ? (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "3rem",
+                      color: "#666",
+                    }}
+                  >
+                    <h3>Carregando funções...</h3>
                   </div>
-
-                  <div className={styles.permissionsGrid}>
-                    {/* Módulo Visão Geral */}
-                    <div className={styles.permissionModule}>
-                      <div className={styles.moduleHeader}>
-                        <i className="fas fa-chart-line"></i>
-                        <h4>Visão Geral</h4>
-                      </div>
-                      <div className={styles.permissionOptions}>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-eye"></i>
-                            Visualizar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-edit"></i>
-                            Editar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Módulo Turmas */}
-                    <div className={styles.permissionModule}>
-                      <div className={styles.moduleHeader}>
-                        <i className="fas fa-users"></i>
-                        <h4>Turmas</h4>
-                      </div>
-                      <div className={styles.permissionOptions}>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-eye"></i>
-                            Visualizar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-edit"></i>
-                            Editar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Módulo Alunos */}
-                    <div className={styles.permissionModule}>
-                      <div className={styles.moduleHeader}>
-                        <i className="fas fa-user-graduate"></i>
-                        <h4>Alunos</h4>
-                      </div>
-                      <div className={styles.permissionOptions}>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-eye"></i>
-                            Visualizar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-edit"></i>
-                            Editar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Módulo Financeiro */}
-                    <div className={styles.permissionModule}>
-                      <div className={styles.moduleHeader}>
-                        <i className="fas fa-money-bill-wave"></i>
-                        <h4>Financeiro</h4>
-                      </div>
-                      <div className={styles.permissionOptions}>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-eye"></i>
-                            Visualizar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-edit"></i>
-                            Editar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Módulo Professores */}
-                    <div className={styles.permissionModule}>
-                      <div className={styles.moduleHeader}>
-                        <i className="fas fa-chalkboard-teacher"></i>
-                        <h4>Professores</h4>
-                      </div>
-                      <div className={styles.permissionOptions}>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-eye"></i>
-                            Visualizar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-edit"></i>
-                            Editar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Professor */}
-                <div className={styles.accessTypeCard}>
-                  <div className={styles.accessTypeHeader}>
-                    <h3>
-                      <i className="fas fa-chalkboard-teacher"></i>
-                      Professor
-                    </h3>
-                    <span
-                      className={`${styles.accessTypeBadge} ${styles.teacher}`}
-                    >
-                      Acesso Limitado
-                    </span>
-                  </div>
-
-                  <div className={styles.permissionsGrid}>
-                    {/* Módulo Visão Geral */}
-                    <div className={styles.permissionModule}>
-                      <div className={styles.moduleHeader}>
-                        <i className="fas fa-chart-line"></i>
-                        <h4>Visão Geral</h4>
-                      </div>
-                      <div className={styles.permissionOptions}>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-eye"></i>
-                            Visualizar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-edit"></i>
-                            Editar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Módulo Turmas */}
-                    <div className={styles.permissionModule}>
-                      <div className={styles.moduleHeader}>
-                        <i className="fas fa-users"></i>
-                        <h4>Turmas</h4>
-                      </div>
-                      <div className={styles.permissionOptions}>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-eye"></i>
-                            Visualizar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-edit"></i>
-                            Editar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Módulo Alunos */}
-                    <div className={styles.permissionModule}>
-                      <div className={styles.moduleHeader}>
-                        <i className="fas fa-user-graduate"></i>
-                        <h4>Alunos</h4>
-                      </div>
-                      <div className={styles.permissionOptions}>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-eye"></i>
-                            Visualizar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" defaultChecked />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-edit"></i>
-                            Editar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Módulo Financeiro */}
-                    <div className={styles.permissionModule}>
-                      <div className={styles.moduleHeader}>
-                        <i className="fas fa-money-bill-wave"></i>
-                        <h4>Financeiro</h4>
-                      </div>
-                      <div className={styles.permissionOptions}>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-eye"></i>
-                            Visualizar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-edit"></i>
-                            Editar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Módulo Professores */}
-                    <div className={styles.permissionModule}>
-                      <div className={styles.moduleHeader}>
-                        <i className="fas fa-chalkboard-teacher"></i>
-                        <h4>Professores</h4>
-                      </div>
-                      <div className={styles.permissionOptions}>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-eye"></i>
-                            Visualizar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                        <div className={styles.permissionOption}>
-                          <div className={styles.permissionLabel}>
-                            <i className="fas fa-edit"></i>
-                            Editar
-                          </div>
-                          <label className={styles.permissionToggle}>
-                            <input type="checkbox" />
-                            <span className={styles.toggleSlider}></span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                ) : (
+                  <RolesTable
+                    roles={roles}
+                    onEditRole={handleOpenRoleModal}
+                    onDeleteRole={handleDeleteRole}
+                  />
+                )}
 
                 <div
                   style={{
@@ -2281,11 +2653,437 @@ export default function AdminPage() {
                     Informação
                   </h4>
                   <p style={{ color: "#666", margin: 0, lineHeight: "1.6" }}>
-                    As alterações nas permissões são aplicadas imediatamente.
-                    Configure cuidadosamente o acesso de cada perfil para
-                    garantir a segurança do sistema.
+                    As funções definem os níveis de acesso no sistema de forma
+                    granular. Configure permissões específicas por módulo (Visão
+                    Geral, Turmas, Alunos, Financeiro, Professores, Acessos)
+                    para cada função. Você pode criar funções personalizadas
+                    como "Financeiro" com acesso apenas ao módulo de pagamentos,
+                    ou "Recepção" com acesso a alunos e turmas.
                   </p>
                 </div>
+              </div>
+            )}
+
+            {/* Modal de Criar/Editar Role */}
+            {showRoleModal && (
+              <div
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: "rgba(0, 0, 0, 0.5)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 1000,
+                  padding: "1rem",
+                }}
+                onClick={handleCloseRoleModal}
+              >
+                <div
+                  style={{
+                    background: "white",
+                    borderRadius: "12px",
+                    padding: "2rem",
+                    maxWidth: "500px",
+                    width: "100%",
+                    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "1.5rem",
+                    }}
+                  >
+                    <h3 style={{ margin: 0, color: "#333" }}>
+                      {editingRole ? "Editar Função" : "Nova Função"}
+                    </h3>
+                    <button
+                      onClick={handleCloseRoleModal}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        fontSize: "2rem",
+                        cursor: "pointer",
+                        color: "#999",
+                        lineHeight: 1,
+                        padding: 0,
+                      }}
+                    >
+                      &times;
+                    </button>
+                  </div>
+
+                  <div style={{ marginBottom: "1.5rem" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "0.5rem",
+                        fontWeight: 500,
+                        color: "#333",
+                      }}
+                    >
+                      Nome da Função *
+                    </label>
+                    <input
+                      type="text"
+                      value={roleFormData.name}
+                      onChange={(e) =>
+                        setRoleFormData({
+                          ...roleFormData,
+                          name: e.target.value,
+                        })
+                      }
+                      placeholder="Ex: Administrador, Professor, Aluno"
+                      style={{
+                        width: "100%",
+                        padding: "0.75rem",
+                        border: "2px solid #e0e0e0",
+                        borderRadius: "8px",
+                        fontSize: "1rem",
+                        transition: "border-color 0.2s",
+                      }}
+                      onFocus={(e) => (e.target.style.borderColor = "#e91e63")}
+                      onBlur={(e) => (e.target.style.borderColor = "#e0e0e0")}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: "1.5rem" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "0.5rem",
+                        fontWeight: 500,
+                        color: "#333",
+                      }}
+                    >
+                      Descrição
+                    </label>
+                    <textarea
+                      value={roleFormData.description || ""}
+                      onChange={(e) =>
+                        setRoleFormData({
+                          ...roleFormData,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Breve descrição da função (opcional)"
+                      rows={2}
+                      style={{
+                        width: "100%",
+                        padding: "0.75rem",
+                        border: "2px solid #e0e0e0",
+                        borderRadius: "8px",
+                        fontSize: "1rem",
+                        transition: "border-color 0.2s",
+                        fontFamily: "inherit",
+                        resize: "vertical",
+                      }}
+                      onFocus={(e) => (e.target.style.borderColor = "#e91e63")}
+                      onBlur={(e) => (e.target.style.borderColor = "#e0e0e0")}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: "1.5rem" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: "0.75rem",
+                        fontWeight: 500,
+                        color: "#333",
+                      }}
+                    >
+                      Permissões por Módulo
+                    </label>
+                    {isLoadingModules ? (
+                      <div
+                        style={{
+                          textAlign: "center",
+                          padding: "1rem",
+                          color: "#666",
+                        }}
+                      >
+                        Carregando módulos...
+                      </div>
+                    ) : modules.length === 0 ? (
+                      <div
+                        style={{
+                          textAlign: "center",
+                          padding: "1rem",
+                          color: "#999",
+                        }}
+                      >
+                        Nenhum módulo disponível
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "0.75rem",
+                          maxHeight: "300px",
+                          overflowY: "auto",
+                          padding: "0.5rem",
+                          background: "#f8f9fa",
+                          borderRadius: "8px",
+                        }}
+                      >
+                        {modules.map((module) => {
+                          const permission = roleFormData.permissions.find(
+                            (p) => p.moduleId === module.id
+                          ) || {
+                            moduleId: module.id,
+                            canRead: false,
+                            canWrite: false,
+                          };
+
+                          return (
+                            <div
+                              key={module.id}
+                              style={{
+                                padding: "0.75rem",
+                                background: "white",
+                                borderRadius: "6px",
+                                border: "1px solid #e0e0e0",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontWeight: 600,
+                                  color: "#333",
+                                  marginBottom: "0.5rem",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "0.5rem",
+                                }}
+                              >
+                                {module.icon && (
+                                  <i className={`fas ${module.icon}`}></i>
+                                )}
+                                {module.displayName}
+                              </div>
+                              {module.description && (
+                                <div
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    color: "#666",
+                                    marginBottom: "0.5rem",
+                                  }}
+                                >
+                                  {module.description}
+                                </div>
+                              )}
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "1rem",
+                                  marginTop: "0.5rem",
+                                }}
+                              >
+                                <label
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "0.5rem",
+                                    cursor: "pointer",
+                                    fontSize: "0.85rem",
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={permission.canRead}
+                                    onChange={(e) => {
+                                      const newPermissions =
+                                        roleFormData.permissions.filter(
+                                          (p) => p.moduleId !== module.id
+                                        );
+                                      newPermissions.push({
+                                        moduleId: module.id,
+                                        canRead: e.target.checked,
+                                        canWrite: permission.canWrite,
+                                      });
+                                      setRoleFormData({
+                                        ...roleFormData,
+                                        permissions: newPermissions,
+                                      });
+                                    }}
+                                    style={{
+                                      width: "16px",
+                                      height: "16px",
+                                      cursor: "pointer",
+                                    }}
+                                  />
+                                  <span style={{ color: "#555" }}>Ler</span>
+                                </label>
+                                <label
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "0.5rem",
+                                    cursor: "pointer",
+                                    fontSize: "0.85rem",
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={permission.canWrite}
+                                    onChange={(e) => {
+                                      const newPermissions =
+                                        roleFormData.permissions.filter(
+                                          (p) => p.moduleId !== module.id
+                                        );
+                                      newPermissions.push({
+                                        moduleId: module.id,
+                                        canRead: permission.canRead,
+                                        canWrite: e.target.checked,
+                                      });
+                                      setRoleFormData({
+                                        ...roleFormData,
+                                        permissions: newPermissions,
+                                      });
+                                    }}
+                                    style={{
+                                      width: "16px",
+                                      height: "16px",
+                                      cursor: "pointer",
+                                    }}
+                                  />
+                                  <span style={{ color: "#555" }}>Editar</span>
+                                </label>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "1rem",
+                      justifyContent: "flex-end",
+                      marginTop: "2rem",
+                    }}
+                  >
+                    <button
+                      onClick={handleCloseRoleModal}
+                      disabled={isSavingRole}
+                      style={{
+                        padding: "0.75rem 1.5rem",
+                        borderRadius: "8px",
+                        border: "2px solid #e0e0e0",
+                        background: "white",
+                        color: "#666",
+                        fontWeight: 500,
+                        cursor: isSavingRole ? "not-allowed" : "pointer",
+                        opacity: isSavingRole ? 0.5 : 1,
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSavingRole) {
+                          e.currentTarget.style.background = "#f5f5f5";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "white";
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleSaveRole}
+                      disabled={isSavingRole}
+                      style={{
+                        padding: "0.75rem 1.5rem",
+                        borderRadius: "8px",
+                        border: "none",
+                        background:
+                          "linear-gradient(135deg, #e91e63 0%, #c2185b 100%)",
+                        color: "white",
+                        fontWeight: 600,
+                        cursor: isSavingRole ? "not-allowed" : "pointer",
+                        opacity: isSavingRole ? 0.7 : 1,
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSavingRole) {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow =
+                            "0 4px 12px rgba(233, 30, 99, 0.3)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
+                      }}
+                    >
+                      {isSavingRole
+                        ? "Salvando..."
+                        : editingRole
+                        ? "Atualizar"
+                        : "Criar"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Toast de notificação */}
+            {roleToast.show && (
+              <div
+                style={{
+                  position: "fixed",
+                  top: "20px",
+                  right: "20px",
+                  padding: "16px 24px",
+                  background: "white",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  animation: "slideIn 0.3s ease-out",
+                  zIndex: 1000,
+                  minWidth: "300px",
+                  borderLeft: `4px solid ${
+                    roleToast.type === "success" ? "#4caf50" : "#f44336"
+                  }`,
+                }}
+              >
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "24px",
+                    height: "24px",
+                    borderRadius: "50%",
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    background:
+                      roleToast.type === "success" ? "#e8f5e9" : "#ffebee",
+                    color: roleToast.type === "success" ? "#4caf50" : "#f44336",
+                  }}
+                >
+                  {roleToast.type === "success" ? "✓" : "✗"}
+                </span>
+                <span
+                  style={{
+                    flex: 1,
+                    color: "#333",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                  }}
+                >
+                  {roleToast.message}
+                </span>
               </div>
             )}
           </div>
@@ -2344,6 +3142,18 @@ export default function AdminPage() {
           onCreateStudent={handleCreateStudent}
         />
 
+        {/* Modal de Gerenciamento de Turmas */}
+        <ClassManagementModal
+          isOpen={showClassModal}
+          onClose={() => {
+            setShowClassModal(false);
+            setEditingRealClass(undefined);
+          }}
+          onSave={handleSaveClass}
+          classData={editingRealClass}
+          teachers={allTeachers}
+        />
+
         {/* Modal Editar Aluno */}
         <EditStudentModal
           isOpen={showModal === "editStudent"}
@@ -2381,6 +3191,39 @@ export default function AdminPage() {
           adminData={adminData}
           setAdminData={setAdminData}
           onSave={handleSaveAdminSettings}
+        />
+
+        {/* Modal de Usuários */}
+        <UserModal
+          isOpen={showUserModal}
+          onClose={() => {
+            setShowUserModal(false);
+            setEditingUser(null);
+          }}
+          userData={userData}
+          setUserData={setUserData}
+          addressData={addressData}
+          setAddressData={setAddressData}
+          loadingCep={loadingCep}
+          onCepSearch={handleCepSearch}
+          classes={classes}
+          onSave={handleCreateUser}
+          isEditing={!!editingUser}
+        />
+
+        {/* Modal de Confirmação de Exclusão */}
+        <ConfirmModal
+          isOpen={showDeleteConfirm}
+          title="Confirmar Exclusão"
+          message="Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita."
+          confirmText="Excluir"
+          cancelText="Cancelar"
+          onConfirm={confirmDeleteUser}
+          onCancel={() => {
+            setShowDeleteConfirm(false);
+            setUserToDelete(null);
+          }}
+          danger={true}
         />
       </div>
     </ProtectedRoute>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Header from "../components/Header";
 import ProtectedRoute from "../components/ProtectedRoute";
+import PaymentsList from "../components/PaymentsList";
 import { useAuthStore } from "../store/authStore";
 import { Student, StudentsData } from "../types";
 import styles from "./aluno.module.css";
@@ -239,7 +240,7 @@ export default function AlunoPage() {
   if (!currentStudent) return null;
 
   return (
-    <ProtectedRoute allowedRoles={["student"]}>
+    <ProtectedRoute allowedRoles={[3]}>
       <Header />
       <div className={styles.alunoPage}>
         <div className={styles.alunoContainer}>
@@ -400,91 +401,8 @@ export default function AlunoPage() {
                   Gerenciar Mensalidades
                 </h3>
 
-                <div className={styles.currentPayment}>
-                  <div className={styles.currentPaymentHeader}>
-                    <div className={styles.currentPaymentMonth}>
-                      {currentStudent.payments[0].month}
-                    </div>
-                    <span
-                      className={`${styles.paymentStatusBadge} ${
-                        currentStudent.payments[0].status === "paid"
-                          ? styles.paid
-                          : styles.pending
-                      }`}
-                    >
-                      {currentStudent.payments[0].status === "paid"
-                        ? "✓ Pago"
-                        : "⚠ Pendente"}
-                    </span>
-                  </div>
-
-                  <div className={styles.currentPaymentInfo}>
-                    <div className={styles.paymentInfoItem}>
-                      <h4>Valor</h4>
-                      <p>{currentStudent.payments[0].amount}</p>
-                    </div>
-                    <div className={styles.paymentInfoItem}>
-                      <h4>Vencimento</h4>
-                      <p>{currentStudent.payments[0].dueDate}</p>
-                    </div>
-                    {currentStudent.payments[0].paidDate && (
-                      <div className={styles.paymentInfoItem}>
-                        <h4>Data do Pagamento</h4>
-                        <p>{currentStudent.payments[0].paidDate}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {currentStudent.payments[0].status === "pending" && (
-                    <div className={styles.paymentButtons}>
-                      <button
-                        className={`${styles.paymentButton} ${styles.primary}`}
-                        onClick={handlePayPix}
-                      >
-                        <i className="fas fa-qrcode"></i>
-                        Pagar com PIX
-                      </button>
-                      <button
-                        className={`${styles.paymentButton} ${styles.secondary}`}
-                        onClick={handleGenerateBoleto}
-                      >
-                        <i className="fas fa-barcode"></i>
-                        Gerar Boleto
-                      </button>
-                      <button
-                        className={`${styles.paymentButton} ${styles.secondary}`}
-                        onClick={handleViewHistory}
-                      >
-                        <i className="fas fa-history"></i>
-                        Ver Histórico
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div
-                  className={styles.paymentHistorySection}
-                  id="payment-history"
-                >
-                  <h4>Histórico de Pagamentos</h4>
-                  <div className={styles.paymentHistoryGrid}>
-                    {currentStudent.payments.slice(1).map((payment, index) => (
-                      <div key={index} className={styles.paymentHistoryItem}>
-                        <div className={styles.paymentHistoryMonth}>
-                          {payment.month}
-                        </div>
-                        <div className={styles.paymentHistoryAmount}>
-                          {payment.amount}
-                        </div>
-                        <div className={styles.paymentHistoryDate}>
-                          {payment.status === "paid"
-                            ? `✓ Pago em ${payment.paidDate}`
-                            : `⚠ Vencimento: ${payment.dueDate}`}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                {/* Componente de Mensalidades Integrado com Backend */}
+                {user?.id && <PaymentsList userId={user.id} />}
               </section>
 
               <section className={styles.attendanceSection}>

@@ -2,6 +2,14 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import apiService from "@/lib/api";
 
+interface Permission {
+  moduleId: number;
+  moduleName: string;
+  moduleDisplayName: string;
+  canRead: boolean;
+  canWrite: boolean;
+}
+
 interface User {
   id: number;
   name: string;
@@ -10,10 +18,11 @@ interface User {
   birthDate: Date;
   cpf: string;
   rg: string;
-  role: "admin" | "teacher" | "student";
+  roleId: number;
   groupId?: number;
   addressId?: number;
   createdAt: Date;
+  permissions?: Permission[];
 }
 
 interface AuthState {
@@ -28,6 +37,10 @@ interface AuthState {
   isAdmin: () => boolean;
   isTeacher: () => boolean;
   isStudent: () => boolean;
+  hasModuleAccess: (
+    moduleName: string,
+    accessType?: "read" | "write"
+  ) => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -76,17 +89,33 @@ export const useAuthStore = create<AuthState>()(
 
       isAdmin: () => {
         const state = get();
-        return state.user?.role === "admin";
+        return state.user?.roleId === 1;
       },
 
       isTeacher: () => {
         const state = get();
-        return state.user?.role === "teacher";
+        return state.user?.roleId === 2;
       },
 
       isStudent: () => {
         const state = get();
-        return state.user?.role === "student";
+        return state.user?.roleId === 3;
+      },
+
+      hasModuleAccess: (
+        moduleName: string,
+        accessType: "read" | "write" = "read"
+      ) => {
+        const state = get();
+        if (!state.user?.permissions) return false;
+
+        const permission = state.user.permissions.find(
+          (p) => p.moduleName === moduleName
+        );
+
+        if (!permission) return false;
+
+        return accessType === "read" ? permission.canRead : permission.canWrite;
       },
     }),
     {

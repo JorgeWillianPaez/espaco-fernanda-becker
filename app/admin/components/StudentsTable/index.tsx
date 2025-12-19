@@ -1,122 +1,129 @@
 "use client";
 
-import React from "react";
-import Image from "next/image";
+import React, { useState } from "react";
 import { AdminStudent } from "@/app/types";
 import styles from "./StudentsTable.module.css";
 
 interface StudentsTableProps {
   students: AdminStudent[];
-  filters: {
-    name: string;
-    class: string;
-    status: string;
-    id: string;
-  };
-  currentPage: number;
-  itemsPerPage: number;
   onEditStudent: (student: AdminStudent) => void;
   onDeleteStudent: (studentId: string) => void;
 }
 
 const StudentsTable: React.FC<StudentsTableProps> = ({
   students,
-  filters,
-  currentPage,
-  itemsPerPage,
   onEditStudent,
   onDeleteStudent,
 }) => {
-  const filteredStudents = students.filter((student) => {
-    if (
-      filters.name &&
-      !student.name.toLowerCase().includes(filters.name.toLowerCase())
-    ) {
-      return false;
-    }
-    if (
-      filters.id &&
-      !student.id.toLowerCase().includes(filters.id.toLowerCase())
-    ) {
-      return false;
-    }
-    if (filters.class && student.class !== filters.class) {
-      return false;
-    }
-    if (filters.status && student.status !== filters.status) {
-      return false;
-    }
-    return true;
-  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  const paginatedStudents = filteredStudents.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Paginação
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentStudents = students.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(students.length / itemsPerPage);
 
   return (
-    <div className={styles.studentsTableContainer}>
-      <table className={styles.studentsTable}>
-        <thead>
-          <tr>
-            <th>Foto</th>
-            <th>Nome</th>
-            <th>Turma</th>
-            <th>E-mail</th>
-            <th>Telefone</th>
-            <th>Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedStudents.map((student) => (
-            <tr key={student.id}>
-              <td>
-                {student.profileImage ? (
-                  <Image
-                    src={student.profileImage}
-                    alt={student.name}
-                    width={40}
-                    height={40}
-                    className={styles.studentAvatar}
-                  />
-                ) : (
-                  <div className={styles.avatarIconPlaceholder}>
-                    <i className="fas fa-user-circle"></i>
-                  </div>
-                )}
-              </td>
-              <td>{student.name}</td>
-              <td>{student.class}</td>
-              <td>{student.email}</td>
-              <td>{student.phone}</td>
-              <td>
-                <span
-                  className={`student-status-badge ${
-                    student.status === "Ativo" ? "active" : "inactive"
-                  }`}
-                >
-                  {student.status}
-                </span>
-              </td>
-              <td>
-                <button
-                  className={styles.tableActionBtn}
-                  onClick={() => onEditStudent(student)}
-                >
-                  <i className="fas fa-edit"></i>
-                </button>
-                <button
-                  className={styles.tableActionBtn}
-                  onClick={() => onDeleteStudent(student.id)}
-                >
-                  <i className="fas fa-trash"></i>
-                </button>
-              </td>
+    <div className={styles.container}>
+      {/* Tabela */}
+      <div className={styles.tableWrapper}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Telefone</th>
+              <th>Turma</th>
+              <th>Status</th>
+              <th>Data de Matrícula</th>
+              <th>Ações</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {currentStudents.length > 0 ? (
+              currentStudents.map((student) => (
+                <tr key={student.id}>
+                  <td>
+                    <div className={styles.userName}>
+                      <div className={styles.avatarIcon}>
+                        <i className="fas fa-user-circle"></i>
+                      </div>
+                      {student.name}
+                    </div>
+                  </td>
+                  <td>{student.email}</td>
+                  <td>{student.phone}</td>
+                  <td>{student.class || "Sem turma"}</td>
+                  <td>
+                    <span
+                      className={`${styles.statusBadge} ${
+                        student.status === "Ativo"
+                          ? styles.statusActive
+                          : styles.statusInactive
+                      }`}
+                    >
+                      {student.status}
+                    </span>
+                  </td>
+                  <td>{student.enrollmentDate}</td>
+                  <td>
+                    <div className={styles.actions}>
+                      <button
+                        className={styles.actionButton}
+                        onClick={() => onEditStudent(student)}
+                        title="Editar"
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+                      <button
+                        className={`${styles.actionButton} ${styles.danger}`}
+                        onClick={() => onDeleteStudent(student.id)}
+                        title="Excluir"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7} className={styles.emptyState}>
+                  Nenhum aluno encontrado
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Paginação */}
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button
+            className={styles.pageButton}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            <i className="fas fa-chevron-left"></i>
+            Anterior
+          </button>
+          <span className={styles.pageInfo}>
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            className={styles.pageButton}
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+          >
+            Próximo
+            <i className="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

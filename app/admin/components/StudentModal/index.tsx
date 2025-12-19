@@ -1,5 +1,12 @@
 import { AdminStudent, Class } from "@/app/types";
 import styles from "./StudentModal.module.css";
+import {
+  maskCPF,
+  maskRG,
+  maskPhone,
+  maskCEP,
+  removeMask,
+} from "@/app/utils/masks";
 
 interface StudentModalProps {
   isOpen: boolean;
@@ -83,10 +90,12 @@ export default function StudentModal({
               type="tel"
               className={styles.formInput}
               value={newStudent.phone}
-              onChange={(e) =>
-                setNewStudent({ ...newStudent, phone: e.target.value })
-              }
+              onChange={(e) => {
+                const maskedValue = maskPhone(e.target.value);
+                setNewStudent({ ...newStudent, phone: maskedValue });
+              }}
               placeholder="(41) 98765-4321"
+              maxLength={15}
             />
           </div>
           <div>
@@ -127,10 +136,12 @@ export default function StudentModal({
               type="text"
               className={styles.formInput}
               value={newStudent.cpf}
-              onChange={(e) =>
-                setNewStudent({ ...newStudent, cpf: e.target.value })
-              }
+              onChange={(e) => {
+                const maskedValue = maskCPF(e.target.value);
+                setNewStudent({ ...newStudent, cpf: maskedValue });
+              }}
               placeholder="000.000.000-00"
+              maxLength={14}
             />
           </div>
           <div>
@@ -139,10 +150,12 @@ export default function StudentModal({
               type="text"
               className={styles.formInput}
               value={newStudent.rg}
-              onChange={(e) =>
-                setNewStudent({ ...newStudent, rg: e.target.value })
-              }
+              onChange={(e) => {
+                const maskedValue = maskRG(e.target.value);
+                setNewStudent({ ...newStudent, rg: maskedValue });
+              }}
               placeholder="00.000.000-0"
+              maxLength={12}
             />
           </div>
         </div>
@@ -155,9 +168,9 @@ export default function StudentModal({
               className={styles.formInput}
               value={addressData.cep}
               onChange={(e) => {
-                const value = e.target.value;
-                setAddressData({ ...addressData, cep: value });
-                onCepSearch(value);
+                const maskedValue = maskCEP(e.target.value);
+                setAddressData({ ...addressData, cep: maskedValue });
+                onCepSearch(removeMask(maskedValue));
               }}
               placeholder="00000-000"
               maxLength={9}

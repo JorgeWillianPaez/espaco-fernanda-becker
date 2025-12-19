@@ -1,0 +1,231 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2d3748;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.loading,
+.error,
+.empty {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.1rem;
+  color: #718096;
+}
+
+.error {
+  color: #e53e3e;
+  background-color: #fff5f5;
+  border-radius: 8px;
+  border: 1px solid #fc8181;
+}
+
+.paymentsList {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+}
+
+.paymentCard {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.paymentCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.paymentCard.status-overdue {
+  border-left: 4px solid #e53e3e;
+}
+
+.paymentCard.status-pending {
+  border-left: 4px solid #ed8936;
+}
+
+.paymentCard.status-paid {
+  border-left: 4px solid #48bb78;
+}
+
+.paymentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.referenceMonth {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.status {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.status-pending {
+  background-color: #ed8936;
+  color: white;
+}
+
+.status-paid {
+  background-color: #48bb78;
+  color: white;
+}
+
+.status-overdue {
+  background-color: #e53e3e;
+  color: white;
+}
+
+.status-cancelled {
+  background-color: #718096;
+  color: white;
+}
+
+.paymentBody {
+  padding: 1.5rem;
+}
+
+.paymentInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.totalRow {
+  border-top: 2px solid #e2e8f0;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+}
+
+.label {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.95rem;
+}
+
+.value {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 1rem;
+}
+
+.valueTotal {
+  font-weight: 700;
+  color: #2d3748;
+  font-size: 1.25rem;
+}
+
+.fine {
+  color: #e53e3e;
+}
+
+.notes {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
+}
+
+.notes p {
+  margin-top: 0.5rem;
+  color: #4a5568;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.paymentActions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.payButton {
+  flex: 1;
+  min-width: 150px;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+}
+
+.payButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.payButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pixButton {
+  background: linear-gradient(135deg, #00b4d8 0%, #0096c7 100%);
+}
+
+.pixButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0096c7 0%, #0077b6 100%);
+}
+
+.boletoButton {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+}
+
+.boletoButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ee5a6f 0%, #dc5369 100%);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .paymentsList {
+    grid-template-columns: 1fr;
+  }
+
+  .paymentActions {
+    flex-direction: column;
+  }
+
+  .payButton {
+    width: 100%;
+  }
+}

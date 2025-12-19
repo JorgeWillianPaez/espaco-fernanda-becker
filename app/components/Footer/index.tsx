@@ -27,15 +27,20 @@ export default function Footer() {
             <div className={styles.socialLinks}>
               <a
                 href="https://www.instagram.com/espaco.ferbecker/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className={styles.socialLink}
                 aria-label="Instagram"
               >
                 <i className="fab fa-instagram"></i>
               </a>
-              <a href="#" className={styles.socialLink} aria-label="Facebook">
-                <i className="fab fa-facebook"></i>
-              </a>
-              <a href="#" className={styles.socialLink} aria-label="YouTube">
+              <a
+                href="#"
+                className={styles.socialLink}
+                aria-label="YouTube"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <i className="fab fa-youtube"></i>
               </a>
             </div>
