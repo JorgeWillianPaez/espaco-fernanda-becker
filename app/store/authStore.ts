@@ -15,13 +15,14 @@ interface User {
   name: string;
   email: string;
   phone: string;
-  birthDate: Date;
+  birthDate: string; // Vem como string ISO do JSON
   cpf: string;
   rg: string;
   roleId: number;
   groupId?: number;
   addressId?: number;
-  createdAt: Date;
+  allowedPaymentMethods?: string[];
+  createdAt: string; // Vem como string ISO do JSON
   permissions?: Permission[];
 }
 

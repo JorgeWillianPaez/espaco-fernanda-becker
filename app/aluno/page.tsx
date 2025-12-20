@@ -8,7 +8,9 @@ import Header from "../components/Header";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PaymentsList from "../components/PaymentsList";
 import { useAuthStore } from "../store/authStore";
-import { Student, StudentsData } from "../types";
+import { Student, StudentsData, ClassSchedule } from "../types";
+import { maskPhone } from "../utils/masks";
+import apiService from "@/lib/api";
 import styles from "./aluno.module.css";
 
 const studentsData: StudentsData = {
@@ -147,9 +149,76 @@ const studentsData: StudentsData = {
 export default function AlunoPage() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
   const logout = useAuthStore((state) => state.logout);
   const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [studentClasses, setStudentClasses] = useState<ClassSchedule[]>([]);
+  const [isLoadingClasses, setIsLoadingClasses] = useState(false);
+
+  // Modal de alteração de senha
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Mapa para traduzir dias da semana
+  const DAY_OF_WEEK_MAP: Record<string, string> = {
+    monday: "Segunda-feira",
+    tuesday: "Terça-feira",
+    wednesday: "Quarta-feira",
+    thursday: "Quinta-feira",
+    friday: "Sexta-feira",
+    saturday: "Sábado",
+    sunday: "Domingo",
+  };
+
+  const translateDayOfWeek = (day: string): string => {
+    return DAY_OF_WEEK_MAP[day.toLowerCase()] || day;
+  };
+
+  // Carregar turmas do aluno
+  const fetchStudentClasses = async () => {
+    if (!user?.id || !token) return;
+
+    try {
+      setIsLoadingClasses(true);
+      const response = (await apiService.getClassesByStudent(
+        user.id,
+        token
+      )) as { data?: any[] };
+
+      if (response.data && Array.isArray(response.data)) {
+        // Função para formatar horário (remover segundos)
+        const formatTime = (time: string) => {
+          if (!time) return "";
+          // Se vier no formato HH:mm:ss, pegar só HH:mm
+          return time.substring(0, 5);
+        };
+
+        // Converter dados da API para formato de schedule
+        const schedules: ClassSchedule[] = response.data.map(
+          (classItem: any) => ({
+            day: translateDayOfWeek(classItem.dayOfWeek),
+            startTime: formatTime(classItem.startTime),
+            endTime: formatTime(classItem.endTime),
+            room: classItem.room?.name || "Sala não definida",
+            className: classItem.name,
+          })
+        );
+        setStudentClasses(schedules);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar turmas:", error);
+    } finally {
+      setIsLoadingClasses(false);
+    }
+  };
 
   // Carregar dados do aluno baseado no usuário logado
   useEffect(() => {
@@ -166,17 +235,69 @@ export default function AlunoPage() {
           class: "Sem turma",
           status: "Ativo",
           profileImage: "",
-          enrollmentDate: new Date().toLocaleDateString("pt-BR"),
+          enrollmentDate: user.createdAt
+            ? new Date(user.createdAt).toLocaleDateString("pt-BR")
+            : new Date().toLocaleDateString("pt-BR"),
           schedule: [],
           payments: [],
         });
       }
+
+      // Carregar turmas do backend
+      fetchStudentClasses();
     }
-  }, [user]);
+  }, [user, token]);
 
   const handleLogout = () => {
     logout();
     router.push("/login");
+  };
+
+  const handleChangePassword = async (e: FormEvent) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError("As senhas não coincidem");
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError("A nova senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+
+    if (!token) {
+      setPasswordError("Sessão expirada. Faça login novamente.");
+      return;
+    }
+
+    try {
+      setIsChangingPassword(true);
+      await apiService.changePassword(
+        passwordData.currentPassword,
+        passwordData.newPassword,
+        token
+      );
+
+      setPasswordSuccess("Senha alterada com sucesso!");
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      // Fechar modal após 2 segundos
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordSuccess("");
+      }, 2000);
+    } catch (error: any) {
+      setPasswordError(error.message || "Erro ao alterar senha");
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const handleGenerateBoleto = () => {
@@ -304,22 +425,27 @@ export default function AlunoPage() {
                 </span>
                 <div className={styles.profileDetails}>
                   <div className={styles.profileDetailItem}>
-                    <i className="fas fa-id-card"></i>
-                    <span>E-mail: {currentStudent.email}</span>
-                  </div>
-                  <div className={styles.profileDetailItem}>
                     <i className="fas fa-envelope"></i>
                     <span>{currentStudent.email}</span>
                   </div>
                   <div className={styles.profileDetailItem}>
                     <i className="fas fa-phone"></i>
-                    <span>{currentStudent.phone}</span>
+                    <span>{maskPhone(currentStudent.phone || "")}</span>
                   </div>
                   <div className={styles.profileDetailItem}>
                     <i className="fas fa-calendar"></i>
                     <span>Matrícula desde {currentStudent.enrollmentDate}</span>
                   </div>
                 </div>
+
+                {/* Botão de Alterar Senha */}
+                <button
+                  className={styles.changePasswordBtn}
+                  onClick={() => setShowPasswordModal(true)}
+                >
+                  <i className="fas fa-key"></i>
+                  Alterar Senha
+                </button>
               </div>
 
               <div className={styles.scheduleCard}>
@@ -328,22 +454,40 @@ export default function AlunoPage() {
                   Horários das Aulas
                 </h3>
                 <div className={styles.scheduleList}>
-                  {currentStudent.schedule.map((schedule, index) => (
-                    <div key={index} className={styles.scheduleItem}>
-                      <div className={styles.scheduleDay}>
-                        <i className="fas fa-calendar-day"></i>
-                        {schedule.day}
-                      </div>
-                      <div className={styles.scheduleTime}>
-                        <i className="fas fa-clock"></i> {schedule.startTime} -{" "}
-                        {schedule.endTime}
-                      </div>
-                      <div className={styles.scheduleRoom}>
-                        <i className="fas fa-door-open"></i>
-                        {schedule.room}
-                      </div>
+                  {isLoadingClasses ? (
+                    <div className={styles.loadingSchedule}>
+                      <i className="fas fa-spinner fa-spin"></i>
+                      <span>Carregando horários...</span>
                     </div>
-                  ))}
+                  ) : studentClasses.length > 0 ? (
+                    studentClasses.map((schedule, index) => (
+                      <div key={index} className={styles.scheduleItem}>
+                        {schedule.className && (
+                          <div className={styles.scheduleClassName}>
+                            <i className="fas fa-graduation-cap"></i>
+                            {schedule.className}
+                          </div>
+                        )}
+                        <div className={styles.scheduleDay}>
+                          <i className="fas fa-calendar-day"></i>
+                          {schedule.day}
+                        </div>
+                        <div className={styles.scheduleTime}>
+                          <i className="fas fa-clock"></i> {schedule.startTime}{" "}
+                          - {schedule.endTime}
+                        </div>
+                        <div className={styles.scheduleRoom}>
+                          <i className="fas fa-door-open"></i>
+                          {schedule.room}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className={styles.noSchedule}>
+                      <i className="fas fa-info-circle"></i>
+                      <span>Nenhuma turma vinculada</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -356,7 +500,8 @@ export default function AlunoPage() {
                     <i className="fas fa-calendar-week"></i>
                     <div className={styles.statContent}>
                       <div className={styles.statValue}>
-                        {currentStudent.schedule.length}
+                        {studentClasses.length ||
+                          currentStudent.schedule.length}
                       </div>
                       <div className={styles.statLabel}>Aulas por Semana</div>
                     </div>
@@ -402,7 +547,12 @@ export default function AlunoPage() {
                 </h3>
 
                 {/* Componente de Mensalidades Integrado com Backend */}
-                {user?.id && <PaymentsList userId={user.id} />}
+                {user?.id && (
+                  <PaymentsList
+                    userId={user.id}
+                    allowedPaymentMethods={user.allowedPaymentMethods}
+                  />
+                )}
               </section>
 
               <section className={styles.attendanceSection}>
@@ -541,6 +691,111 @@ export default function AlunoPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Alteração de Senha */}
+      {showPasswordModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowPasswordModal(false)}
+        >
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <button
+              className={styles.modalClose}
+              onClick={() => setShowPasswordModal(false)}
+            >
+              <i className="fas fa-times"></i>
+            </button>
+            <h2 className={styles.modalTitle}>
+              <i className="fas fa-key"></i>
+              Alterar Senha
+            </h2>
+            <form
+              onSubmit={handleChangePassword}
+              className={styles.passwordForm}
+            >
+              <div className={styles.formGroup}>
+                <label htmlFor="currentPassword">Senha Atual</label>
+                <input
+                  type="password"
+                  id="currentPassword"
+                  value={passwordData.currentPassword}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      currentPassword: e.target.value,
+                    })
+                  }
+                  required
+                  placeholder="Digite sua senha atual"
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="newPassword">Nova Senha</label>
+                <input
+                  type="password"
+                  id="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      newPassword: e.target.value,
+                    })
+                  }
+                  required
+                  placeholder="Digite a nova senha"
+                  minLength={6}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="confirmPassword">Confirmar Nova Senha</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      confirmPassword: e.target.value,
+                    })
+                  }
+                  required
+                  placeholder="Confirme a nova senha"
+                  minLength={6}
+                />
+              </div>
+              {passwordError && (
+                <div className={styles.errorMessage}>
+                  <i className="fas fa-exclamation-circle"></i>
+                  {passwordError}
+                </div>
+              )}
+              {passwordSuccess && (
+                <div className={styles.successMessage}>
+                  <i className="fas fa-check-circle"></i>
+                  {passwordSuccess}
+                </div>
+              )}
+              <button
+                type="submit"
+                className={styles.submitButton}
+                disabled={isChangingPassword}
+              >
+                {isChangingPassword ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i>
+                    Alterando...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-save"></i>
+                    Salvar Nova Senha
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </ProtectedRoute>
   );
 }

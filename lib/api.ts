@@ -8,13 +8,13 @@ interface LoginResponse {
       name: string;
       email: string;
       phone: string;
-      birthDate: Date;
+      birthDate: string; // Vem como string ISO do JSON
       cpf: string;
       rg: string;
       roleId: number;
       groupId?: number;
       addressId?: number;
-      createdAt: Date;
+      createdAt: string; // Vem como string ISO do JSON
     };
     token: string;
   };
@@ -28,6 +28,19 @@ interface ApiError {
 class ApiService {
   private getToken(): string | null {
     if (typeof window !== "undefined") {
+      // Primeiro tenta pegar do storage do Zustand (auth-storage)
+      const authStorage = localStorage.getItem("auth-storage");
+      if (authStorage) {
+        try {
+          const parsed = JSON.parse(authStorage);
+          if (parsed.state?.token) {
+            return parsed.state.token;
+          }
+        } catch (e) {
+          console.error("Erro ao parsear auth-storage:", e);
+        }
+      }
+      // Fallback para token direto (compatibilidade)
       return localStorage.getItem("token");
     }
     return null;
@@ -212,6 +225,77 @@ class ApiService {
     return this.handleResponse<LoginResponse>(response);
   }
 
+  // Registro feito pelo admin - não precisa de senha (gerada automaticamente) e envia email
+  async adminRegister(
+    data: {
+      name: string;
+      email: string;
+      phone: string;
+      birth_date: string;
+      cpf: string;
+      rg: string;
+      role?: number;
+      guardian?: string;
+      guardian_id?: number;
+      allowed_payment_methods?: string[];
+      class_id?: number;
+      plan_id?: number;
+      discount_type?: "percentage" | "value" | "none";
+      discount_percentage?: number;
+      discount_value?: number;
+      proportional_payment_option?: "immediate" | "next_month";
+      has_disability?: boolean;
+      disability_description?: string;
+      takes_medication?: boolean;
+      medication_description?: string;
+      address?: {
+        zip_code: string;
+        street: string;
+        number: string;
+        complement?: string;
+        neighborhood: string;
+        city: string;
+        state: string;
+      };
+    },
+    token: string
+  ): Promise<{
+    message: string;
+    data: {
+      user: LoginResponse["data"]["user"];
+      token: string;
+    };
+  }> {
+    const response = await fetch(`${API_URL}/auth/admin-register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    return this.handleResponse(response);
+  }
+
+  // Alterar senha do usuário logado
+  async changePassword(
+    currentPassword: string,
+    newPassword: string,
+    token: string
+  ): Promise<{ message: string }> {
+    const response = await fetch(`${API_URL}/auth/change-password`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+
+    return this.handleResponse(response);
+  }
+
   // ========== MODULES ==========
 
   async getModules(token: string): Promise<{
@@ -361,14 +445,25 @@ class ApiService {
       name: string;
       email: string;
       phone: string;
-      birthDate: Date;
+      birthDate: string; // Vem como string ISO do JSON
       cpf: string;
       rg: string;
       role: "admin" | "teacher" | "student";
       roleId: number;
       groupId?: number;
       addressId?: number;
-      createdAt: Date;
+      guardian?: string;
+      classIds?: number[];
+      address?: {
+        cep: string;
+        street: string;
+        number: string;
+        complement?: string;
+        neighborhood: string;
+        city: string;
+        state: string;
+      };
+      createdAt: string; // Vem como string ISO do JSON
     }>;
   }> {
     const response = await fetch(`${API_URL}/users`, {
@@ -390,13 +485,13 @@ class ApiService {
       name: string;
       email: string;
       phone: string;
-      birthDate: Date;
+      birthDate: string; // Vem como string ISO do JSON
       cpf: string;
       rg: string;
       role: "admin" | "teacher" | "student";
       groupId?: number;
       addressId?: number;
-      createdAt: Date;
+      createdAt: string; // Vem como string ISO do JSON
     };
   }> {
     const response = await fetch(`${API_URL}/users/${id}`, {
@@ -418,8 +513,24 @@ class ApiService {
       birth_date?: string;
       cpf?: string;
       rg?: string;
-      role?: "admin" | "teacher" | "student";
+      role_id?: number;
       group_id?: number;
+      guardian_id?: number | null;
+      has_disability?: boolean;
+      disability_description?: string | null;
+      takes_medication?: boolean;
+      medication_description?: string | null;
+      allowed_payment_methods?: string[];
+      address?: {
+        zip_code: string;
+        street: string;
+        number: string;
+        complement?: string;
+        neighborhood: string;
+        city: string;
+        state: string;
+      };
+      class_id?: number;
     },
     token: string
   ): Promise<{ message: string; data: any }> {
@@ -843,6 +954,180 @@ class ApiService {
   async deleteEventPhotosByEventId(eventId: number, token: string) {
     const response = await fetch(`${API_URL}/event-photos/event/${eventId}`, {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return this.handleResponse(response);
+  }
+
+  // ============== PLANOS ==============
+
+  async getPlans(token: string) {
+    const response = await fetch(`${API_URL}/plans`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async getActivePlans() {
+    const response = await fetch(`${API_URL}/plans/active`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async getPlanById(id: number, token?: string) {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_URL}/plans/${id}`, {
+      method: "GET",
+      headers,
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async createPlan(
+    data: {
+      name: string;
+      description?: string;
+      type: "individual" | "family" | "premium";
+      price: number;
+    },
+    token: string
+  ) {
+    const response = await fetch(`${API_URL}/plans`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async updatePlan(
+    id: number,
+    data: {
+      name?: string;
+      description?: string;
+      type?: "individual" | "family" | "premium";
+      price?: number;
+      active?: boolean;
+    },
+    token: string
+  ) {
+    const response = await fetch(`${API_URL}/plans/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async deletePlan(id: number, token: string) {
+    const response = await fetch(`${API_URL}/plans/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return this.handleResponse(response);
+  }
+
+  // ============== GRUPOS ==============
+
+  async getGroups(token: string) {
+    const response = await fetch(`${API_URL}/groups`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async getGroupById(id: number, token: string) {
+    const response = await fetch(`${API_URL}/groups/${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async updateGroup(
+    id: number,
+    data: {
+      name?: string;
+      planId?: number | null;
+      active?: boolean;
+      discountType?: "percentage" | "value" | "none";
+      discountPercentage?: number;
+      discountValue?: number;
+    },
+    token: string
+  ) {
+    const response = await fetch(`${API_URL}/groups/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name: data.name,
+        plan_id: data.planId,
+        active: data.active,
+        discount_type: data.discountType,
+        discount_percentage: data.discountPercentage,
+        discount_value: data.discountValue,
+      }),
+    });
+
+    return this.handleResponse(response);
+  }
+
+  // ========== REVENUE ==========
+
+  async getMonthlyRevenue(
+    year: number,
+    token: string
+  ): Promise<{
+    data: Array<{ month: number; total: number }>;
+  }> {
+    const response = await fetch(`${API_URL}/tuitions/revenue/${year}`, {
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,

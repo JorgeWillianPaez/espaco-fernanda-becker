@@ -6,12 +6,12 @@ interface Student {
   name: string;
   email: string;
   phone: string;
-  birthDate: Date;
+  birthDate: string; // Vem como string ISO do JSON
   cpf: string;
   rg: string;
   groupId?: number;
   addressId?: number;
-  createdAt: Date;
+  createdAt: string; // Vem como string ISO do JSON
 }
 
 interface Payment {
@@ -19,10 +19,10 @@ interface Payment {
   userId: number;
   planId: number;
   amount: number;
-  paymentDate: Date;
-  dueDate: Date;
+  paymentDate: string; // Vem como string ISO do JSON
+  dueDate: string; // Vem como string ISO do JSON
   status: "pending" | "paid" | "overdue" | "cancelled";
-  createdAt: Date;
+  createdAt: string; // Vem como string ISO do JSON
 }
 
 interface Group {

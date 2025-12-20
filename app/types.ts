@@ -40,6 +40,7 @@ export interface ClassSchedule {
   startTime: string;
   endTime: string;
   room: string;
+  className?: string;
 }
 
 export interface Student {
@@ -154,18 +155,20 @@ export interface UserData {
   name: string;
   email: string;
   phone: string;
-  birthDate: Date;
+  birthDate: string; // Vem como string ISO do JSON
   cpf: string;
   rg: string;
   roleId: number;
   groupId?: number;
   addressId?: number;
+  guardianId?: number;
   guardian?: string;
   hasDisability?: boolean;
   disabilityDescription?: string;
   takesMedication?: boolean;
   medicationDescription?: string;
   paymentMethods?: string[];
+  classIds?: number[]; // IDs das turmas em que o aluno está matriculado
   address?: {
     id?: number;
     cep: string;
@@ -176,7 +179,7 @@ export interface UserData {
     city: string;
     state: string;
   };
-  createdAt: Date;
+  createdAt: string; // Vem como string ISO do JSON
 }
 
 export interface UserFormData {
@@ -189,9 +192,14 @@ export interface UserFormData {
   guardian?: string;
   role?: string;
   classId?: string;
+  planId?: string;
   hasDisability?: boolean;
   disabilityDescription?: string;
   takesMedication?: boolean;
   medicationDescription?: string;
   paymentMethods?: string[];
+  discountType?: "percentage" | "value" | "none";
+  discountPercentage?: string;
+  discountValue?: string;
+  proportionalPaymentOption?: "immediate" | "next_month";
 }

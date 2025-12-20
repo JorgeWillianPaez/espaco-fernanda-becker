@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { maskPhone } from "@/app/utils/masks";
 import styles from "./TeacherProfile.module.css";
 
 interface Teacher {
@@ -72,7 +73,7 @@ const TeacherProfile: React.FC<TeacherProfileProps> = ({
         </div>
         <div className={styles.profileDetailItem}>
           <i className="fas fa-phone"></i>
-          <span>{teacher.phone}</span>
+          <span>{maskPhone(teacher.phone)}</span>
         </div>
         <div className={styles.profileDetailItem}>
           <i className="fas fa-calendar"></i>

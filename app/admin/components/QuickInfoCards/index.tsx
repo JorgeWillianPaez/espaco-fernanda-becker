@@ -2,25 +2,10 @@
 
 import React from "react";
 import styles from "./QuickInfoCards.module.css";
-import { AdminStudent } from "@/app/types";
-
-interface Class {
-  id: string;
-  name: string;
-  level: string;
-  room: string;
-  currentStudents: number;
-  maxStudents: number;
-  schedule: Array<{
-    day: string;
-    startTime: string;
-    endTime: string;
-    room: string;
-  }>;
-}
+import { AdminStudent, ClassData } from "@/app/types";
 
 interface QuickInfoCardsProps {
-  classes: Class[];
+  classes: ClassData[];
   students: AdminStudent[];
 }
 
@@ -30,17 +15,18 @@ const QuickInfoCards: React.FC<QuickInfoCardsProps> = ({
 }) => {
   const totalClasses = classes.length;
   const totalStudents = students.length;
-  const weeklyClasses = classes.reduce((acc, c) => acc + c.schedule.length, 0);
+  const weeklyClasses = classes.length; // Cada turma = 1 aula semanal
   const averagePerClass = classes.length
     ? Math.round(
-        classes.reduce((acc, c) => acc + c.currentStudents, 0) / classes.length
+        classes.reduce((acc, c) => acc + (c.studentCount || 0), 0) /
+          classes.length
       )
     : 0;
   const paidStudents = students.filter(
     (s) => s.payments[0]?.status === "paid"
   ).length;
   const availableSpots = classes.reduce(
-    (acc, c) => acc + (c.maxStudents - c.currentStudents),
+    (acc, c) => acc + (c.maxStudents - (c.studentCount || 0)),
     0
   );
 

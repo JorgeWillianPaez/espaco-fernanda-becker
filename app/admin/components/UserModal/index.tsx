@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Class } from "@/app/types";
+import { ClassData } from "@/app/types";
 import styles from "./UserModal.module.css";
 import {
   maskCPF,
@@ -31,11 +31,37 @@ interface UserFormData {
   guardian?: string;
   role?: string;
   classId?: string;
+  planId?: string;
   hasDisability?: boolean;
   disabilityDescription?: string;
   takesMedication?: boolean;
   medicationDescription?: string;
   paymentMethods?: string[];
+  discountType?: "percentage" | "value" | "none";
+  discountPercentage?: string;
+  discountValue?: string;
+  proportionalPaymentOption?: "immediate" | "next_month";
+}
+
+interface Plan {
+  id: number;
+  name: string;
+  type: string;
+  price: number;
+  active: boolean;
+}
+
+interface StudentWithGroup {
+  id: string;
+  name: string;
+  groupId?: number;
+}
+
+interface GroupDiscount {
+  discountType?: "percentage" | "value" | "none";
+  discountPercentage?: number;
+  discountValue?: number;
+  planId?: number;
 }
 
 interface UserModalProps {
@@ -47,9 +73,13 @@ interface UserModalProps {
   setAddressData: (data: AddressData) => void;
   loadingCep: boolean;
   onCepSearch: (cep: string) => void;
-  classes: Class[];
+  classes: ClassData[];
+  plans?: Plan[];
   onSave: () => void;
   isEditing?: boolean;
+  allStudents?: StudentWithGroup[];
+  isSaving?: boolean;
+  onGetGroupDiscount?: (groupId: number) => Promise<GroupDiscount | null>;
 }
 
 const UserModal: React.FC<UserModalProps> = ({
@@ -62,15 +92,42 @@ const UserModal: React.FC<UserModalProps> = ({
   loadingCep,
   onCepSearch,
   classes,
+  plans = [],
   onSave,
   isEditing = false,
+  allStudents = [],
+  isSaving = false,
+  onGetGroupDiscount,
 }) => {
   if (!isOpen) return null;
 
   const isStudent = userData.role === "aluno";
 
+  // Função para lidar com a seleção de responsável
+  const handleGuardianChange = async (guardianId: string) => {
+    setUserData({ ...userData, guardian: guardianId });
+
+    if (guardianId && onGetGroupDiscount) {
+      const guardian = allStudents.find((s) => s.id === guardianId);
+      if (guardian?.groupId) {
+        const groupDiscount = await onGetGroupDiscount(guardian.groupId);
+        if (groupDiscount) {
+          setUserData({
+            ...userData,
+            guardian: guardianId,
+            planId: groupDiscount.planId?.toString() || userData.planId,
+            discountType: groupDiscount.discountType || "none",
+            discountPercentage:
+              groupDiscount.discountPercentage?.toString() || "",
+            discountValue: groupDiscount.discountValue?.toString() || "",
+          });
+        }
+      }
+    }
+  };
+
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={styles.modalOverlay}>
       <div
         className={styles.modalContainer}
         onClick={(e) => e.stopPropagation()}
@@ -168,15 +225,24 @@ const UserModal: React.FC<UserModalProps> = ({
             <div className={styles.formGrid}>
               <div>
                 <label className={styles.formLabel}>Responsável</label>
-                <input
-                  type="text"
-                  className={styles.formInput}
+                <select
+                  className={styles.formSelect}
                   value={userData.guardian || ""}
-                  onChange={(e) =>
-                    setUserData({ ...userData, guardian: e.target.value })
-                  }
-                  placeholder="Nome do responsável"
-                />
+                  onChange={(e) => handleGuardianChange(e.target.value)}
+                >
+                  <option value="">Selecione um responsável (opcional)</option>
+                  {allStudents.map((student) => (
+                    <option key={student.id} value={student.id}>
+                      {student.name}
+                    </option>
+                  ))}
+                </select>
+                {userData.guardian && (
+                  <p className={styles.helperText}>
+                    <i className="fas fa-info-circle"></i> O desconto do grupo
+                    do responsável será aplicado automaticamente
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -340,14 +406,250 @@ const UserModal: React.FC<UserModalProps> = ({
                   >
                     <option value="">Selecione uma turma</option>
                     {classes.map((classItem) => (
-                      <option key={classItem.id} value={classItem.id}>
-                        {classItem.name} ({classItem.currentStudents}/
+                      <option
+                        key={classItem.id}
+                        value={classItem.id.toString()}
+                      >
+                        {classItem.name} ({classItem.studentCount || 0}/
                         {classItem.maxStudents})
                       </option>
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className={styles.formLabel}>Plano</label>
+                  <select
+                    className={styles.formSelect}
+                    value={userData.planId || ""}
+                    onChange={(e) =>
+                      setUserData({ ...userData, planId: e.target.value })
+                    }
+                  >
+                    <option value="">Selecione um plano (opcional)</option>
+                    {plans
+                      .filter((p) => p.active)
+                      .map((plan) => (
+                        <option key={plan.id} value={plan.id.toString()}>
+                          {plan.name} -{" "}
+                          {new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          }).format(plan.price)}
+                        </option>
+                      ))}
+                  </select>
+                </div>
               </div>
+
+              {/* Opção de cobrança proporcional para matrícula no meio do mês */}
+              {!isEditing && userData.classId && userData.planId && (
+                <div className={styles.proportionalPaymentSection}>
+                  <label className={styles.formLabel}>
+                    <i className="fas fa-calendar-alt"></i> Cobrança das Aulas
+                    Restantes do Mês
+                  </label>
+                  <p className={styles.helperText}>
+                    Como deseja cobrar o valor proporcional das aulas restantes
+                    deste mês?
+                  </p>
+                  <div className={styles.radioGroup}>
+                    <label className={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="proportionalPaymentOption"
+                        value="immediate"
+                        checked={
+                          userData.proportionalPaymentOption !== "next_month"
+                        }
+                        onChange={() =>
+                          setUserData({
+                            ...userData,
+                            proportionalPaymentOption: "immediate",
+                          })
+                        }
+                      />
+                      <span>
+                        <strong>Gerar cobrança imediata</strong>
+                        <small>
+                          Um pagamento separado será gerado com vencimento em 3
+                          dias
+                        </small>
+                      </span>
+                    </label>
+                    <label className={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="proportionalPaymentOption"
+                        value="next_month"
+                        checked={
+                          userData.proportionalPaymentOption === "next_month"
+                        }
+                        onChange={() =>
+                          setUserData({
+                            ...userData,
+                            proportionalPaymentOption: "next_month",
+                          })
+                        }
+                      />
+                      <span>
+                        <strong>Somar com a próxima mensalidade</strong>
+                        <small>
+                          O valor será adicionado à mensalidade do próximo mês
+                        </small>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Campos de Desconto */}
+              {userData.planId && (
+                <div className={styles.discountSection}>
+                  <label className={styles.formLabel}>
+                    <i className="fas fa-tags"></i> Desconto
+                  </label>
+                  <p className={styles.helperText}>
+                    O desconto é aplicado ao aluno/família. Se o responsável já
+                    possui desconto, ele será herdado automaticamente.
+                  </p>
+
+                  <div className={styles.discountGrid}>
+                    <div>
+                      <label className={styles.formLabel}>
+                        Tipo de Desconto
+                      </label>
+                      <select
+                        className={styles.formSelect}
+                        value={userData.discountType || "none"}
+                        onChange={(e) => {
+                          const type = e.target.value as
+                            | "percentage"
+                            | "value"
+                            | "none";
+                          setUserData({
+                            ...userData,
+                            discountType: type,
+                            discountPercentage:
+                              type === "none"
+                                ? ""
+                                : userData.discountPercentage,
+                            discountValue:
+                              type === "none" ? "" : userData.discountValue,
+                          });
+                        }}
+                      >
+                        <option value="none">Sem desconto</option>
+                        <option value="percentage">Percentual (%)</option>
+                        <option value="value">Valor fixo (R$)</option>
+                      </select>
+                    </div>
+
+                    {userData.discountType === "percentage" && (
+                      <div>
+                        <label className={styles.formLabel}>Desconto (%)</label>
+                        <div className={styles.inputWithIcon}>
+                          <input
+                            type="number"
+                            className={styles.formInput}
+                            value={userData.discountPercentage || ""}
+                            onChange={(e) => {
+                              const percentage =
+                                parseFloat(e.target.value) || 0;
+                              const planPrice =
+                                plans.find(
+                                  (p) => p.id.toString() === userData.planId
+                                )?.price || 0;
+                              const calculatedValue = (
+                                (planPrice * percentage) /
+                                100
+                              ).toFixed(2);
+                              setUserData({
+                                ...userData,
+                                discountPercentage: e.target.value,
+                                discountValue: calculatedValue,
+                              });
+                            }}
+                            placeholder="0"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                          />
+                          <span className={styles.inputSuffix}>%</span>
+                        </div>
+                        {userData.discountPercentage && (
+                          <p className={styles.discountPreview}>
+                            = R$ {userData.discountValue || "0.00"} de desconto
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {userData.discountType === "value" && (
+                      <div>
+                        <label className={styles.formLabel}>
+                          Desconto (R$)
+                        </label>
+                        <div className={styles.inputWithIcon}>
+                          <span className={styles.inputPrefix}>R$</span>
+                          <input
+                            type="number"
+                            className={styles.formInput}
+                            value={userData.discountValue || ""}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value) || 0;
+                              const planPrice =
+                                plans.find(
+                                  (p) => p.id.toString() === userData.planId
+                                )?.price || 0;
+                              const calculatedPercentage =
+                                planPrice > 0
+                                  ? ((value / planPrice) * 100).toFixed(2)
+                                  : "0";
+                              setUserData({
+                                ...userData,
+                                discountValue: e.target.value,
+                                discountPercentage: calculatedPercentage,
+                              });
+                            }}
+                            placeholder="0.00"
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
+                        {userData.discountValue && (
+                          <p className={styles.discountPreview}>
+                            = {userData.discountPercentage || "0"}% do valor do
+                            plano
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {userData.discountType !== "none" && userData.planId && (
+                    <div className={styles.discountSummary}>
+                      <i className="fas fa-calculator"></i>
+                      <span>
+                        Valor final da mensalidade:{" "}
+                        <strong>
+                          {new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          }).format(
+                            Math.max(
+                              0,
+                              (plans.find(
+                                (p) => p.id.toString() === userData.planId
+                              )?.price || 0) -
+                                (parseFloat(userData.discountValue || "0") || 0)
+                            )
+                          )}
+                        </strong>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className={`${styles.formGrid} ${styles.full}`}>
                 <div>
@@ -521,14 +823,24 @@ const UserModal: React.FC<UserModalProps> = ({
             <button
               className={`${styles.formButton} ${styles.secondary}`}
               onClick={onClose}
+              disabled={isSaving}
             >
               Cancelar
             </button>
             <button
               className={`${styles.formButton} ${styles.primary}`}
               onClick={onSave}
+              disabled={isSaving}
             >
-              {isEditing ? "Atualizar" : "Cadastrar"}
+              {isSaving ? (
+                <>
+                  <i className="fas fa-spinner fa-spin"></i> Salvando...
+                </>
+              ) : isEditing ? (
+                "Atualizar"
+              ) : (
+                "Cadastrar"
+              )}
             </button>
           </div>
         </div>

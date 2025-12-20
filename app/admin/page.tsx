@@ -25,9 +25,10 @@ import TeachersTable from "./components/TeachersTable";
 import TeacherProfile from "./components/TeacherProfile";
 import AdminProfile from "./components/AdminProfile";
 import EventsManagement from "./components/EventsManagement";
+import PlansManagement from "./components/PlansManagement";
 import QuickInfoCards from "./components/QuickInfoCards";
 import WeeklySchedule from "./components/WeeklySchedule";
-import ClassesSummary from "./components/ClassesSummary";
+import BirthdayCard from "./components/BirthdayCard";
 import ClassManagementModal from "./components/ClassManagementModal";
 import UserModal from "./components/UserModal";
 import UsersTable from "./components/UsersTable";
@@ -35,7 +36,13 @@ import RolesTable from "./components/RolesTable";
 import ToastContainer from "../components/ToastContainer";
 import ConfirmModal from "../components/ConfirmModal";
 import { useToast } from "../hooks/useToast";
-import { removeMask } from "../utils/masks";
+import {
+  removeMask,
+  maskCPF,
+  maskRG,
+  maskPhone,
+  maskCEP,
+} from "../utils/masks";
 import apiService from "@/lib/api";
 import { Role, NewRole, Module } from "../types/role";
 import styles from "./admin.module.css";
@@ -49,7 +56,35 @@ import {
   ClassFormData,
   UserData,
   UserFormData,
+  Payment,
 } from "../types";
+
+// Mapa para traduzir dias da semana de inglês para português
+const DAY_OF_WEEK_MAP: Record<string, string> = {
+  monday: "Segunda-feira",
+  tuesday: "Terça-feira",
+  wednesday: "Quarta-feira",
+  thursday: "Quinta-feira",
+  friday: "Sexta-feira",
+  saturday: "Sábado",
+  sunday: "Domingo",
+};
+
+// Função helper para traduzir dia da semana
+const translateDayOfWeek = (day: string): string => {
+  return DAY_OF_WEEK_MAP[day.toLowerCase()] || day;
+};
+
+// Função helper para formatar horário (remover segundos)
+const formatTime = (time: string): string => {
+  if (!time) return "";
+  // Se o horário vier como HH:MM:SS, retorna apenas HH:MM
+  const parts = time.split(":");
+  if (parts.length >= 2) {
+    return `${parts[0]}:${parts[1]}`;
+  }
+  return time;
+};
 
 // Dados mockados
 const teacherData: Teacher = {
@@ -581,6 +616,7 @@ export default function AdminPage() {
     teachers: "teachers",
     users: "users",
     payments: "payments",
+    plans: "plans",
     events: "events",
     access: "access",
   };
@@ -589,6 +625,12 @@ export default function AdminPage() {
   const shouldShowTab = (tabName: keyof typeof TAB_MODULE_MAP) => {
     const moduleName = TAB_MODULE_MAP[tabName];
     return hasModuleAccess(moduleName, "read");
+  };
+
+  // Função para verificar se pode escrever em um módulo
+  const canWriteModule = (tabName: keyof typeof TAB_MODULE_MAP) => {
+    const moduleName = TAB_MODULE_MAP[tabName];
+    return hasModuleAccess(moduleName, "write");
   };
 
   // Obter primeira aba disponível para o usuário
@@ -600,6 +642,7 @@ export default function AdminPage() {
       "teachers",
       "users",
       "payments",
+      "plans",
       "events",
       "access",
     ];
@@ -614,6 +657,7 @@ export default function AdminPage() {
     | "teachers"
     | "users"
     | "payments"
+    | "plans"
     | "events"
     | "access"
   >(getFirstAvailableTab());
@@ -625,6 +669,15 @@ export default function AdminPage() {
     ClassData | undefined
   >(undefined);
   const [allTeachers, setAllTeachers] = useState<UserData[]>([]);
+  const [allPlans, setAllPlans] = useState<
+    {
+      id: number;
+      name: string;
+      type: string;
+      price: number;
+      active: boolean;
+    }[]
+  >([]);
   const [students, setStudents] = useState<AdminStudent[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [teacher, setTeacher] = useState<Teacher | null>(null);
@@ -660,6 +713,8 @@ export default function AdminPage() {
     | "editStudent"
     | null
   >(null);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [showPlanModal, setShowPlanModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
@@ -702,9 +757,7 @@ export default function AdminPage() {
     email: user?.email || "admin@espacobecker.com",
     phone: user?.phone || "",
     password: "",
-    birthDate: user?.birthDate
-      ? new Date(user.birthDate).toISOString().split("T")[0]
-      : "",
+    birthDate: user?.birthDate ? user.birthDate.split("T")[0] : "",
     username: user?.email?.split("@")[0] || "admin",
   });
 
@@ -763,6 +816,21 @@ export default function AdminPage() {
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
+  const [isSavingUser, setIsSavingUser] = useState(false);
+
+  // Estados para modais de confirmação de exclusão
+  const [showDeleteClassConfirm, setShowDeleteClassConfirm] = useState(false);
+  const [classToDelete, setClassToDelete] = useState<number | null>(null);
+  const [classToDeleteStudentCount, setClassToDeleteStudentCount] = useState(0);
+  const [showDeleteOldClassConfirm, setShowDeleteOldClassConfirm] =
+    useState(false);
+  const [oldClassToDelete, setOldClassToDelete] = useState<string | null>(null);
+  const [showDeleteStudentConfirm, setShowDeleteStudentConfirm] =
+    useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<string | null>(null);
+  const [showDeleteRoleConfirm, setShowDeleteRoleConfirm] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState<number | null>(null);
+
   const [userData, setUserData] = useState<UserFormData>({
     name: "",
     email: "",
@@ -801,10 +869,12 @@ export default function AdminPage() {
             state: data.uf || "",
           });
         } else {
-          alert("CEP não encontrado!");
+          toast.error(
+            "CEP não encontrado. Verifique o número e tente novamente."
+          );
         }
       } catch (error) {
-        alert("Erro ao buscar CEP. Tente novamente.");
+        toast.error("Erro ao buscar CEP. Tente novamente.");
       } finally {
         setLoadingCep(false);
       }
@@ -822,7 +892,7 @@ export default function AdminPage() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert("A imagem deve ter no máximo 5MB");
+        toast.warning("A imagem deve ter no máximo 5MB");
         return;
       }
 
@@ -833,7 +903,7 @@ export default function AdminPage() {
           if (!prev) return prev;
           return { ...prev, profileImage: imageUrl };
         });
-        alert("Foto atualizada com sucesso!");
+        toast.success("Foto atualizada com sucesso!");
       };
       reader.readAsDataURL(file);
     }
@@ -847,20 +917,20 @@ export default function AdminPage() {
       !adminData.username ||
       !adminData.password
     ) {
-      alert("Por favor, preencha todos os campos obrigatórios.");
+      toast.warning("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
 
     // Validar email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(adminData.email)) {
-      alert("Por favor, insira um email válido.");
+      toast.warning("Por favor, insira um email válido.");
       return;
     }
 
     // Salvar no sessionStorage
     sessionStorage.setItem("adminData", JSON.stringify(adminData));
-    alert("Configurações salvas com sucesso!");
+    toast.success("Configurações salvas com sucesso!");
     setShowAdminSettings(false);
   };
 
@@ -909,7 +979,7 @@ export default function AdminPage() {
         room: "",
       });
     } else {
-      alert("Por favor, preencha todos os campos obrigatórios");
+      toast.warning("Por favor, preencha todos os campos obrigatórios");
     }
   };
 
@@ -1015,14 +1085,21 @@ export default function AdminPage() {
         state: "",
       });
     } else {
-      alert("Por favor, preencha todos os campos obrigatórios");
+      toast.warning("Por favor, preencha todos os campos obrigatórios");
     }
   };
 
   const handleDeleteOldClass = (classId: string) => {
-    if (confirm("Tem certeza que deseja excluir esta turma?")) {
-      setClasses(classes.filter((c) => c.id !== classId));
-    }
+    setOldClassToDelete(classId);
+    setShowDeleteOldClassConfirm(true);
+  };
+
+  const confirmDeleteOldClass = () => {
+    if (!oldClassToDelete) return;
+    setClasses(classes.filter((c) => c.id !== oldClassToDelete));
+    toast.success("Turma excluída com sucesso!");
+    setShowDeleteOldClassConfirm(false);
+    setOldClassToDelete(null);
   };
 
   const handleEditClass = (classItem: Class) => {
@@ -1068,24 +1145,32 @@ export default function AdminPage() {
         room: "",
       });
     } else {
-      alert("Por favor, preencha todos os campos obrigatórios");
+      toast.warning("Por favor, preencha todos os campos obrigatórios");
     }
   };
 
   const handleDeleteStudent = (studentId: string) => {
-    if (confirm("Tem certeza que deseja excluir este aluno?")) {
-      const student = students.find((s) => s.id === studentId);
-      if (student) {
-        setClasses(
-          classes.map((c) =>
-            c.id === student.classId
-              ? { ...c, currentStudents: Math.max(0, c.currentStudents - 1) }
-              : c
-          )
-        );
-      }
-      setStudents(students.filter((s) => s.id !== studentId));
+    setStudentToDelete(studentId);
+    setShowDeleteStudentConfirm(true);
+  };
+
+  const confirmDeleteStudent = () => {
+    if (!studentToDelete) return;
+
+    const student = students.find((s) => s.id === studentToDelete);
+    if (student) {
+      setClasses(
+        classes.map((c) =>
+          c.id === student.classId
+            ? { ...c, currentStudents: Math.max(0, c.currentStudents - 1) }
+            : c
+        )
+      );
     }
+    setStudents(students.filter((s) => s.id !== studentToDelete));
+    toast.success("Aluno excluído com sucesso!");
+    setShowDeleteStudentConfirm(false);
+    setStudentToDelete(null);
   };
 
   const handleEditStudent = (student: AdminStudent) => {
@@ -1229,7 +1314,7 @@ export default function AdminPage() {
         state: "",
       });
     } else {
-      alert("Por favor, preencha todos os campos obrigatórios");
+      toast.warning("Por favor, preencha todos os campos obrigatórios");
     }
   };
 
@@ -1372,6 +1457,25 @@ export default function AdminPage() {
     }
   };
 
+  const fetchPlans = async () => {
+    if (!token) return;
+
+    try {
+      const response = (await apiService.getPlans(token)) as {
+        data?: {
+          id: number;
+          name: string;
+          type: string;
+          price: number;
+          active: boolean;
+        }[];
+      };
+      setAllPlans(response.data || []);
+    } catch (error) {
+      console.error("Erro ao carregar planos:", error);
+    }
+  };
+
   const handleOpenClassModal = (classData?: ClassData) => {
     setEditingRealClass(classData);
     setShowClassModal(true);
@@ -1399,14 +1503,26 @@ export default function AdminPage() {
   };
 
   const handleDeleteClass = async (classId: number) => {
-    if (!token) return;
-    if (!confirm("Tem certeza que deseja excluir esta turma?")) return;
+    // Buscar a turma para verificar se tem alunos
+    const classToRemove = realClasses.find((c) => c.id === classId);
+    setClassToDeleteStudentCount(classToRemove?.studentCount || 0);
+    setClassToDelete(classId);
+    setShowDeleteClassConfirm(true);
+  };
+
+  const confirmDeleteClass = async () => {
+    if (!token || !classToDelete) return;
 
     try {
-      await apiService.deleteClass(classId, token);
+      await apiService.deleteClass(classToDelete, token);
       await fetchRealClasses();
+      toast.success("Turma excluída com sucesso!");
     } catch (error) {
       toast.error("Erro ao excluir turma. Por favor, tente novamente.");
+    } finally {
+      setShowDeleteClassConfirm(false);
+      setClassToDelete(null);
+      setClassToDeleteStudentCount(0);
     }
   };
 
@@ -1467,6 +1583,8 @@ export default function AdminPage() {
     }
 
     try {
+      setIsSavingUser(true);
+
       // Mapear role para roleId
       const roleIdMap: { [key: string]: number } = {
         admin: 1,
@@ -1487,23 +1605,111 @@ export default function AdminPage() {
         state: addressData.state,
       };
 
-      // Preparar dados do usuário
-      const userPayload = {
-        name: userData.name,
-        email: userData.email,
-        password: "senha123", // Senha padrão - o usuário deve alterar no primeiro login
-        phone: removeMask(userData.phone),
-        birth_date: userData.birthDate,
-        cpf: removeMask(userData.cpf),
-        rg: removeMask(userData.rg),
-        role: roleId,
-        address,
-      };
+      if (editingUser) {
+        // Atualizar usuário existente
+        const updatePayload = {
+          name: userData.name,
+          email: userData.email,
+          phone: removeMask(userData.phone),
+          birth_date: userData.birthDate,
+          cpf: removeMask(userData.cpf),
+          rg: removeMask(userData.rg),
+          role_id: roleId,
+          guardian_id: userData.guardian ? parseInt(userData.guardian) : null,
+          has_disability: userData.hasDisability,
+          disability_description: userData.hasDisability
+            ? userData.disabilityDescription
+            : null,
+          takes_medication: userData.takesMedication,
+          medication_description: userData.takesMedication
+            ? userData.medicationDescription
+            : null,
+          allowed_payment_methods: userData.paymentMethods,
+          address,
+          class_id: userData.classId ? parseInt(userData.classId) : undefined,
+        };
 
-      await apiService.register(userPayload, token);
+        await apiService.updateUser(editingUser.id, updatePayload, token);
 
-      toast.success("Usuário criado com sucesso!");
+        // Se for aluno e tiver alterado o plano ou desconto, atualizar o grupo
+        if (roleId === 3 && editingUser.groupId) {
+          try {
+            const groupUpdateData: any = {};
+
+            if (userData.planId) {
+              groupUpdateData.planId = parseInt(userData.planId);
+            }
+
+            // Adicionar dados de desconto
+            groupUpdateData.discountType = userData.discountType || "none";
+            groupUpdateData.discountPercentage = userData.discountPercentage
+              ? parseFloat(userData.discountPercentage)
+              : 0;
+            groupUpdateData.discountValue = userData.discountValue
+              ? parseFloat(userData.discountValue)
+              : 0;
+
+            await apiService.updateGroup(
+              editingUser.groupId,
+              groupUpdateData,
+              token
+            );
+          } catch (error) {
+            console.error("Erro ao atualizar plano/desconto do grupo:", error);
+          }
+        }
+
+        toast.success("Usuário atualizado com sucesso!");
+      } else {
+        // Criar novo usuário
+        // Preparar dados do usuário para registro pelo admin
+        // A senha será gerada automaticamente e enviada por email
+        const userPayload = {
+          name: userData.name,
+          email: userData.email,
+          phone: removeMask(userData.phone),
+          birth_date: userData.birthDate,
+          cpf: removeMask(userData.cpf),
+          rg: removeMask(userData.rg),
+          role: roleId,
+          guardian: userData.guardian || undefined,
+          guardian_id: userData.guardian
+            ? parseInt(userData.guardian)
+            : undefined,
+          allowed_payment_methods: userData.paymentMethods,
+          has_disability: userData.hasDisability,
+          disability_description: userData.hasDisability
+            ? userData.disabilityDescription
+            : undefined,
+          takes_medication: userData.takesMedication,
+          medication_description: userData.takesMedication
+            ? userData.medicationDescription
+            : undefined,
+          address,
+          class_id: userData.classId ? parseInt(userData.classId) : undefined,
+          plan_id: userData.planId ? parseInt(userData.planId) : undefined,
+          // Dados de desconto para o grupo
+          discount_type: userData.discountType || "none",
+          discount_percentage: userData.discountPercentage
+            ? parseFloat(userData.discountPercentage)
+            : 0,
+          discount_value: userData.discountValue
+            ? parseFloat(userData.discountValue)
+            : 0,
+          // Opção de cobrança proporcional para matrícula no meio do mês
+          proportional_payment_option:
+            userData.proportionalPaymentOption || "immediate",
+        };
+
+        await apiService.adminRegister(userPayload, token);
+
+        toast.success(
+          "Usuário criado com sucesso! Um email com as credenciais de acesso foi enviado."
+        );
+      }
+
       setShowUserModal(false);
+      setEditingUser(null);
 
       // Resetar formulário
       setUserData({
@@ -1516,11 +1722,16 @@ export default function AdminPage() {
         guardian: "",
         role: "",
         classId: "",
+        planId: "",
         hasDisability: false,
         disabilityDescription: "",
         takesMedication: false,
         medicationDescription: "",
         paymentMethods: [],
+        discountType: "none",
+        discountPercentage: "",
+        discountValue: "",
+        proportionalPaymentOption: "immediate",
       });
       setAddressData({
         cep: "",
@@ -1543,13 +1754,22 @@ export default function AdminPage() {
       const errorMessage =
         error.message ||
         error.response?.data?.message ||
-        "Erro ao criar usuário. Por favor, tente novamente.";
+        (editingUser
+          ? "Erro ao atualizar usuário."
+          : "Erro ao criar usuário.") + " Por favor, tente novamente.";
       toast.error(errorMessage);
+    } finally {
+      setIsSavingUser(false);
     }
   };
 
-  const handleEditUser = (user: UserData) => {
+  const handleEditUser = async (user: UserData) => {
     setEditingUser(user);
+
+    // Garantir que os planos estão carregados
+    if (allPlans.length === 0) {
+      await fetchPlans();
+    }
 
     // Preencher formulário com dados do usuário
     const roleMap: { [key: number]: string } = {
@@ -1558,29 +1778,68 @@ export default function AdminPage() {
       3: "aluno",
     };
 
+    // Buscar plano do grupo se o usuário for aluno
+    let userPlanId = "";
+    if (user.roleId === 3 && user.groupId && token) {
+      try {
+        const groupResponse = (await apiService.getGroupById(
+          user.groupId,
+          token
+        )) as {
+          data?: { planId?: number | null };
+        };
+        if (
+          groupResponse.data?.planId !== undefined &&
+          groupResponse.data?.planId !== null
+        ) {
+          userPlanId = groupResponse.data.planId.toString();
+        }
+      } catch (error) {
+        console.error("Erro ao buscar plano do grupo:", error);
+      }
+    }
+
     setUserData({
       name: user.name,
       email: user.email,
-      phone: user.phone,
-      birthDate: user.birthDate
-        ? new Date(user.birthDate).toISOString().split("T")[0]
-        : "",
-      cpf: user.cpf,
-      rg: user.rg,
-      guardian: user.guardian,
+      phone: maskPhone(user.phone || ""),
+      birthDate: user.birthDate ? user.birthDate.split("T")[0] : "",
+      cpf: maskCPF(user.cpf || ""),
+      rg: maskRG(user.rg || ""),
+      guardian: user.guardianId ? user.guardianId.toString() : "",
       role: roleMap[user.roleId] || "",
-      classId: user.groupId?.toString() || "",
+      classId:
+        user.classIds && user.classIds.length > 0
+          ? user.classIds[0].toString()
+          : "",
+      planId: userPlanId,
+      hasDisability: user.hasDisability || false,
+      disabilityDescription: user.disabilityDescription || "",
+      takesMedication: user.takesMedication || false,
+      medicationDescription: user.medicationDescription || "",
+      paymentMethods: user.paymentMethods || [],
     });
 
     if (user.address) {
       setAddressData({
-        cep: user.address.cep,
-        street: user.address.street,
-        number: user.address.number,
+        cep: maskCEP(user.address.cep || ""),
+        street: user.address.street || "",
+        number: user.address.number || "",
         complement: user.address.complement || "",
-        neighborhood: user.address.neighborhood,
-        city: user.address.city,
-        state: user.address.state,
+        neighborhood: user.address.neighborhood || "",
+        city: user.address.city || "",
+        state: user.address.state || "",
+      });
+    } else {
+      // Limpar dados de endereço se não houver
+      setAddressData({
+        cep: "",
+        street: "",
+        number: "",
+        complement: "",
+        neighborhood: "",
+        city: "",
+        state: "",
       });
     }
 
@@ -1627,7 +1886,11 @@ export default function AdminPage() {
   }, [user?.permissions]);
 
   useEffect(() => {
-    if (activeTab === "access") {
+    if (activeTab === "overview") {
+      fetchRealClasses();
+      fetchStudents();
+      fetchAllUsers(); // Para aniversariantes
+    } else if (activeTab === "access") {
       fetchModules();
       fetchRoles();
     } else if (activeTab === "students") {
@@ -1639,6 +1902,8 @@ export default function AdminPage() {
       fetchTeachers();
     } else if (activeTab === "users") {
       fetchAllUsers();
+      fetchRealClasses(); // Carregar turmas para o modal de cadastro de usuário
+      fetchPlans(); // Carregar planos para o modal de cadastro de usuário
     }
   }, [activeTab]);
 
@@ -1657,22 +1922,68 @@ export default function AdminPage() {
       setIsLoadingStudents(true);
       const response = await apiService.getAllUsers(token);
 
+      // Buscar turmas para fazer o mapeamento
+      let classesData: ClassData[] = [];
+      try {
+        const classesResponse = await apiService.getClasses(token);
+        classesData = classesResponse.data as ClassData[];
+      } catch {
+        console.error("Erro ao carregar turmas para mapeamento");
+      }
+
       // Filtrar apenas estudantes e converter para formato AdminStudent
-      const studentsData = response.data
-        .filter((u) => u.roleId === 3)
-        .map((u) => ({
-          id: u.id.toString(),
-          name: u.name,
-          email: u.email,
-          phone: u.phone,
-          class: "", // TODO: Buscar da relação com grupo
-          classId: u.groupId?.toString() || "",
-          status: "Ativo",
-          profileImage: "",
-          enrollmentDate: new Date(u.createdAt).toLocaleDateString("pt-BR"),
-          schedule: [],
-          payments: [], // TODO: Buscar pagamentos
-        }));
+      const studentsData = await Promise.all(
+        response.data
+          .filter((u) => u.roleId === 3)
+          .map(async (u) => {
+            // Buscar nome da turma baseado no classIds
+            let className = "";
+            if (u.classIds && u.classIds.length > 0) {
+              const studentClass = classesData.find(
+                (c) => c.id === u.classIds![0]
+              );
+              className = studentClass?.name || "";
+            }
+
+            // Buscar pagamentos do aluno
+            let payments: Payment[] = [];
+            try {
+              const paymentsResponse = await apiService.get<{ data: any[] }>(
+                `/tuitions/student/${u.id}`,
+                token
+              );
+              if (paymentsResponse.data) {
+                payments = paymentsResponse.data.map((p) => ({
+                  month: formatReferenceMonth(p.reference_month),
+                  status: p.status === "paid" ? "paid" : "pending",
+                  amount: `R$ ${Number(p.amount).toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                  })}`,
+                  dueDate: new Date(p.due_date).toLocaleDateString("pt-BR"),
+                  paidDate: p.payment_date
+                    ? new Date(p.payment_date).toLocaleDateString("pt-BR")
+                    : undefined,
+                }));
+              }
+            } catch {
+              // Se não encontrar pagamentos, deixa vazio
+            }
+
+            return {
+              id: u.id.toString(),
+              name: u.name,
+              email: u.email,
+              phone: u.phone,
+              class: className,
+              classId: u.classIds?.[0]?.toString() || "",
+              status: "Ativo",
+              profileImage: "",
+              enrollmentDate: new Date(u.createdAt).toLocaleDateString("pt-BR"),
+              schedule: [],
+              payments,
+            };
+          })
+      );
 
       setStudents(studentsData);
     } catch (error: any) {
@@ -1680,6 +1991,26 @@ export default function AdminPage() {
     } finally {
       setIsLoadingStudents(false);
     }
+  };
+
+  // Função auxiliar para formatar o mês de referência
+  const formatReferenceMonth = (referenceMonth: string): string => {
+    const [year, month] = referenceMonth.split("-");
+    const months = [
+      "Janeiro",
+      "Fevereiro",
+      "Março",
+      "Abril",
+      "Maio",
+      "Junho",
+      "Julho",
+      "Agosto",
+      "Setembro",
+      "Outubro",
+      "Novembro",
+      "Dezembro",
+    ];
+    return `${months[parseInt(month) - 1]} ${year}`;
   };
 
   const fetchAdminData = async () => {
@@ -1695,10 +2026,26 @@ export default function AdminPage() {
         phone: response.data.phone,
         password: "",
         birthDate: response.data.birthDate
-          ? new Date(response.data.birthDate).toISOString().split("T")[0]
+          ? response.data.birthDate.split("T")[0]
           : "",
         username: response.data.email.split("@")[0],
       });
+
+      // Se for professor, popular dados do teacher
+      if (user.roleId === 2) {
+        setTeacher({
+          id: response.data.id.toString(),
+          name: response.data.name,
+          email: response.data.email,
+          phone: response.data.phone,
+          specialty: "Professor(a)",
+          profileImage: "",
+          classes: [],
+          startDate: response.data.createdAt
+            ? new Date(response.data.createdAt).toLocaleDateString("pt-BR")
+            : new Date().toLocaleDateString("pt-BR"),
+        });
+      }
     } catch (error: any) {
       console.error("Erro ao carregar dados do admin:", error);
     } finally {
@@ -1825,22 +2172,30 @@ export default function AdminPage() {
   };
 
   const handleDeleteRole = async (roleId: number) => {
-    if (!confirm("Tem certeza que deseja excluir esta role?")) {
-      return;
-    }
+    setRoleToDelete(roleId);
+    setShowDeleteRoleConfirm(true);
+  };
+
+  const confirmDeleteRole = async () => {
+    if (!roleToDelete) return;
 
     if (!token) {
       showRoleToast("Token de autenticação não encontrado", "error");
+      setShowDeleteRoleConfirm(false);
+      setRoleToDelete(null);
       return;
     }
 
     try {
-      await apiService.deleteRole(roleId, token);
+      await apiService.deleteRole(roleToDelete, token);
       await fetchRoles();
-      showRoleToast("Role deletada com sucesso!", "success");
+      showRoleToast("Função excluída com sucesso!", "success");
     } catch (error: any) {
-      console.error("Erro ao deletar role:", error);
-      showRoleToast(error.message || "Erro ao deletar role", "error");
+      console.error("Erro ao deletar função:", error);
+      showRoleToast(error.message || "Erro ao deletar função", "error");
+    } finally {
+      setShowDeleteRoleConfirm(false);
+      setRoleToDelete(null);
     }
   };
 
@@ -1855,7 +2210,7 @@ export default function AdminPage() {
               <h1>Painel Administrativo 🎭</h1>
               <p>Bem-vindo(a), {adminData.name}</p>
             </div>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className={styles.headerButtons}>
               <button
                 className={styles.settingsButton}
                 onClick={() => setShowAdminSettings(true)}
@@ -1863,7 +2218,7 @@ export default function AdminPage() {
                 <i className="fas fa-cog"></i>
                 Configurações
               </button>
-              <button className="logout-button" onClick={handleLogout}>
+              <button className={styles.logoutButton} onClick={handleLogout}>
                 <i className="fas fa-sign-out-alt"></i>
                 Sair
               </button>
@@ -1938,6 +2293,17 @@ export default function AdminPage() {
                 Financeiro
               </button>
             )}
+            {shouldShowTab("plans") && (
+              <button
+                className={`${styles.adminTab} ${
+                  activeTab === "plans" ? styles.active : ""
+                }`}
+                onClick={() => setActiveTab("plans")}
+              >
+                <i className="fas fa-clipboard-list"></i>
+                Planos
+              </button>
+            )}
             {shouldShowTab("events") && (
               <button
                 className={`${styles.adminTab} ${
@@ -1975,28 +2341,46 @@ export default function AdminPage() {
                   />
                 )
               )}
-              <QuickInfoCards classes={classes} students={students} />
+              <QuickInfoCards classes={realClasses} students={students} />
             </div>
           )}
 
           {/* Calendário Semanal */}
-          {activeTab === "overview" && <WeeklySchedule classes={classes} />}
+          {activeTab === "overview" && <WeeklySchedule classes={realClasses} />}
+
+          {/* Aniversariantes do Mês */}
+          {activeTab === "overview" && (
+            <BirthdayCard
+              users={allUsers.map((u) => ({
+                id: u.id,
+                name: u.name,
+                birthDate: u.birthDate || "",
+                role:
+                  u.roleId === 1
+                    ? "admin"
+                    : u.roleId === 2
+                    ? "professor"
+                    : "aluno",
+                profileImage: "",
+              }))}
+            />
+          )}
 
           {/* Content */}
           <div className={styles.adminContent}>
-            {activeTab === "overview" && <ClassesSummary classes={classes} />}
-
             {activeTab === "classes" && (
               <div>
                 <div className={styles.adminSectionHeader}>
                   <h2>Gerenciar Turmas</h2>
-                  <button
-                    className={styles.addButton}
-                    onClick={() => handleOpenClassModal()}
-                  >
-                    <i className="fas fa-plus"></i>
-                    Nova Turma
-                  </button>
+                  {canWriteModule("classes") && (
+                    <button
+                      className={styles.addButton}
+                      onClick={() => handleOpenClassModal()}
+                    >
+                      <i className="fas fa-plus"></i>
+                      Nova Turma
+                    </button>
+                  )}
                 </div>
 
                 {isLoadingClasses ? (
@@ -2030,8 +2414,9 @@ export default function AdminPage() {
                           </div>
                           <div className={styles.classInfoItem}>
                             <i className="fas fa-calendar"></i>
-                            {classItem.dayOfWeek} - {classItem.startTime} às{" "}
-                            {classItem.endTime}
+                            {translateDayOfWeek(classItem.dayOfWeek)} -{" "}
+                            {formatTime(classItem.startTime)} às{" "}
+                            {formatTime(classItem.endTime)}
                           </div>
                           {classItem.teacher?.name && (
                             <div className={styles.classInfoItem}>
@@ -2040,22 +2425,22 @@ export default function AdminPage() {
                             </div>
                           )}
                         </div>
-                        <div className={styles.classActions}>
-                          <button
-                            className={styles.classActionBtn}
-                            onClick={() => handleOpenClassModal(classItem)}
-                          >
-                            <i className="fas fa-edit"></i> Editar
-                          </button>
-                          {user?.roleId === 1 && (
+                        {canWriteModule("classes") && (
+                          <div className={styles.classActions}>
+                            <button
+                              className={styles.classActionBtn}
+                              onClick={() => handleOpenClassModal(classItem)}
+                            >
+                              <i className="fas fa-edit"></i> Editar
+                            </button>
                             <button
                               className={`${styles.classActionBtn} ${styles.deleteBtn}`}
                               onClick={() => handleDeleteClass(classItem.id)}
                             >
                               <i className="fas fa-trash"></i> Excluir
                             </button>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -2414,8 +2799,6 @@ export default function AdminPage() {
                       s.status === studentFilters.status;
                     return matchesName && matchesClass && matchesStatus;
                   })}
-                  onEditStudent={handleEditStudent}
-                  onDeleteStudent={handleDeleteStudent}
                 />
               </div>
             )}
@@ -2455,21 +2838,10 @@ export default function AdminPage() {
                   <PaymentsTable
                     students={students}
                     filters={paymentFilters}
-                    currentPage={paymentsPage}
-                    itemsPerPage={paymentsPerPage}
                     onSelectStudent={(student) => {
                       setSelectedStudent(student);
                       setShowModal("payment");
                     }}
-                  />
-
-                  {/* Paginação */}
-                  <Pagination
-                    currentPage={paymentsPage}
-                    totalItems={students.length}
-                    itemsPerPage={paymentsPerPage}
-                    onPageChange={setPaymentsPage}
-                    onItemsPerPageChange={setPaymentsPerPage}
                   />
                 </div>
               </div>
@@ -2499,8 +2871,6 @@ export default function AdminPage() {
                         .includes(teacherFilters.name.toLowerCase());
                       return matchesName;
                     })}
-                    onEditTeacher={handleEditUser}
-                    onDeleteTeacher={handleDeleteUser}
                   />
                 )}
               </div>
@@ -2510,41 +2880,44 @@ export default function AdminPage() {
               <div>
                 <div className={styles.adminSectionHeader}>
                   <h2>Gerenciar Usuários</h2>
-                  <button
-                    className={styles.addButton}
-                    onClick={() => {
-                      setEditingUser(null);
-                      setUserData({
-                        name: "",
-                        email: "",
-                        phone: "",
-                        birthDate: "",
-                        cpf: "",
-                        rg: "",
-                        guardian: "",
-                        role: "",
-                        classId: "",
-                        hasDisability: false,
-                        disabilityDescription: "",
-                        takesMedication: false,
-                        medicationDescription: "",
-                        paymentMethods: [],
-                      });
-                      setAddressData({
-                        cep: "",
-                        street: "",
-                        number: "",
-                        complement: "",
-                        neighborhood: "",
-                        city: "",
-                        state: "",
-                      });
-                      setShowUserModal(true);
-                    }}
-                  >
-                    <i className="fas fa-user-plus"></i>
-                    Novo Usuário
-                  </button>
+                  {canWriteModule("users") && (
+                    <button
+                      className={styles.addButton}
+                      onClick={() => {
+                        setEditingUser(null);
+                        setUserData({
+                          name: "",
+                          email: "",
+                          phone: "",
+                          birthDate: "",
+                          cpf: "",
+                          rg: "",
+                          guardian: "",
+                          role: "",
+                          classId: "",
+                          planId: "",
+                          hasDisability: false,
+                          disabilityDescription: "",
+                          takesMedication: false,
+                          medicationDescription: "",
+                          paymentMethods: [],
+                        });
+                        setAddressData({
+                          cep: "",
+                          street: "",
+                          number: "",
+                          complement: "",
+                          neighborhood: "",
+                          city: "",
+                          state: "",
+                        });
+                        setShowUserModal(true);
+                      }}
+                    >
+                      <i className="fas fa-user-plus"></i>
+                      Novo Usuário
+                    </button>
+                  )}
                 </div>
 
                 {isLoadingUsers ? (
@@ -2584,6 +2957,7 @@ export default function AdminPage() {
                       }
                     }}
                     onDeleteUser={handleDeleteUser}
+                    canWrite={canWriteModule("users")}
                   />
                 )}
               </div>
@@ -2591,7 +2965,47 @@ export default function AdminPage() {
 
             {activeTab === "events" && (
               <div>
-                <EventsManagement token={token || ""} />
+                <div className={styles.adminSectionHeader}>
+                  <h2>Gerenciar Eventos</h2>
+                  {canWriteModule("events") && (
+                    <button
+                      className={styles.addButton}
+                      onClick={() => setShowEventModal(true)}
+                    >
+                      <i className="fas fa-plus"></i>
+                      Novo Evento
+                    </button>
+                  )}
+                </div>
+                <EventsManagement
+                  token={token || ""}
+                  canWrite={canWriteModule("events")}
+                  showAddModal={showEventModal}
+                  onCloseAddModal={() => setShowEventModal(false)}
+                />
+              </div>
+            )}
+
+            {activeTab === "plans" && (
+              <div>
+                <div className={styles.adminSectionHeader}>
+                  <h2>Gerenciar Planos</h2>
+                  {canWriteModule("plans") && (
+                    <button
+                      className={styles.addButton}
+                      onClick={() => setShowPlanModal(true)}
+                    >
+                      <i className="fas fa-plus"></i>
+                      Novo Plano
+                    </button>
+                  )}
+                </div>
+                <PlansManagement
+                  token={token || ""}
+                  canWrite={canWriteModule("plans")}
+                  showAddModal={showPlanModal}
+                  onCloseAddModal={() => setShowPlanModal(false)}
+                />
               </div>
             )}
 
@@ -2599,13 +3013,15 @@ export default function AdminPage() {
               <div>
                 <div className={styles.adminSectionHeader}>
                   <h2>Gerenciamento de Funções</h2>
-                  <button
-                    className={styles.addButton}
-                    onClick={() => handleOpenRoleModal()}
-                  >
-                    <i className="fas fa-plus"></i>
-                    Nova Função
-                  </button>
+                  {canWriteModule("access") && (
+                    <button
+                      className={styles.addButton}
+                      onClick={() => handleOpenRoleModal()}
+                    >
+                      <i className="fas fa-plus"></i>
+                      Nova Função
+                    </button>
+                  )}
                 </div>
 
                 <p style={{ color: "#666", marginBottom: "1.5rem" }}>
@@ -2628,6 +3044,7 @@ export default function AdminPage() {
                     roles={roles}
                     onEditRole={handleOpenRoleModal}
                     onDeleteRole={handleDeleteRole}
+                    canWrite={canWriteModule("access")}
                   />
                 )}
 
@@ -2663,430 +3080,430 @@ export default function AdminPage() {
                 </div>
               </div>
             )}
+          </div>
 
-            {/* Modal de Criar/Editar Role */}
-            {showRoleModal && (
+          {/* Modal de Criar/Editar Role */}
+          {showRoleModal && (
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: "rgba(0, 0, 0, 0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1000,
+                padding: "1rem",
+              }}
+              onClick={handleCloseRoleModal}
+            >
               <div
                 style={{
-                  position: "fixed",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: "rgba(0, 0, 0, 0.5)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  zIndex: 1000,
-                  padding: "1rem",
+                  background: "white",
+                  borderRadius: "12px",
+                  padding: "2rem",
+                  maxWidth: "500px",
+                  width: "100%",
+                  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
                 }}
-                onClick={handleCloseRoleModal}
+                onClick={(e) => e.stopPropagation()}
               >
                 <div
                   style={{
-                    background: "white",
-                    borderRadius: "12px",
-                    padding: "2rem",
-                    maxWidth: "500px",
-                    width: "100%",
-                    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "1.5rem",
                   }}
-                  onClick={(e) => e.stopPropagation()}
                 >
-                  <div
+                  <h3 style={{ margin: 0, color: "#333" }}>
+                    {editingRole ? "Editar Função" : "Nova Função"}
+                  </h3>
+                  <button
+                    onClick={handleCloseRoleModal}
                     style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "1.5rem",
+                      background: "transparent",
+                      border: "none",
+                      fontSize: "2rem",
+                      cursor: "pointer",
+                      color: "#999",
+                      lineHeight: 1,
+                      padding: 0,
                     }}
                   >
-                    <h3 style={{ margin: 0, color: "#333" }}>
-                      {editingRole ? "Editar Função" : "Nova Função"}
-                    </h3>
-                    <button
-                      onClick={handleCloseRoleModal}
+                    &times;
+                  </button>
+                </div>
+
+                <div style={{ marginBottom: "1.5rem" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontWeight: 500,
+                      color: "#333",
+                    }}
+                  >
+                    Nome da Função *
+                  </label>
+                  <input
+                    type="text"
+                    value={roleFormData.name}
+                    onChange={(e) =>
+                      setRoleFormData({
+                        ...roleFormData,
+                        name: e.target.value,
+                      })
+                    }
+                    placeholder="Ex: Administrador, Professor, Aluno"
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      border: "2px solid #e0e0e0",
+                      borderRadius: "8px",
+                      fontSize: "1rem",
+                      transition: "border-color 0.2s",
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = "#e91e63")}
+                    onBlur={(e) => (e.target.style.borderColor = "#e0e0e0")}
+                  />
+                </div>
+
+                <div style={{ marginBottom: "1.5rem" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontWeight: 500,
+                      color: "#333",
+                    }}
+                  >
+                    Descrição
+                  </label>
+                  <textarea
+                    value={roleFormData.description || ""}
+                    onChange={(e) =>
+                      setRoleFormData({
+                        ...roleFormData,
+                        description: e.target.value,
+                      })
+                    }
+                    placeholder="Breve descrição da função (opcional)"
+                    rows={2}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      border: "2px solid #e0e0e0",
+                      borderRadius: "8px",
+                      fontSize: "1rem",
+                      transition: "border-color 0.2s",
+                      fontFamily: "inherit",
+                      resize: "vertical",
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = "#e91e63")}
+                    onBlur={(e) => (e.target.style.borderColor = "#e0e0e0")}
+                  />
+                </div>
+
+                <div style={{ marginBottom: "1.5rem" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "0.75rem",
+                      fontWeight: 500,
+                      color: "#333",
+                    }}
+                  >
+                    Permissões por Módulo
+                  </label>
+                  {isLoadingModules ? (
+                    <div
                       style={{
-                        background: "transparent",
-                        border: "none",
-                        fontSize: "2rem",
-                        cursor: "pointer",
+                        textAlign: "center",
+                        padding: "1rem",
+                        color: "#666",
+                      }}
+                    >
+                      Carregando módulos...
+                    </div>
+                  ) : modules.length === 0 ? (
+                    <div
+                      style={{
+                        textAlign: "center",
+                        padding: "1rem",
                         color: "#999",
-                        lineHeight: 1,
-                        padding: 0,
                       }}
                     >
-                      &times;
-                    </button>
-                  </div>
-
-                  <div style={{ marginBottom: "1.5rem" }}>
-                    <label
+                      Nenhum módulo disponível
+                    </div>
+                  ) : (
+                    <div
                       style={{
-                        display: "block",
-                        marginBottom: "0.5rem",
-                        fontWeight: 500,
-                        color: "#333",
-                      }}
-                    >
-                      Nome da Função *
-                    </label>
-                    <input
-                      type="text"
-                      value={roleFormData.name}
-                      onChange={(e) =>
-                        setRoleFormData({
-                          ...roleFormData,
-                          name: e.target.value,
-                        })
-                      }
-                      placeholder="Ex: Administrador, Professor, Aluno"
-                      style={{
-                        width: "100%",
-                        padding: "0.75rem",
-                        border: "2px solid #e0e0e0",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.75rem",
+                        maxHeight: "300px",
+                        overflowY: "auto",
+                        padding: "0.5rem",
+                        background: "#f8f9fa",
                         borderRadius: "8px",
-                        fontSize: "1rem",
-                        transition: "border-color 0.2s",
-                      }}
-                      onFocus={(e) => (e.target.style.borderColor = "#e91e63")}
-                      onBlur={(e) => (e.target.style.borderColor = "#e0e0e0")}
-                    />
-                  </div>
-
-                  <div style={{ marginBottom: "1.5rem" }}>
-                    <label
-                      style={{
-                        display: "block",
-                        marginBottom: "0.5rem",
-                        fontWeight: 500,
-                        color: "#333",
                       }}
                     >
-                      Descrição
-                    </label>
-                    <textarea
-                      value={roleFormData.description || ""}
-                      onChange={(e) =>
-                        setRoleFormData({
-                          ...roleFormData,
-                          description: e.target.value,
-                        })
-                      }
-                      placeholder="Breve descrição da função (opcional)"
-                      rows={2}
-                      style={{
-                        width: "100%",
-                        padding: "0.75rem",
-                        border: "2px solid #e0e0e0",
-                        borderRadius: "8px",
-                        fontSize: "1rem",
-                        transition: "border-color 0.2s",
-                        fontFamily: "inherit",
-                        resize: "vertical",
-                      }}
-                      onFocus={(e) => (e.target.style.borderColor = "#e91e63")}
-                      onBlur={(e) => (e.target.style.borderColor = "#e0e0e0")}
-                    />
-                  </div>
+                      {modules.map((module) => {
+                        const permission = roleFormData.permissions.find(
+                          (p) => p.moduleId === module.id
+                        ) || {
+                          moduleId: module.id,
+                          canRead: false,
+                          canWrite: false,
+                        };
 
-                  <div style={{ marginBottom: "1.5rem" }}>
-                    <label
-                      style={{
-                        display: "block",
-                        marginBottom: "0.75rem",
-                        fontWeight: 500,
-                        color: "#333",
-                      }}
-                    >
-                      Permissões por Módulo
-                    </label>
-                    {isLoadingModules ? (
-                      <div
-                        style={{
-                          textAlign: "center",
-                          padding: "1rem",
-                          color: "#666",
-                        }}
-                      >
-                        Carregando módulos...
-                      </div>
-                    ) : modules.length === 0 ? (
-                      <div
-                        style={{
-                          textAlign: "center",
-                          padding: "1rem",
-                          color: "#999",
-                        }}
-                      >
-                        Nenhum módulo disponível
-                      </div>
-                    ) : (
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "0.75rem",
-                          maxHeight: "300px",
-                          overflowY: "auto",
-                          padding: "0.5rem",
-                          background: "#f8f9fa",
-                          borderRadius: "8px",
-                        }}
-                      >
-                        {modules.map((module) => {
-                          const permission = roleFormData.permissions.find(
-                            (p) => p.moduleId === module.id
-                          ) || {
-                            moduleId: module.id,
-                            canRead: false,
-                            canWrite: false,
-                          };
-
-                          return (
+                        return (
+                          <div
+                            key={module.id}
+                            style={{
+                              padding: "0.75rem",
+                              background: "white",
+                              borderRadius: "6px",
+                              border: "1px solid #e0e0e0",
+                            }}
+                          >
                             <div
-                              key={module.id}
                               style={{
-                                padding: "0.75rem",
-                                background: "white",
-                                borderRadius: "6px",
-                                border: "1px solid #e0e0e0",
+                                fontWeight: 600,
+                                color: "#333",
+                                marginBottom: "0.5rem",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.5rem",
                               }}
                             >
+                              {module.icon && (
+                                <i className={`fas ${module.icon}`}></i>
+                              )}
+                              {module.displayName}
+                            </div>
+                            {module.description && (
                               <div
                                 style={{
-                                  fontWeight: 600,
-                                  color: "#333",
+                                  fontSize: "0.75rem",
+                                  color: "#666",
                                   marginBottom: "0.5rem",
+                                }}
+                              >
+                                {module.description}
+                              </div>
+                            )}
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "1rem",
+                                marginTop: "0.5rem",
+                              }}
+                            >
+                              <label
+                                style={{
                                   display: "flex",
                                   alignItems: "center",
                                   gap: "0.5rem",
+                                  cursor: "pointer",
+                                  fontSize: "0.85rem",
                                 }}
                               >
-                                {module.icon && (
-                                  <i className={`fas ${module.icon}`}></i>
-                                )}
-                                {module.displayName}
-                              </div>
-                              {module.description && (
-                                <div
-                                  style={{
-                                    fontSize: "0.75rem",
-                                    color: "#666",
-                                    marginBottom: "0.5rem",
+                                <input
+                                  type="checkbox"
+                                  checked={permission.canRead}
+                                  onChange={(e) => {
+                                    const newPermissions =
+                                      roleFormData.permissions.filter(
+                                        (p) => p.moduleId !== module.id
+                                      );
+                                    newPermissions.push({
+                                      moduleId: module.id,
+                                      canRead: e.target.checked,
+                                      canWrite: permission.canWrite,
+                                    });
+                                    setRoleFormData({
+                                      ...roleFormData,
+                                      permissions: newPermissions,
+                                    });
                                   }}
-                                >
-                                  {module.description}
-                                </div>
-                              )}
-                              <div
+                                  style={{
+                                    width: "16px",
+                                    height: "16px",
+                                    cursor: "pointer",
+                                  }}
+                                />
+                                <span style={{ color: "#555" }}>Ler</span>
+                              </label>
+                              <label
                                 style={{
                                   display: "flex",
-                                  gap: "1rem",
-                                  marginTop: "0.5rem",
+                                  alignItems: "center",
+                                  gap: "0.5rem",
+                                  cursor: "pointer",
+                                  fontSize: "0.85rem",
                                 }}
                               >
-                                <label
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "0.5rem",
-                                    cursor: "pointer",
-                                    fontSize: "0.85rem",
+                                <input
+                                  type="checkbox"
+                                  checked={permission.canWrite}
+                                  onChange={(e) => {
+                                    const newPermissions =
+                                      roleFormData.permissions.filter(
+                                        (p) => p.moduleId !== module.id
+                                      );
+                                    newPermissions.push({
+                                      moduleId: module.id,
+                                      canRead: permission.canRead,
+                                      canWrite: e.target.checked,
+                                    });
+                                    setRoleFormData({
+                                      ...roleFormData,
+                                      permissions: newPermissions,
+                                    });
                                   }}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={permission.canRead}
-                                    onChange={(e) => {
-                                      const newPermissions =
-                                        roleFormData.permissions.filter(
-                                          (p) => p.moduleId !== module.id
-                                        );
-                                      newPermissions.push({
-                                        moduleId: module.id,
-                                        canRead: e.target.checked,
-                                        canWrite: permission.canWrite,
-                                      });
-                                      setRoleFormData({
-                                        ...roleFormData,
-                                        permissions: newPermissions,
-                                      });
-                                    }}
-                                    style={{
-                                      width: "16px",
-                                      height: "16px",
-                                      cursor: "pointer",
-                                    }}
-                                  />
-                                  <span style={{ color: "#555" }}>Ler</span>
-                                </label>
-                                <label
                                   style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "0.5rem",
+                                    width: "16px",
+                                    height: "16px",
                                     cursor: "pointer",
-                                    fontSize: "0.85rem",
                                   }}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={permission.canWrite}
-                                    onChange={(e) => {
-                                      const newPermissions =
-                                        roleFormData.permissions.filter(
-                                          (p) => p.moduleId !== module.id
-                                        );
-                                      newPermissions.push({
-                                        moduleId: module.id,
-                                        canRead: permission.canRead,
-                                        canWrite: e.target.checked,
-                                      });
-                                      setRoleFormData({
-                                        ...roleFormData,
-                                        permissions: newPermissions,
-                                      });
-                                    }}
-                                    style={{
-                                      width: "16px",
-                                      height: "16px",
-                                      cursor: "pointer",
-                                    }}
-                                  />
-                                  <span style={{ color: "#555" }}>Editar</span>
-                                </label>
-                              </div>
+                                />
+                                <span style={{ color: "#555" }}>Editar</span>
+                              </label>
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "1rem",
-                      justifyContent: "flex-end",
-                      marginTop: "2rem",
-                    }}
-                  >
-                    <button
-                      onClick={handleCloseRoleModal}
-                      disabled={isSavingRole}
-                      style={{
-                        padding: "0.75rem 1.5rem",
-                        borderRadius: "8px",
-                        border: "2px solid #e0e0e0",
-                        background: "white",
-                        color: "#666",
-                        fontWeight: 500,
-                        cursor: isSavingRole ? "not-allowed" : "pointer",
-                        opacity: isSavingRole ? 0.5 : 1,
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSavingRole) {
-                          e.currentTarget.style.background = "#f5f5f5";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "white";
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={handleSaveRole}
-                      disabled={isSavingRole}
-                      style={{
-                        padding: "0.75rem 1.5rem",
-                        borderRadius: "8px",
-                        border: "none",
-                        background:
-                          "linear-gradient(135deg, #e91e63 0%, #c2185b 100%)",
-                        color: "white",
-                        fontWeight: 600,
-                        cursor: isSavingRole ? "not-allowed" : "pointer",
-                        opacity: isSavingRole ? 0.7 : 1,
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSavingRole) {
-                          e.currentTarget.style.transform = "translateY(-2px)";
-                          e.currentTarget.style.boxShadow =
-                            "0 4px 12px rgba(233, 30, 99, 0.3)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = "none";
-                      }}
-                    >
-                      {isSavingRole
-                        ? "Salvando..."
-                        : editingRole
-                        ? "Atualizar"
-                        : "Criar"}
-                    </button>
-                  </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
 
-            {/* Toast de notificação */}
-            {roleToast.show && (
-              <div
-                style={{
-                  position: "fixed",
-                  top: "20px",
-                  right: "20px",
-                  padding: "16px 24px",
-                  background: "white",
-                  borderRadius: "12px",
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  animation: "slideIn 0.3s ease-out",
-                  zIndex: 1000,
-                  minWidth: "300px",
-                  borderLeft: `4px solid ${
-                    roleToast.type === "success" ? "#4caf50" : "#f44336"
-                  }`,
-                }}
-              >
-                <span
+                <div
                   style={{
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "24px",
-                    height: "24px",
-                    borderRadius: "50%",
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    background:
-                      roleToast.type === "success" ? "#e8f5e9" : "#ffebee",
-                    color: roleToast.type === "success" ? "#4caf50" : "#f44336",
+                    gap: "1rem",
+                    justifyContent: "flex-end",
+                    marginTop: "2rem",
                   }}
                 >
-                  {roleToast.type === "success" ? "✓" : "✗"}
-                </span>
-                <span
-                  style={{
-                    flex: 1,
-                    color: "#333",
-                    fontSize: "14px",
-                    fontWeight: 500,
-                  }}
-                >
-                  {roleToast.message}
-                </span>
+                  <button
+                    onClick={handleCloseRoleModal}
+                    disabled={isSavingRole}
+                    style={{
+                      padding: "0.75rem 1.5rem",
+                      borderRadius: "8px",
+                      border: "2px solid #e0e0e0",
+                      background: "white",
+                      color: "#666",
+                      fontWeight: 500,
+                      cursor: isSavingRole ? "not-allowed" : "pointer",
+                      opacity: isSavingRole ? 0.5 : 1,
+                      transition: "all 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSavingRole) {
+                        e.currentTarget.style.background = "#f5f5f5";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "white";
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSaveRole}
+                    disabled={isSavingRole}
+                    style={{
+                      padding: "0.75rem 1.5rem",
+                      borderRadius: "8px",
+                      border: "none",
+                      background:
+                        "linear-gradient(135deg, #e91e63 0%, #c2185b 100%)",
+                      color: "white",
+                      fontWeight: 600,
+                      cursor: isSavingRole ? "not-allowed" : "pointer",
+                      opacity: isSavingRole ? 0.7 : 1,
+                      transition: "all 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSavingRole) {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow =
+                          "0 4px 12px rgba(233, 30, 99, 0.3)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                  >
+                    {isSavingRole
+                      ? "Salvando..."
+                      : editingRole
+                      ? "Atualizar"
+                      : "Criar"}
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* Toast de notificação */}
+          {roleToast.show && (
+            <div
+              style={{
+                position: "fixed",
+                top: "20px",
+                right: "20px",
+                padding: "16px 24px",
+                background: "white",
+                borderRadius: "12px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                animation: "slideIn 0.3s ease-out",
+                zIndex: 1000,
+                minWidth: "300px",
+                borderLeft: `4px solid ${
+                  roleToast.type === "success" ? "#4caf50" : "#f44336"
+                }`,
+              }}
+            >
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "50%",
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  background:
+                    roleToast.type === "success" ? "#e8f5e9" : "#ffebee",
+                  color: roleToast.type === "success" ? "#4caf50" : "#f44336",
+                }}
+              >
+                {roleToast.type === "success" ? "✓" : "✗"}
+              </span>
+              <span
+                style={{
+                  flex: 1,
+                  color: "#333",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                }}
+              >
+                {roleToast.message}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Modal Histórico de Pagamentos */}
@@ -3179,7 +3596,9 @@ export default function AdminPage() {
           loadingCep={loadingCep}
           onCepSearch={handleCepSearch}
           onSave={() => {
-            alert("Funcionalidade de cadastro de professor será implementada");
+            toast.info(
+              "Funcionalidade de cadastro de professor será implementada em breve"
+            );
             setShowModal(null);
           }}
         />
@@ -3206,12 +3625,49 @@ export default function AdminPage() {
           setAddressData={setAddressData}
           loadingCep={loadingCep}
           onCepSearch={handleCepSearch}
-          classes={classes}
+          classes={realClasses}
+          plans={allPlans}
           onSave={handleCreateUser}
           isEditing={!!editingUser}
+          allStudents={allUsers
+            .filter((u) => u.roleId === 3)
+            .map((u) => ({
+              id: String(u.id),
+              name: u.name,
+              groupId: u.groupId,
+            }))}
+          isSaving={isSavingUser}
+          onGetGroupDiscount={async (groupId: number) => {
+            if (!token) return null;
+            try {
+              const response = (await apiService.getGroupById(
+                groupId,
+                token
+              )) as {
+                data?: {
+                  planId?: number;
+                  discountType?: "percentage" | "value" | "none";
+                  discountPercentage?: number;
+                  discountValue?: number;
+                };
+              };
+              if (response.data) {
+                return {
+                  planId: response.data.planId,
+                  discountType: response.data.discountType,
+                  discountPercentage: response.data.discountPercentage,
+                  discountValue: response.data.discountValue,
+                };
+              }
+              return null;
+            } catch (error) {
+              console.error("Erro ao buscar desconto do grupo:", error);
+              return null;
+            }
+          }}
         />
 
-        {/* Modal de Confirmação de Exclusão */}
+        {/* Modal de Confirmação de Exclusão de Usuário */}
         <ConfirmModal
           isOpen={showDeleteConfirm}
           title="Confirmar Exclusão"
@@ -3222,6 +3678,75 @@ export default function AdminPage() {
           onCancel={() => {
             setShowDeleteConfirm(false);
             setUserToDelete(null);
+          }}
+          danger={true}
+        />
+
+        {/* Modal de Confirmação de Exclusão de Turma (Real) */}
+        <ConfirmModal
+          isOpen={showDeleteClassConfirm}
+          title="Confirmar Exclusão"
+          message={
+            classToDeleteStudentCount > 0
+              ? `⚠️ ATENÇÃO: Esta turma possui ${classToDeleteStudentCount} aluno${
+                  classToDeleteStudentCount > 1 ? "s" : ""
+                } vinculado${
+                  classToDeleteStudentCount > 1 ? "s" : ""
+                }. Ao excluir a turma, todos os alunos ficarão sem turma associada.\n\nTem certeza que deseja excluir esta turma? Esta ação não pode ser desfeita.`
+              : "Tem certeza que deseja excluir esta turma? Esta ação não pode ser desfeita."
+          }
+          confirmText="Excluir"
+          cancelText="Cancelar"
+          onConfirm={confirmDeleteClass}
+          onCancel={() => {
+            setShowDeleteClassConfirm(false);
+            setClassToDelete(null);
+            setClassToDeleteStudentCount(0);
+          }}
+          danger={true}
+        />
+
+        {/* Modal de Confirmação de Exclusão de Turma (Mock) */}
+        <ConfirmModal
+          isOpen={showDeleteOldClassConfirm}
+          title="Confirmar Exclusão"
+          message="Tem certeza que deseja excluir esta turma? Esta ação não pode ser desfeita."
+          confirmText="Excluir"
+          cancelText="Cancelar"
+          onConfirm={confirmDeleteOldClass}
+          onCancel={() => {
+            setShowDeleteOldClassConfirm(false);
+            setOldClassToDelete(null);
+          }}
+          danger={true}
+        />
+
+        {/* Modal de Confirmação de Exclusão de Aluno */}
+        <ConfirmModal
+          isOpen={showDeleteStudentConfirm}
+          title="Confirmar Exclusão"
+          message="Tem certeza que deseja excluir este aluno? Esta ação não pode ser desfeita."
+          confirmText="Excluir"
+          cancelText="Cancelar"
+          onConfirm={confirmDeleteStudent}
+          onCancel={() => {
+            setShowDeleteStudentConfirm(false);
+            setStudentToDelete(null);
+          }}
+          danger={true}
+        />
+
+        {/* Modal de Confirmação de Exclusão de Função/Role */}
+        <ConfirmModal
+          isOpen={showDeleteRoleConfirm}
+          title="Confirmar Exclusão"
+          message="Tem certeza que deseja excluir esta função? Esta ação não pode ser desfeita."
+          confirmText="Excluir"
+          cancelText="Cancelar"
+          onConfirm={confirmDeleteRole}
+          onCancel={() => {
+            setShowDeleteRoleConfirm(false);
+            setRoleToDelete(null);
           }}
           danger={true}
         />

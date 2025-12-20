@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "../store/authStore";
 import Header from "../components/Header";
@@ -10,11 +10,26 @@ export default function LoginPage() {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
   const logout = useAuthStore((state) => state.logout);
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [userType, setUserType] = useState<"aluno" | "professor">("aluno");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Verificar se usuário já está logado e redirecionar
+  useEffect(() => {
+    if (isAuthenticated() && user) {
+      // Redirecionar baseado na role do usuário
+      // 1 = Administrador, 2 = Professor, 3 = Aluno
+      if (user.roleId === 3) {
+        router.push("/aluno");
+      } else if (user.roleId === 1 || user.roleId === 2) {
+        router.push("/admin");
+      }
+    }
+  }, [isAuthenticated, user, router]);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();

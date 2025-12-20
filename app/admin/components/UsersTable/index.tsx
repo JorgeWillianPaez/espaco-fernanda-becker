@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { maskPhone, maskCPF } from "@/app/utils/masks";
 import styles from "./UsersTable.module.css";
 
 interface User {
@@ -17,12 +18,14 @@ interface UsersTableProps {
   users: User[];
   onEditUser: (user: User) => void;
   onDeleteUser: (userId: number) => void;
+  canWrite?: boolean;
 }
 
 const UsersTable: React.FC<UsersTableProps> = ({
   users,
   onEditUser,
   onDeleteUser,
+  canWrite = true,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("");
@@ -106,7 +109,7 @@ const UsersTable: React.FC<UsersTableProps> = ({
               <th>Telefone</th>
               <th>CPF</th>
               <th>Função</th>
-              <th>Ações</th>
+              {canWrite && <th>Ações</th>}
             </tr>
           </thead>
           <tbody>
@@ -122,8 +125,8 @@ const UsersTable: React.FC<UsersTableProps> = ({
                     </div>
                   </td>
                   <td>{user.email}</td>
-                  <td>{user.phone}</td>
-                  <td>{user.cpf}</td>
+                  <td>{maskPhone(user.phone)}</td>
+                  <td>{maskCPF(user.cpf)}</td>
                   <td>
                     <span
                       className={`${styles.roleBadge} ${getRoleClass(
@@ -133,37 +136,31 @@ const UsersTable: React.FC<UsersTableProps> = ({
                       {getRoleName(user.role)}
                     </span>
                   </td>
-                  <td>
-                    <div className={styles.actions}>
-                      <button
-                        className={styles.actionButton}
-                        onClick={() => onEditUser(user)}
-                        title="Editar"
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button
-                        className={`${styles.actionButton} ${styles.danger}`}
-                        onClick={() => {
-                          if (
-                            confirm(
-                              `Tem certeza que deseja excluir o usuário ${user.name}?`
-                            )
-                          ) {
-                            onDeleteUser(user.id);
-                          }
-                        }}
-                        title="Excluir"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </td>
+                  {canWrite && (
+                    <td>
+                      <div className={styles.actions}>
+                        <button
+                          className={styles.actionButton}
+                          onClick={() => onEditUser(user)}
+                          title="Editar"
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                        <button
+                          className={`${styles.actionButton} ${styles.danger}`}
+                          onClick={() => onDeleteUser(user.id)}
+                          title="Excluir"
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} className={styles.noResults}>
+                <td colSpan={canWrite ? 6 : 5} className={styles.noResults}>
                   {searchTerm || roleFilter
                     ? "Nenhum usuário encontrado com os filtros aplicados"
                     : "Nenhum usuário cadastrado"}

@@ -8,12 +8,14 @@ interface RolesTableProps {
   roles: Role[];
   onEditRole: (role?: Role) => void;
   onDeleteRole: (roleId: number) => void;
+  canWrite?: boolean;
 }
 
 const RolesTable: React.FC<RolesTableProps> = ({
   roles,
   onEditRole,
   onDeleteRole,
+  canWrite = true,
 }) => {
   const [expandedRoleId, setExpandedRoleId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,7 +49,7 @@ const RolesTable: React.FC<RolesTableProps> = ({
               <th>Nome</th>
               <th>Descrição</th>
               <th>Permissões</th>
-              <th>Ações</th>
+              {canWrite && <th>Ações</th>}
             </tr>
           </thead>
           <tbody>
@@ -94,28 +96,30 @@ const RolesTable: React.FC<RolesTableProps> = ({
                         {getPermissionSummary(role.permissions)}
                       </span>
                     </td>
-                    <td>
-                      <div className={styles.actions}>
-                        <button
-                          className={styles.actionButton}
-                          onClick={() => onEditRole(role)}
-                          title="Editar"
-                        >
-                          <i className="fas fa-edit"></i>
-                        </button>
-                        <button
-                          className={`${styles.actionButton} ${styles.danger}`}
-                          onClick={() => onDeleteRole(role.id)}
-                          title="Excluir"
-                        >
-                          <i className="fas fa-trash"></i>
-                        </button>
-                      </div>
-                    </td>
+                    {canWrite && (
+                      <td>
+                        <div className={styles.actions}>
+                          <button
+                            className={styles.actionButton}
+                            onClick={() => onEditRole(role)}
+                            title="Editar"
+                          >
+                            <i className="fas fa-edit"></i>
+                          </button>
+                          <button
+                            className={`${styles.actionButton} ${styles.danger}`}
+                            onClick={() => onDeleteRole(role.id)}
+                            title="Excluir"
+                          >
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                   {expandedRoleId === role.id && (
                     <tr className={styles.detailsRow}>
-                      <td colSpan={5}>
+                      <td colSpan={canWrite ? 5 : 4}>
                         <div className={styles.permissionsContainer}>
                           <div className={styles.permissionsHeader}>
                             <i className="fas fa-key"></i>
@@ -173,7 +177,7 @@ const RolesTable: React.FC<RolesTableProps> = ({
               ))
             ) : (
               <tr>
-                <td colSpan={5} className={styles.emptyState}>
+                <td colSpan={canWrite ? 5 : 4} className={styles.emptyState}>
                   Nenhuma função encontrada
                 </td>
               </tr>

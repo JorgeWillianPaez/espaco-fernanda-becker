@@ -1,4 +1,5 @@
 import { Class, ClassSchedule } from "@/app/types";
+import { maskTime } from "@/app/utils/masks";
 import styles from "./ClassModal.module.css";
 
 interface ClassModalProps {
@@ -27,7 +28,7 @@ export default function ClassModal({
   if (!isOpen) return null;
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={styles.modalOverlay}>
       <div
         className={styles.modalContainer}
         onClick={(e) => e.stopPropagation()}
@@ -121,24 +122,28 @@ export default function ClassModal({
                 <option value="Sábado">Sábado</option>
               </select>
               <input
-                type="time"
+                type="text"
                 value={scheduleInput.startTime}
                 onChange={(e) =>
                   setScheduleInput({
                     ...scheduleInput,
-                    startTime: e.target.value,
+                    startTime: maskTime(e.target.value),
                   } as ClassSchedule)
                 }
+                placeholder="00:00"
+                maxLength={5}
               />
               <input
-                type="time"
+                type="text"
                 value={scheduleInput.endTime}
                 onChange={(e) =>
                   setScheduleInput({
                     ...scheduleInput,
-                    endTime: e.target.value,
+                    endTime: maskTime(e.target.value),
                   } as ClassSchedule)
                 }
+                placeholder="00:00"
+                maxLength={5}
               />
             </div>
             <button className={styles.addScheduleBtn} onClick={onAddSchedule}>

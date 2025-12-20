@@ -17,12 +17,12 @@ interface Student {
   name: string;
   email: string;
   phone: string;
-  birthDate: Date;
+  birthDate: string; // Vem como string ISO do JSON
   cpf: string;
   rg: string;
   groupId?: number;
   addressId?: number;
-  createdAt: Date;
+  createdAt: string; // Vem como string ISO do JSON
 }
 
 interface Teacher {
@@ -32,7 +32,7 @@ interface Teacher {
   phone: string;
   specialties: string[];
   groups: number[];
-  createdAt: Date;
+  createdAt: string; // Vem como string ISO do JSON
 }
 
 interface Group {

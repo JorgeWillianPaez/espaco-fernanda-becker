@@ -2,6 +2,7 @@
 
 import React from "react";
 import styles from "./AdminSettingsModal.module.css";
+import { maskPhone } from "@/app/utils/masks";
 
 interface AdminData {
   name: string;
@@ -30,7 +31,7 @@ const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={styles.modalOverlay}>
       <div
         className={styles.modalContainer}
         onClick={(e) => e.stopPropagation()}
@@ -90,9 +91,13 @@ const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                 className={styles.formInput}
                 value={adminData.phone}
                 onChange={(e) =>
-                  setAdminData({ ...adminData, phone: e.target.value })
+                  setAdminData({
+                    ...adminData,
+                    phone: maskPhone(e.target.value),
+                  })
                 }
                 placeholder="(00) 00000-0000"
+                maxLength={15}
               />
             </div>
 

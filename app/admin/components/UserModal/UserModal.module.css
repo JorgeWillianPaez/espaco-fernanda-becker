@@ -205,6 +205,159 @@
   background-color: #7c3aed;
 }
 
+/* Estilos para a seção de desconto */
+.discountSection {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1px solid #86efac;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.discountSection > .formLabel {
+  color: #166534;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.discountSection > .formLabel i {
+  color: #22c55e;
+}
+
+.discountGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.inputWithIcon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputWithIcon .formInput {
+  padding-right: 2.5rem;
+}
+
+.inputWithIcon.hasPrefix .formInput {
+  padding-left: 2.5rem;
+}
+
+.inputSuffix {
+  position: absolute;
+  right: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.inputPrefix {
+  position: absolute;
+  left: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.discountPreview {
+  font-size: 0.75rem;
+  color: #059669;
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.discountSummary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #dcfce7;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+  color: #166534;
+  font-size: 0.9rem;
+}
+
+.discountSummary i {
+  color: #22c55e;
+}
+
+.discountSummary strong {
+  color: #15803d;
+}
+
+/* Estilos para a seção de cobrança proporcional */
+.proportionalPaymentSection {
+  background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+  border: 1px solid #93c5fd;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.proportionalPaymentSection > .formLabel {
+  color: #1e40af;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.proportionalPaymentSection > .formLabel i {
+  color: #3b82f6;
+}
+
+.proportionalPaymentSection .radioGroup {
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.proportionalPaymentSection .radioLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.proportionalPaymentSection .radioLabel:hover {
+  border-color: #3b82f6;
+  background-color: #f0f9ff;
+}
+
+.proportionalPaymentSection .radioLabel input[type="radio"]:checked + span {
+  color: #1e40af;
+}
+
+.proportionalPaymentSection .radioLabel input[type="radio"] {
+  margin-top: 0.25rem;
+}
+
+.proportionalPaymentSection .radioLabel span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.proportionalPaymentSection .radioLabel span strong {
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.proportionalPaymentSection .radioLabel span small {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
 @media (max-width: 768px) {
   .modalOverlay {
     padding: 1rem;
@@ -233,5 +386,9 @@
 
   .checkboxLabel {
     width: 100%;
+  }
+
+  .discountGrid {
+    grid-template-columns: 1fr;
   }
 }

@@ -32,7 +32,7 @@ export default function ConfirmModal({
           <h3>{title}</h3>
         </div>
         <div className={styles.body}>
-          <p>{message}</p>
+          <p style={{ whiteSpace: "pre-line" }}>{message}</p>
         </div>
         <div className={styles.footer}>
           <button className={styles.cancelBtn} onClick={onCancel}>

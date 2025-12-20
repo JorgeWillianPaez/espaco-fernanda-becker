@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { AdminStudent } from "@/app/types";
 import styles from "./PaymentsTable.module.css";
@@ -13,18 +13,17 @@ interface PaymentsTableProps {
     status: string;
     month: string;
   };
-  currentPage: number;
-  itemsPerPage: number;
   onSelectStudent: (student: AdminStudent) => void;
 }
 
 const PaymentsTable: React.FC<PaymentsTableProps> = ({
   students,
   filters,
-  currentPage,
-  itemsPerPage,
   onSelectStudent,
 }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const filteredStudents = students.filter((student) => {
     // Aplicar filtros
     if (
@@ -59,87 +58,132 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
     return true;
   });
 
-  const paginatedStudents = filteredStudents.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  // Paginação
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentStudents = filteredStudents.slice(
+    indexOfFirstItem,
+    indexOfLastItem
   );
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
 
   return (
-    <div className={styles.paymentsTableContainer}>
-      <table className={styles.studentsTable}>
-        <thead>
-          <tr>
-            <th>Aluno</th>
-            <th>Turma</th>
-            <th>Mensalidade</th>
-            <th>Status Atual</th>
-            <th>Última Atualização</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedStudents.map((student) => {
-            const currentPayment = student.payments[0];
-            const pendingCount = student.payments.filter(
-              (p) => p.status === "pending"
-            ).length;
+    <div className={styles.container}>
+      {/* Tabela */}
+      <div className={styles.tableWrapper}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Aluno</th>
+              <th>Turma</th>
+              <th>Mensalidade</th>
+              <th>Status Atual</th>
+              <th>Última Atualização</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentStudents.length > 0 ? (
+              currentStudents.map((student) => {
+                const currentPayment = student.payments[0];
+                const pendingCount = student.payments.filter(
+                  (p) => p.status === "pending"
+                ).length;
 
-            return (
-              <tr key={student.id}>
-                <td>
-                  <div className={styles.studentInfo}>
-                    {student.profileImage ? (
-                      <Image
-                        src={student.profileImage}
-                        alt={student.name}
-                        width={35}
-                        height={35}
-                        className={styles.studentAvatar}
-                      />
-                    ) : (
-                      <div className={styles.avatarIconPlaceholder}>
-                        <i className="fas fa-user-circle"></i>
+                return (
+                  <tr key={student.id}>
+                    <td>
+                      <div className={styles.userName}>
+                        {student.profileImage ? (
+                          <Image
+                            src={student.profileImage}
+                            alt={student.name}
+                            width={35}
+                            height={35}
+                            className={styles.studentAvatar}
+                          />
+                        ) : (
+                          <div className={styles.avatarIcon}>
+                            <i className="fas fa-user-circle"></i>
+                          </div>
+                        )}
+                        {student.name}
                       </div>
-                    )}
-                    <span>{student.name}</span>
-                  </div>
-                </td>
-                <td>{student.class}</td>
-                <td>{currentPayment?.amount}</td>
-                <td>
-                  {pendingCount > 0 ? (
-                    <span
-                      className={`${styles.paymentStatusBadge} ${styles.pending}`}
-                    >
-                      {pendingCount} {pendingCount === 1 ? "mês" : "meses"}{" "}
-                      pendente{pendingCount > 1 ? "s" : ""}
-                    </span>
-                  ) : (
-                    <span
-                      className={`${styles.paymentStatusBadge} ${styles.paid}`}
-                    >
-                      Em dia
-                    </span>
-                  )}
-                </td>
-                <td>
-                  {currentPayment?.status === "paid"
-                    ? currentPayment.paidDate
-                    : `Vence em ${currentPayment?.dueDate}`}
-                </td>
-                <td>
-                  <button
-                    className={styles.tableActionBtn}
-                    onClick={() => onSelectStudent(student)}
-                  >
-                    <i className="fas fa-eye"></i> Ver Histórico
-                  </button>
+                    </td>
+                    <td>{student.class}</td>
+                    <td>{currentPayment?.amount}</td>
+                    <td>
+                      {pendingCount > 0 ? (
+                        <span
+                          className={`${styles.statusBadge} ${styles.statusPending}`}
+                        >
+                          {pendingCount} {pendingCount === 1 ? "mês" : "meses"}{" "}
+                          pendente{pendingCount > 1 ? "s" : ""}
+                        </span>
+                      ) : (
+                        <span
+                          className={`${styles.statusBadge} ${styles.statusActive}`}
+                        >
+                          Em dia
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {currentPayment?.status === "paid"
+                        ? currentPayment.paidDate
+                        : `Vence em ${currentPayment?.dueDate}`}
+                    </td>
+                    <td>
+                      <div className={styles.actions}>
+                        <button
+                          className={styles.actionButton}
+                          onClick={() => onSelectStudent(student)}
+                          title="Ver Histórico"
+                        >
+                          <i className="fas fa-eye"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={6} className={styles.emptyState}>
+                  Nenhum aluno encontrado
                 </td>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Paginação */}
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button
+            className={styles.pageButton}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            <i className="fas fa-chevron-left"></i>
+            Anterior
+          </button>
+          <span className={styles.pageInfo}>
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            className={styles.pageButton}
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+          >
+            Próximo
+            <i className="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

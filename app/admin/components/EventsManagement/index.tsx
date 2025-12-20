@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import apiService from "@/lib/api";
+import ConfirmModal from "@/app/components/ConfirmModal";
 import styles from "./EventsManagement.module.css";
 
 interface Event {
@@ -18,13 +19,23 @@ interface Event {
 
 interface EventsManagementProps {
   token: string;
+  canWrite?: boolean;
+  showAddModal?: boolean;
+  onCloseAddModal?: () => void;
 }
 
-const EventsManagement: React.FC<EventsManagementProps> = ({ token }) => {
+const EventsManagement: React.FC<EventsManagementProps> = ({
+  token,
+  canWrite = true,
+  showAddModal = false,
+  onCloseAddModal,
+}) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     date: "",
@@ -49,6 +60,21 @@ const EventsManagement: React.FC<EventsManagementProps> = ({ token }) => {
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  // Abrir modal quando showAddModal for true (controlado externamente)
+  useEffect(() => {
+    if (showAddModal) {
+      setEditingEvent(null);
+      setFormData({
+        title: "",
+        date: "",
+        location: "",
+        imageUrl: "",
+        status: "upcoming",
+      });
+      setShowModal(true);
+    }
+  }, [showAddModal]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,15 +102,23 @@ const EventsManagement: React.FC<EventsManagementProps> = ({ token }) => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Tem certeza que deseja excluir este evento?")) return;
+  const handleDelete = (id: number) => {
+    setEventToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!eventToDelete) return;
 
     try {
-      await apiService.deleteEvent(id, token);
+      await apiService.deleteEvent(eventToDelete, token);
       await fetchEvents();
     } catch (error) {
       console.error("Erro ao deletar evento:", error);
       alert("Erro ao deletar evento");
+    } finally {
+      setShowDeleteConfirm(false);
+      setEventToDelete(null);
     }
   };
 
@@ -114,6 +148,10 @@ const EventsManagement: React.FC<EventsManagementProps> = ({ token }) => {
   const closeModal = () => {
     setShowModal(false);
     setEditingEvent(null);
+    // Notificar o componente pai que o modal foi fechado
+    if (onCloseAddModal) {
+      onCloseAddModal();
+    }
   };
 
   const statusLabels = {
@@ -124,14 +162,6 @@ const EventsManagement: React.FC<EventsManagementProps> = ({ token }) => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h2>Gerenciar Eventos</h2>
-        <button className={styles.addButton} onClick={() => openModal()}>
-          <i className="fas fa-plus"></i>
-          Novo Evento
-        </button>
-      </div>
-
       {isLoading ? (
         <div className={styles.loading}>Carregando eventos...</div>
       ) : (
@@ -172,20 +202,22 @@ const EventsManagement: React.FC<EventsManagementProps> = ({ token }) => {
                     {statusLabels[event.status]}
                   </span>
                 </div>
-                <div className={styles.eventActions}>
-                  <button
-                    className={styles.editButton}
-                    onClick={() => openModal(event)}
-                  >
-                    <i className="fas fa-edit"></i>
-                  </button>
-                  <button
-                    className={styles.deleteButton}
-                    onClick={() => handleDelete(event.id)}
-                  >
-                    <i className="fas fa-trash"></i>
-                  </button>
-                </div>
+                {canWrite && (
+                  <div className={styles.eventActions}>
+                    <button
+                      className={styles.editButton}
+                      onClick={() => openModal(event)}
+                    >
+                      <i className="fas fa-edit"></i>
+                    </button>
+                    <button
+                      className={styles.deleteButton}
+                      onClick={() => handleDelete(event.id)}
+                    >
+                      <i className="fas fa-trash"></i>
+                    </button>
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -194,7 +226,7 @@ const EventsManagement: React.FC<EventsManagementProps> = ({ token }) => {
 
       {/* Modal */}
       {showModal && (
-        <div className={styles.modalOverlay} onClick={closeModal}>
+        <div className={styles.modalOverlay}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3>{editingEvent ? "Editar Evento" : "Novo Evento"}</h3>
@@ -286,6 +318,21 @@ const EventsManagement: React.FC<EventsManagementProps> = ({ token }) => {
           </div>
         </div>
       )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Confirmar Exclusão"
+        message="Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setEventToDelete(null);
+        }}
+        danger={true}
+      />
     </div>
   );
 };

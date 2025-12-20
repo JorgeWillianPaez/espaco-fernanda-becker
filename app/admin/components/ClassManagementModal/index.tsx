@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { ClassData, ClassFormData } from "@/app/types";
 import { useAuthStore } from "@/app/store/authStore";
+import { maskTime } from "@/app/utils/masks";
 import apiService from "@/lib/api";
 import styles from "./ClassManagementModal.module.css";
 
@@ -217,11 +218,16 @@ export default function ClassManagementModal({
                 Horário de Início <span style={{ color: "#e74c3c" }}>*</span>
               </label>
               <input
-                type="time"
+                type="text"
                 value={formData.startTime}
                 onChange={(e) =>
-                  setFormData({ ...formData, startTime: e.target.value })
+                  setFormData({
+                    ...formData,
+                    startTime: maskTime(e.target.value),
+                  })
                 }
+                placeholder="00:00"
+                maxLength={5}
                 required
               />
             </div>
@@ -231,11 +237,16 @@ export default function ClassManagementModal({
                 Horário de Fim <span style={{ color: "#e74c3c" }}>*</span>
               </label>
               <input
-                type="time"
+                type="text"
                 value={formData.endTime}
                 onChange={(e) =>
-                  setFormData({ ...formData, endTime: e.target.value })
+                  setFormData({
+                    ...formData,
+                    endTime: maskTime(e.target.value),
+                  })
                 }
+                placeholder="00:00"
+                maxLength={5}
                 required
               />
             </div>

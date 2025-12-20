@@ -51,6 +51,10 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
+.adminContent:empty {
+  display: none;
+}
+
 .adminSectionHeader {
   display: flex;
   justify-content: space-between;
@@ -350,6 +354,36 @@
   .classesGrid {
     grid-template-columns: 1fr;
   }
+
+  .alunoContainer {
+    padding: 1rem;
+  }
+
+  .alunoHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+  }
+
+  .alunoWelcome h1 {
+    font-size: 1.5rem;
+  }
+
+  .alunoWelcome p {
+    font-size: 1rem;
+  }
+
+  .headerButtons {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .settingsButton,
+  .logoutButton {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
 }
 
 /* Login Styles */
@@ -470,6 +504,32 @@
   background: #5568d3;
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.headerButtons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.logoutButton {
+  padding: 0.75rem 1.5rem;
+  background: #ef5350;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logoutButton:hover {
+  background: #e53935;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(239, 83, 80, 0.4);
 }
 
 /* Overview Layout */

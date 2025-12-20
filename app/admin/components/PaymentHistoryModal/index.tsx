@@ -18,7 +18,7 @@ const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
   if (!isOpen || !student) return null;
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={styles.modalOverlay}>
       <div
         className={`${styles.modalContainer} ${styles.large}`}
         onClick={(e) => e.stopPropagation()}

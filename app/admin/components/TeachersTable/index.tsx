@@ -2,19 +2,14 @@
 
 import React, { useState } from "react";
 import { UserData } from "@/app/types";
+import { maskPhone, maskCPF } from "@/app/utils/masks";
 import styles from "./TeachersTable.module.css";
 
 interface TeachersTableProps {
   teachers: UserData[];
-  onEditTeacher: (teacher: UserData) => void;
-  onDeleteTeacher: (teacherId: number) => void;
 }
 
-const TeachersTable: React.FC<TeachersTableProps> = ({
-  teachers,
-  onEditTeacher,
-  onDeleteTeacher,
-}) => {
+const TeachersTable: React.FC<TeachersTableProps> = ({ teachers }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -36,7 +31,6 @@ const TeachersTable: React.FC<TeachersTableProps> = ({
               <th>Telefone</th>
               <th>CPF</th>
               <th>Data de Cadastro</th>
-              <th>Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -52,36 +46,18 @@ const TeachersTable: React.FC<TeachersTableProps> = ({
                     </div>
                   </td>
                   <td>{teacher.email}</td>
-                  <td>{teacher.phone || "N/A"}</td>
-                  <td>{teacher.cpf || "N/A"}</td>
+                  <td>{teacher.phone ? maskPhone(teacher.phone) : "N/A"}</td>
+                  <td>{teacher.cpf ? maskCPF(teacher.cpf) : "N/A"}</td>
                   <td>
                     {teacher.createdAt
                       ? new Date(teacher.createdAt).toLocaleDateString("pt-BR")
                       : "N/A"}
                   </td>
-                  <td>
-                    <div className={styles.actions}>
-                      <button
-                        className={styles.actionButton}
-                        onClick={() => onEditTeacher(teacher)}
-                        title="Editar"
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button
-                        className={`${styles.actionButton} ${styles.danger}`}
-                        onClick={() => onDeleteTeacher(teacher.id)}
-                        title="Excluir"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} className={styles.emptyState}>
+                <td colSpan={5} className={styles.emptyState}>
                   Nenhum professor encontrado
                 </td>
               </tr>

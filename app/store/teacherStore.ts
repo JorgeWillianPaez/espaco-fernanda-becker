@@ -7,7 +7,7 @@ interface Teacher {
   email: string;
   phone: string;
   specialties: string[];
-  createdAt: Date;
+  createdAt: string; // Vem como string ISO do JSON
 }
 
 interface Group {
@@ -24,7 +24,7 @@ interface Student {
   name: string;
   email: string;
   phone: string;
-  birthDate: Date;
+  birthDate: string; // Vem como string ISO do JSON
   groupId?: number;
 }
 
