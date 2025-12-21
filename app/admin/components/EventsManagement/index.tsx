@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import apiService from "@/lib/api";
 import ConfirmModal from "@/app/components/ConfirmModal";
+import DatePicker from "@/app/components/DatePicker";
 import styles from "./EventsManagement.module.css";
 
 interface Event {
@@ -41,7 +42,6 @@ const EventsManagement: React.FC<EventsManagementProps> = ({
     date: "",
     location: "",
     imageUrl: "",
-    status: "upcoming" as "past" | "open" | "upcoming",
   });
 
   const fetchEvents = async () => {
@@ -70,7 +70,6 @@ const EventsManagement: React.FC<EventsManagementProps> = ({
         date: "",
         location: "",
         imageUrl: "",
-        status: "upcoming",
       });
       setShowModal(true);
     }
@@ -85,7 +84,6 @@ const EventsManagement: React.FC<EventsManagementProps> = ({
         date: formData.date,
         location: formData.location,
         image_url: formData.imageUrl,
-        status: formData.status,
       };
 
       if (editingEvent) {
@@ -130,7 +128,6 @@ const EventsManagement: React.FC<EventsManagementProps> = ({
         date: event.date,
         location: event.location || "",
         imageUrl: event.imageUrl || "",
-        status: event.status,
       });
     } else {
       setEditingEvent(null);
@@ -139,7 +136,6 @@ const EventsManagement: React.FC<EventsManagementProps> = ({
         date: "",
         location: "",
         imageUrl: "",
-        status: "upcoming",
       });
     }
     setShowModal(true);
@@ -247,35 +243,16 @@ const EventsManagement: React.FC<EventsManagementProps> = ({
                 />
               </div>
 
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Data *</label>
-                  <input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, date: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>Status *</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        status: e.target.value as "past" | "open" | "upcoming",
-                      })
-                    }
-                  >
-                    <option value="upcoming">Em Breve</option>
-                    <option value="open">Inscrições Abertas</option>
-                    <option value="past">Evento Realizado</option>
-                  </select>
-                </div>
+              <div className={styles.formGroup}>
+                <label>Data *</label>
+                <DatePicker
+                  value={formData.date}
+                  onChange={(value) =>
+                    setFormData({ ...formData, date: value })
+                  }
+                  placeholder="Selecione a data do evento"
+                  maxYear={new Date().getFullYear() + 5}
+                />
               </div>
 
               <div className={styles.formGroup}>

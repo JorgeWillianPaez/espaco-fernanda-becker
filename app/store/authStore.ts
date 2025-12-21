@@ -22,6 +22,7 @@ interface User {
   groupId?: number;
   addressId?: number;
   allowedPaymentMethods?: string[];
+  profileImage?: string;
   createdAt: string; // Vem como string ISO do JSON
   permissions?: Permission[];
 }

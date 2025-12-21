@@ -1136,6 +1136,103 @@ class ApiService {
 
     return this.handleResponse(response);
   }
+
+  // ========== PRESENÇAS (ATTENDANCES) ==========
+
+  async createAttendance(
+    data: {
+      classId: number;
+      studentId: number;
+      date: string;
+      status: "present" | "absent" | "late";
+      notes?: string;
+    },
+    token: string
+  ) {
+    const response = await fetch(`${API_URL}/attendances`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async createBulkAttendance(
+    data: {
+      classId: number;
+      date: string;
+      attendances: Array<{
+        studentId: number;
+        status: "present" | "absent" | "late";
+        notes?: string;
+      }>;
+    },
+    token: string
+  ) {
+    const response = await fetch(`${API_URL}/attendances/bulk`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async getAttendancesByClassAndDate(
+    classId: number,
+    date: string,
+    token: string
+  ) {
+    const response = await fetch(
+      `${API_URL}/attendances/class/${classId}?date=${date}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return this.handleResponse(response);
+  }
+
+  async getAttendancesByStudent(studentId: number, token: string) {
+    const response = await fetch(
+      `${API_URL}/attendances/student/${studentId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return this.handleResponse(response);
+  }
+
+  async getAttendanceStats(studentId: number, token: string) {
+    const response = await fetch(
+      `${API_URL}/attendances/stats/student/${studentId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return this.handleResponse(response);
+  }
 }
 
 const apiService = new ApiService();

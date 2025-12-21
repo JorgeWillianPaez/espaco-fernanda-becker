@@ -1,6 +1,17 @@
 import { Class, ClassSchedule } from "@/app/types";
 import styles from "./EditClassModal.module.css";
 
+// Função helper para formatar horário (remover segundos)
+const formatTime = (time: string): string => {
+  if (!time) return "";
+  // Se o horário vier como HH:MM:SS, retorna apenas HH:MM
+  const parts = time.split(":");
+  if (parts.length >= 2) {
+    return `${parts[0]}:${parts[1]}`;
+  }
+  return time;
+};
+
 interface EditClassModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -150,7 +161,8 @@ export default function EditClassModal({
                 {newClass.schedule.map((sch, idx) => (
                   <div key={idx} className={styles.scheduleListItem}>
                     <span>
-                      {sch.day} - {sch.startTime} às {sch.endTime}
+                      {sch.day} - {formatTime(sch.startTime)} às{" "}
+                      {formatTime(sch.endTime)}
                     </span>
                     <button
                       className={styles.removeScheduleBtn}

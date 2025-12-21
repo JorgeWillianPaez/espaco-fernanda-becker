@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Class } from "@/app/types";
+import { ClassData } from "@/app/types";
 import styles from "./StudentFilters.module.css";
 
 interface StudentFiltersProps {
@@ -17,7 +17,7 @@ interface StudentFiltersProps {
     status: string;
     id: string;
   }) => void;
-  classes: Class[];
+  classes: ClassData[];
 }
 
 const StudentFilters: React.FC<StudentFiltersProps> = ({

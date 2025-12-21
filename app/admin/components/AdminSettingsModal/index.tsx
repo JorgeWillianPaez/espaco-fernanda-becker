@@ -3,6 +3,7 @@
 import React from "react";
 import styles from "./AdminSettingsModal.module.css";
 import { maskPhone } from "@/app/utils/masks";
+import DatePicker from "@/app/components/DatePicker";
 
 interface AdminData {
   name: string;
@@ -10,7 +11,6 @@ interface AdminData {
   phone: string;
   password: string;
   birthDate: string;
-  username: string;
 }
 
 interface AdminSettingsModalProps {
@@ -59,19 +59,6 @@ const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
             </div>
 
             <div className="form-group">
-              <label className={styles.formLabel}>Nome de Usuário *</label>
-              <input
-                type="text"
-                className={styles.formInput}
-                value={adminData.username}
-                onChange={(e) =>
-                  setAdminData({ ...adminData, username: e.target.value })
-                }
-                placeholder="Nome de usuário para login"
-              />
-            </div>
-
-            <div className="form-group">
               <label className={styles.formLabel}>E-mail *</label>
               <input
                 type="email"
@@ -103,16 +90,15 @@ const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
 
             <div className="form-group">
               <label className={styles.formLabel}>Data de Nascimento</label>
-              <input
-                type="date"
-                className={styles.formInput}
+              <DatePicker
                 value={adminData.birthDate}
-                onChange={(e) =>
+                onChange={(value) =>
                   setAdminData({
                     ...adminData,
-                    birthDate: e.target.value,
+                    birthDate: value,
                   })
                 }
+                placeholder="Selecione a data"
               />
             </div>
 
@@ -133,8 +119,8 @@ const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
           <div className={styles.formNote}>
             <i className="fas fa-info-circle"></i>
             <strong>Nota:</strong> As configurações serão salvas localmente
-            neste navegador. Use o novo nome de usuário e senha para fazer login
-            nas próximas vezes.
+            neste navegador. Use o e-mail e nova senha para fazer login nas
+            próximas vezes.
           </div>
         </div>
 

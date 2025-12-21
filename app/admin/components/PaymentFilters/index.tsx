@@ -1,8 +1,13 @@
 "use client";
 
 import React from "react";
-import { Class } from "@/app/types";
 import styles from "./PaymentFilters.module.css";
+
+// Interface genérica para classes que só precisa de id e name
+interface ClassOption {
+  id: string | number;
+  name: string;
+}
 
 interface PaymentFiltersProps {
   filters: {
@@ -17,7 +22,7 @@ interface PaymentFiltersProps {
     status: string;
     month: string;
   }) => void;
-  classes: Class[];
+  classes: ClassOption[];
 }
 
 const PaymentFilters: React.FC<PaymentFiltersProps> = ({

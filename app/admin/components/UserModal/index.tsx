@@ -3,6 +3,7 @@
 import React from "react";
 import { ClassData } from "@/app/types";
 import styles from "./UserModal.module.css";
+import DatePicker from "@/app/components/DatePicker";
 import {
   maskCPF,
   maskRG,
@@ -206,16 +207,15 @@ const UserModal: React.FC<UserModalProps> = ({
             </div>
             <div>
               <label className={styles.formLabel}>Data de Nascimento *</label>
-              <input
-                type="date"
-                className={styles.formInput}
+              <DatePicker
                 value={userData.birthDate || ""}
-                onChange={(e) =>
+                onChange={(value) =>
                   setUserData({
                     ...userData,
-                    birthDate: e.target.value,
+                    birthDate: value,
                   })
                 }
+                placeholder="Selecione a data de nascimento"
               />
             </div>
           </div>

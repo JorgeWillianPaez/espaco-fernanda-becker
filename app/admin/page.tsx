@@ -8,10 +8,8 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import { useAuthStore } from "../store/authStore";
 import ClassModal from "./components/ClassModal";
 import EditClassModal from "./components/EditClassModal";
-import StudentModal from "./components/StudentModal";
 import EditStudentModal from "./components/EditStudentModal";
 import PaymentHistoryModal from "./components/PaymentHistoryModal";
-import TeacherModal from "./components/TeacherModal";
 import AdminSettingsModal from "./components/AdminSettingsModal";
 import FinancialSummary from "./components/FinancialSummary";
 import RevenueChart from "./components/RevenueChart";
@@ -33,6 +31,7 @@ import ClassManagementModal from "./components/ClassManagementModal";
 import UserModal from "./components/UserModal";
 import UsersTable from "./components/UsersTable";
 import RolesTable from "./components/RolesTable";
+import AttendanceModal from "./components/AttendanceModal";
 import ToastContainer from "../components/ToastContainer";
 import ConfirmModal from "../components/ConfirmModal";
 import { useToast } from "../hooks/useToast";
@@ -704,14 +703,7 @@ export default function AdminPage() {
   });
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [showModal, setShowModal] = useState<
-    | "class"
-    | "student"
-    | "payment"
-    | "attendance"
-    | "editClass"
-    | "teacher"
-    | "editStudent"
-    | null
+    "class" | "payment" | "attendance" | "editClass" | "editStudent" | null
   >(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
@@ -729,6 +721,17 @@ export default function AdminPage() {
   const [showAdminSettings, setShowAdminSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [expandedClassId, setExpandedClassId] = useState<string | null>(null);
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+  const [selectedClassForAttendance, setSelectedClassForAttendance] = useState<{
+    id: number;
+    name: string;
+    students?: Array<{
+      id: number;
+      name: string;
+      email: string;
+      profileImage?: string;
+    }>;
+  } | null>(null);
   const [classAttendanceDate, setClassAttendanceDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -750,7 +753,6 @@ export default function AdminPage() {
   });
   const [teacherFilters, setTeacherFilters] = useState({
     name: "",
-    status: "",
   });
   const [adminData, setAdminData] = useState({
     name: user?.name || "Administrador",
@@ -758,7 +760,6 @@ export default function AdminPage() {
     phone: user?.phone || "",
     password: "",
     birthDate: user?.birthDate ? user.birthDate.split("T")[0] : "",
-    username: user?.email?.split("@")[0] || "admin",
   });
 
   const handleLogout = () => {
@@ -911,12 +912,7 @@ export default function AdminPage() {
 
   const handleSaveAdminSettings = () => {
     // Validar campos
-    if (
-      !adminData.name ||
-      !adminData.email ||
-      !adminData.username ||
-      !adminData.password
-    ) {
+    if (!adminData.name || !adminData.email || !adminData.password) {
       toast.warning("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
@@ -932,6 +928,25 @@ export default function AdminPage() {
     sessionStorage.setItem("adminData", JSON.stringify(adminData));
     toast.success("Configurações salvas com sucesso!");
     setShowAdminSettings(false);
+  };
+
+  const handleAdminPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageUrl = reader.result as string;
+        // Atualizar user no auth store
+        if (user) {
+          useAuthStore.getState().setUser({
+            ...user,
+            profileImage: imageUrl,
+          });
+        }
+        toast.success("Foto atualizada com sucesso!");
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleAddSchedule = () => {
@@ -1104,12 +1119,18 @@ export default function AdminPage() {
 
   const handleEditClass = (classItem: Class) => {
     setEditingClass(classItem);
+    // Formatar os horários para remover os segundos (HH:MM:SS -> HH:MM)
+    const formattedSchedule = classItem.schedule.map((sch) => ({
+      ...sch,
+      startTime: formatTime(sch.startTime),
+      endTime: formatTime(sch.endTime),
+    }));
     setNewClass({
       name: classItem.name,
       level: classItem.level,
       maxStudents: classItem.maxStudents,
       currentStudents: classItem.currentStudents,
-      schedule: classItem.schedule,
+      schedule: formattedSchedule,
       teacher: classItem.teacher,
       room: classItem.room,
     });
@@ -2028,7 +2049,6 @@ export default function AdminPage() {
         birthDate: response.data.birthDate
           ? response.data.birthDate.split("T")[0]
           : "",
-        username: response.data.email.split("@")[0],
       });
 
       // Se for professor, popular dados do teacher
@@ -2332,7 +2352,10 @@ export default function AdminPage() {
           {activeTab === "overview" && (
             <div className={styles.overviewLayout}>
               {user?.roleId === 1 ? (
-                <AdminProfile user={user} />
+                <AdminProfile
+                  user={user}
+                  onPhotoUpload={handleAdminPhotoUpload}
+                />
               ) : (
                 teacher && (
                   <TeacherProfile
@@ -2395,7 +2418,22 @@ export default function AdminPage() {
                 ) : (
                   <div className={styles.classesGrid}>
                     {realClasses.map((classItem) => (
-                      <div key={classItem.id} className={styles.classCard}>
+                      <div
+                        key={classItem.id}
+                        className={`${styles.classCard} ${styles.clickable}`}
+                        onClick={() => {
+                          setSelectedClassForAttendance({
+                            id: classItem.id,
+                            name: classItem.name,
+                            students: classItem.students?.map((s) => ({
+                              id: s.id,
+                              name: s.name,
+                              email: s.email,
+                            })),
+                          });
+                          setShowAttendanceModal(true);
+                        }}
+                      >
                         <div className={styles.classCardHeader}>
                           <div>
                             <div className={styles.className}>
@@ -2425,350 +2463,33 @@ export default function AdminPage() {
                             </div>
                           )}
                         </div>
-                        {canWriteModule("classes") && (
-                          <div className={styles.classActions}>
-                            <button
-                              className={styles.classActionBtn}
-                              onClick={() => handleOpenClassModal(classItem)}
+                        <div className={styles.classCardFooter}>
+                          <span className={styles.clickHint}>
+                            <i className="fas fa-clipboard-check"></i>
+                            Clique para controle de presença
+                          </span>
+                          {canWriteModule("classes") && (
+                            <div
+                              className={styles.classActions}
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <i className="fas fa-edit"></i> Editar
-                            </button>
-                            <button
-                              className={`${styles.classActionBtn} ${styles.deleteBtn}`}
-                              onClick={() => handleDeleteClass(classItem.id)}
-                            >
-                              <i className="fas fa-trash"></i> Excluir
-                            </button>
-                          </div>
-                        )}
+                              <button
+                                className={styles.classActionBtn}
+                                onClick={() => handleOpenClassModal(classItem)}
+                              >
+                                <i className="fas fa-edit"></i> Editar
+                              </button>
+                              <button
+                                className={`${styles.classActionBtn} ${styles.deleteBtn}`}
+                                onClick={() => handleDeleteClass(classItem.id)}
+                              >
+                                <i className="fas fa-trash"></i> Excluir
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
-                  </div>
-                )}
-
-                {/* Container de Controle de Presenças */}
-                {expandedClassId && (
-                  <div className={styles.attendanceSection}>
-                    {(() => {
-                      const selectedClassItem = classes.find(
-                        (c) => c.id === expandedClassId
-                      );
-                      if (!selectedClassItem) return null;
-
-                      return (
-                        <>
-                          <div className={styles.attendanceSectionHeader}>
-                            <h3>
-                              <i className="fas fa-clipboard-check"></i>{" "}
-                              Controle de Presença - {selectedClassItem.name}
-                            </h3>
-                            <button
-                              className={styles.closeAttendanceBtn}
-                              onClick={() => setExpandedClassId(null)}
-                            >
-                              <i className="fas fa-times"></i> Fechar
-                            </button>
-                          </div>
-
-                          {/* Seletor de Data */}
-                          <div className={styles.attendanceControls}>
-                            <label>
-                              <i className="fas fa-calendar-day"></i> Data da
-                              Aula
-                            </label>
-                            <input
-                              type="date"
-                              className={styles.formInput}
-                              value={classAttendanceDate}
-                              onChange={(e) =>
-                                setClassAttendanceDate(e.target.value)
-                              }
-                            />
-                          </div>
-
-                          {/* Resumo de Presença */}
-                          <div className={styles.attendanceSummary}>
-                            <div
-                              className={`${styles.attendanceStat} ${styles.present}`}
-                            >
-                              <i className="fas fa-check-circle"></i>
-                              <div>
-                                <div className={styles.statValue}>
-                                  {
-                                    getAttendanceStatsForClass(
-                                      selectedClassItem.id,
-                                      classAttendanceDate
-                                    ).present
-                                  }
-                                </div>
-                                <div className={styles.statLabel}>
-                                  Presentes
-                                </div>
-                              </div>
-                            </div>
-                            <div
-                              className={`${styles.attendanceStat} ${styles.absent}`}
-                            >
-                              <i className="fas fa-times-circle"></i>
-                              <div>
-                                <div className={styles.statValue}>
-                                  {
-                                    getAttendanceStatsForClass(
-                                      selectedClassItem.id,
-                                      classAttendanceDate
-                                    ).absent
-                                  }
-                                </div>
-                                <div className={styles.statLabel}>Ausentes</div>
-                              </div>
-                            </div>
-                            <div
-                              className={`${styles.attendanceStat} ${styles.late}`}
-                            >
-                              <i className="fas fa-clock"></i>
-                              <div>
-                                <div className={styles.statValue}>
-                                  {
-                                    getAttendanceStatsForClass(
-                                      selectedClassItem.id,
-                                      classAttendanceDate
-                                    ).late
-                                  }
-                                </div>
-                                <div className={styles.statLabel}>
-                                  Atrasados
-                                </div>
-                              </div>
-                            </div>
-                            <div
-                              className={`${styles.attendanceStat} ${styles.total}`}
-                            >
-                              <i className="fas fa-users"></i>
-                              <div>
-                                <div className={styles.statValue}>
-                                  {
-                                    getAttendanceStatsForClass(
-                                      selectedClassItem.id,
-                                      classAttendanceDate
-                                    ).total
-                                  }
-                                </div>
-                                <div className={styles.statLabel}>
-                                  Total de Alunos
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Lista de Alunos para Marcar Presença */}
-                          <div className={styles.attendanceList}>
-                            <h3>Marcar Presença</h3>
-                            <div className={styles.studentsTableContainer}>
-                              <table className={styles.studentsTable}>
-                                <thead>
-                                  <tr>
-                                    <th>Foto</th>
-                                    <th>Nome</th>
-                                    <th>Status</th>
-                                    <th>Ações</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {students
-                                    .filter(
-                                      (s) => s.classId === selectedClassItem.id
-                                    )
-                                    .map((student) => {
-                                      const attendance =
-                                        getStudentAttendanceForClassDate(
-                                          student.id,
-                                          selectedClassItem.id,
-                                          classAttendanceDate
-                                        );
-                                      return (
-                                        <tr key={student.id}>
-                                          <td>
-                                            {student.profileImage ? (
-                                              <Image
-                                                src={student.profileImage}
-                                                alt={student.name}
-                                                width={40}
-                                                height={40}
-                                                className={styles.studentAvatar}
-                                              />
-                                            ) : (
-                                              <div
-                                                className={
-                                                  styles.avatarIconPlaceholder
-                                                }
-                                              >
-                                                <i className="fas fa-user-circle"></i>
-                                              </div>
-                                            )}
-                                          </td>
-                                          <td>{student.name}</td>
-                                          <td>
-                                            {attendance ? (
-                                              <span
-                                                className={`${
-                                                  styles.attendanceBadge
-                                                } ${styles[attendance.status]}`}
-                                              >
-                                                {attendance.status ===
-                                                  "present" && "Presente"}
-                                                {attendance.status ===
-                                                  "absent" && "Ausente"}
-                                                {attendance.status === "late" &&
-                                                  "Atrasado"}
-                                              </span>
-                                            ) : (
-                                              <span
-                                                className={`${styles.attendanceBadge} ${styles.pending}`}
-                                              >
-                                                Não marcado
-                                              </span>
-                                            )}
-                                          </td>
-                                          <td>
-                                            <div
-                                              style={{
-                                                display: "flex",
-                                                gap: "0.5rem",
-                                              }}
-                                            >
-                                              <button
-                                                className={`${styles.attendanceBtn} ${styles.present}`}
-                                                onClick={() =>
-                                                  handleMarkClassAttendance(
-                                                    student.id,
-                                                    selectedClassItem.id,
-                                                    "present"
-                                                  )
-                                                }
-                                                disabled={!!attendance}
-                                                title="Marcar como Presente"
-                                              >
-                                                <i className="fas fa-check"></i>
-                                              </button>
-                                              <button
-                                                className={`${styles.attendanceBtn} ${styles.late}`}
-                                                onClick={() =>
-                                                  handleMarkClassAttendance(
-                                                    student.id,
-                                                    selectedClassItem.id,
-                                                    "late"
-                                                  )
-                                                }
-                                                disabled={!!attendance}
-                                                title="Marcar como Atrasado"
-                                              >
-                                                <i className="fas fa-clock"></i>
-                                              </button>
-                                              <button
-                                                className={`${styles.attendanceBtn} ${styles.absent}`}
-                                                onClick={() =>
-                                                  handleMarkClassAttendance(
-                                                    student.id,
-                                                    selectedClassItem.id,
-                                                    "absent"
-                                                  )
-                                                }
-                                                disabled={!!attendance}
-                                                title="Marcar como Ausente"
-                                              >
-                                                <i className="fas fa-times"></i>
-                                              </button>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
-                                </tbody>
-                              </table>
-                              {students.filter(
-                                (s) => s.classId === selectedClassItem.id
-                              ).length === 0 && (
-                                <p
-                                  style={{
-                                    textAlign: "center",
-                                    padding: "2rem",
-                                    color: "#666",
-                                  }}
-                                >
-                                  Nenhum aluno cadastrado nesta turma ainda.
-                                </p>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Histórico de Presença */}
-                          <div className={styles.attendanceHistory}>
-                            <h3>Histórico de Presenças</h3>
-                            <div className={styles.studentsTableContainer}>
-                              <table className={styles.studentsTable}>
-                                <thead>
-                                  <tr>
-                                    <th>Data</th>
-                                    <th>Aluno</th>
-                                    <th>Status</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {attendances
-                                    .filter(
-                                      (att) =>
-                                        att.classId === selectedClassItem.id
-                                    )
-                                    .sort(
-                                      (a, b) =>
-                                        new Date(b.date).getTime() -
-                                        new Date(a.date).getTime()
-                                    )
-                                    .map((att) => (
-                                      <tr key={att.id}>
-                                        <td>
-                                          {new Date(
-                                            att.date
-                                          ).toLocaleDateString("pt-BR")}
-                                        </td>
-                                        <td>{att.studentName}</td>
-                                        <td>
-                                          <span
-                                            className={`${
-                                              styles.attendanceBadge
-                                            } ${styles[att.status]}`}
-                                          >
-                                            {att.status === "present" &&
-                                              "Presente"}
-                                            {att.status === "absent" &&
-                                              "Ausente"}
-                                            {att.status === "late" &&
-                                              "Atrasado"}
-                                          </span>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                </tbody>
-                              </table>
-                              {attendances.filter(
-                                (att) => att.classId === selectedClassItem.id
-                              ).length === 0 && (
-                                <p
-                                  style={{
-                                    textAlign: "center",
-                                    padding: "2rem",
-                                    color: "#666",
-                                  }}
-                                >
-                                  Nenhuma presença registrada para esta turma
-                                  ainda.
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </>
-                      );
-                    })()}
                   </div>
                 )}
               </div>
@@ -2784,7 +2505,7 @@ export default function AdminPage() {
                 <StudentFilters
                   filters={studentFilters}
                   onFiltersChange={setStudentFilters}
-                  classes={classes}
+                  classes={realClasses}
                 />
 
                 <StudentsTable
@@ -2832,7 +2553,7 @@ export default function AdminPage() {
                   <PaymentFilters
                     filters={paymentFilters}
                     onFiltersChange={setPaymentFilters}
-                    classes={classes}
+                    classes={realClasses}
                   />
 
                   <PaymentsTable
@@ -3545,20 +3266,6 @@ export default function AdminPage() {
           onUpdateClass={handleUpdateClass}
         />
 
-        {/* Modal Novo Aluno */}
-        <StudentModal
-          isOpen={showModal === "student"}
-          onClose={() => setShowModal(null)}
-          newStudent={newStudent}
-          setNewStudent={setNewStudent}
-          addressData={addressData}
-          setAddressData={setAddressData}
-          loadingCep={loadingCep}
-          onCepSearch={handleCepSearch}
-          classes={classes}
-          onCreateStudent={handleCreateStudent}
-        />
-
         {/* Modal de Gerenciamento de Turmas */}
         <ClassManagementModal
           isOpen={showClassModal}
@@ -3583,24 +3290,6 @@ export default function AdminPage() {
           onCepSearch={handleCepSearch}
           classes={classes}
           onUpdateStudent={handleUpdateStudent}
-        />
-
-        {/* Modal Novo Professor */}
-        <TeacherModal
-          isOpen={showModal === "teacher"}
-          onClose={() => setShowModal(null)}
-          teacherData={newStudent}
-          setTeacherData={setNewStudent}
-          addressData={addressData}
-          setAddressData={setAddressData}
-          loadingCep={loadingCep}
-          onCepSearch={handleCepSearch}
-          onSave={() => {
-            toast.info(
-              "Funcionalidade de cadastro de professor será implementada em breve"
-            );
-            setShowModal(null);
-          }}
         />
 
         {/* Modal de Configurações do Admin */}
@@ -3750,6 +3439,20 @@ export default function AdminPage() {
           }}
           danger={true}
         />
+
+        {/* Modal de Presença */}
+        {showAttendanceModal && selectedClassForAttendance && (
+          <AttendanceModal
+            isOpen={showAttendanceModal}
+            onClose={() => {
+              setShowAttendanceModal(false);
+              setSelectedClassForAttendance(null);
+            }}
+            classData={selectedClassForAttendance}
+            token={token || ""}
+            onSuccess={() => toast.success("Presenças salvas com sucesso!")}
+          />
+        )}
       </div>
     </ProtectedRoute>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import AnimatedSection from "../AnimatedSection";
 import styles from "./Contact.module.css";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -70,83 +71,89 @@ export default function Contact() {
   return (
     <section id="contact" className={styles.contact}>
       <div className="container">
-        <h2>Entre em Contato</h2>
+        <AnimatedSection animation="fadeUp">
+          <h2>Entre em Contato</h2>
+        </AnimatedSection>
         <div className={styles.contactContent}>
-          <div className={styles.contactInfo}>
-            <h3>Fale Conosco</h3>
-            <p>
-              Tem alguma dúvida ou quer conhecer melhor nossa escola? Entre em
-              contato!
-            </p>
-            <div className={styles.contactMethods}>
-              <a
-                href="https://wa.me/5511999999999"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`${styles.contactBtn} ${styles.whatsapp}`}
-              >
-                <i className="fab fa-whatsapp"></i>
-                WhatsApp
-              </a>
-              <a
-                href="https://www.instagram.com/espaco.ferbecker/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`${styles.contactBtn} ${styles.instagram}`}
-              >
-                <i className="fab fa-instagram"></i>
-                Instagram
-              </a>
+          <AnimatedSection animation="fadeRight" delay={0.1}>
+            <div className={styles.contactInfo}>
+              <h3>Fale Conosco</h3>
+              <p>
+                Tem alguma dúvida ou quer conhecer melhor nossa escola? Entre em
+                contato!
+              </p>
+              <div className={styles.contactMethods}>
+                <a
+                  href="https://wa.me/5511999999999"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${styles.contactBtn} ${styles.whatsapp}`}
+                >
+                  <i className="fab fa-whatsapp"></i>
+                  WhatsApp
+                </a>
+                <a
+                  href="https://www.instagram.com/espaco.ferbecker/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${styles.contactBtn} ${styles.instagram}`}
+                >
+                  <i className="fab fa-instagram"></i>
+                  Instagram
+                </a>
+              </div>
             </div>
-          </div>
-          <div className={styles.contactForm}>
-            <h3>Envie uma Mensagem</h3>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <input
-                  type="text"
-                  placeholder="Seu nome"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  required
+          </AnimatedSection>
+          <AnimatedSection animation="fadeLeft" delay={0.2}>
+            <div className={styles.contactForm}>
+              <h3>Envie uma Mensagem</h3>
+              <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                  <input
+                    type="text"
+                    placeholder="Seu nome"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                <div className="form-group">
+                  <input
+                    type="email"
+                    placeholder="Seu e-mail"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                <div className="form-group">
+                  <textarea
+                    placeholder="Sua mensagem"
+                    rows={5}
+                    value={formData.message}
+                    onChange={(e) =>
+                      setFormData({ ...formData, message: e.target.value })
+                    }
+                    required
+                    disabled={loading}
+                  ></textarea>
+                </div>
+                <button
+                  type="submit"
+                  className={styles.submitBtn}
                   disabled={loading}
-                />
-              </div>
-              <div className="form-group">
-                <input
-                  type="email"
-                  placeholder="Seu e-mail"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  required
-                  disabled={loading}
-                />
-              </div>
-              <div className="form-group">
-                <textarea
-                  placeholder="Sua mensagem"
-                  rows={5}
-                  value={formData.message}
-                  onChange={(e) =>
-                    setFormData({ ...formData, message: e.target.value })
-                  }
-                  required
-                  disabled={loading}
-                ></textarea>
-              </div>
-              <button
-                type="submit"
-                className={styles.submitBtn}
-                disabled={loading}
-              >
-                {loading ? "Enviando..." : "Enviar Mensagem"}
-              </button>
-            </form>
-          </div>
+                >
+                  {loading ? "Enviando..." : "Enviar Mensagem"}
+                </button>
+              </form>
+            </div>
+          </AnimatedSection>
         </div>
       </div>
 

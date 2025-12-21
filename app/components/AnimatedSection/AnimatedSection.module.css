@@ -1,0 +1,81 @@
+/* Base animated element */
+.animated {
+  transition-property: opacity, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+/* Fade Up Animation */
+.fadeUp {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+.fadeUp.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Fade Down Animation */
+.fadeDown {
+  opacity: 0;
+  transform: translateY(-40px);
+}
+
+.fadeDown.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Fade Left Animation */
+.fadeLeft {
+  opacity: 0;
+  transform: translateX(-40px);
+}
+
+.fadeLeft.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Fade Right Animation */
+.fadeRight {
+  opacity: 0;
+  transform: translateX(40px);
+}
+
+.fadeRight.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Fade In Animation */
+.fadeIn {
+  opacity: 0;
+}
+
+.fadeIn.visible {
+  opacity: 1;
+}
+
+/* Scale Up Animation */
+.scaleUp {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.scaleUp.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Slide Up Animation */
+.slideUp {
+  opacity: 0;
+  transform: translateY(60px);
+}
+
+.slideUp.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

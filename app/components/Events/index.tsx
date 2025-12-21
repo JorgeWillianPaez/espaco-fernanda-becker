@@ -7,6 +7,7 @@ import { Pagination } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 import apiService from "@/lib/api";
 import { Event, EventPhoto } from "../../types";
+import AnimatedSection from "../AnimatedSection";
 import styles from "./Events.module.css";
 
 // Import Swiper styles
@@ -118,146 +119,152 @@ export default function Events() {
     <>
       <section id="events" className={styles.events}>
         <div className="container">
-          <h2>Eventos</h2>
+          <AnimatedSection animation="fadeUp">
+            <h2>Eventos</h2>
+          </AnimatedSection>
 
-          <div className={styles.eventFilters}>
-            <button
-              className={`${styles.filterBtn} ${
-                filter === "all" ? styles.active : ""
-              }`}
-              onClick={() => setFilter("all")}
-            >
-              Todos
-            </button>
-            <button
-              className={`${styles.filterBtn} ${
-                filter === "past" ? styles.active : ""
-              }`}
-              onClick={() => setFilter("past")}
-            >
-              Eventos Passados
-            </button>
-            <button
-              className={`${styles.filterBtn} ${
-                filter === "open" ? styles.active : ""
-              }`}
-              onClick={() => setFilter("open")}
-            >
-              Inscrições Abertas
-            </button>
-            <button
-              className={`${styles.filterBtn} ${
-                filter === "upcoming" ? styles.active : ""
-              }`}
-              onClick={() => setFilter("upcoming")}
-            >
-              Próximos Eventos
-            </button>
-          </div>
+          <AnimatedSection animation="fadeUp" delay={0.1}>
+            <div className={styles.eventFilters}>
+              <button
+                className={`${styles.filterBtn} ${
+                  filter === "all" ? styles.active : ""
+                }`}
+                onClick={() => setFilter("all")}
+              >
+                Todos
+              </button>
+              <button
+                className={`${styles.filterBtn} ${
+                  filter === "past" ? styles.active : ""
+                }`}
+                onClick={() => setFilter("past")}
+              >
+                Eventos Passados
+              </button>
+              <button
+                className={`${styles.filterBtn} ${
+                  filter === "open" ? styles.active : ""
+                }`}
+                onClick={() => setFilter("open")}
+              >
+                Inscrições Abertas
+              </button>
+              <button
+                className={`${styles.filterBtn} ${
+                  filter === "upcoming" ? styles.active : ""
+                }`}
+                onClick={() => setFilter("upcoming")}
+              >
+                Próximos Eventos
+              </button>
+            </div>
+          </AnimatedSection>
 
-          <div className={styles.eventsCarousel}>
-            {isLoading ? (
-              <p className={styles.textCenter}>Carregando eventos...</p>
-            ) : filteredEvents.length === 0 ? (
-              <p className={styles.textCenter}>
-                Nenhum evento encontrado para este filtro.
-              </p>
-            ) : (
-              <>
-                <button
-                  className={styles.navButtonPrev}
-                  onClick={() => swiperRef.current?.slidePrev()}
-                  aria-label="Slide anterior"
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
+          <AnimatedSection animation="fadeUp" delay={0.2}>
+            <div className={styles.eventsCarousel}>
+              {isLoading ? (
+                <p className={styles.textCenter}>Carregando eventos...</p>
+              ) : filteredEvents.length === 0 ? (
+                <p className={styles.textCenter}>
+                  Nenhum evento encontrado para este filtro.
+                </p>
+              ) : (
+                <>
+                  <button
+                    className={styles.navButtonPrev}
+                    onClick={() => swiperRef.current?.slidePrev()}
+                    aria-label="Slide anterior"
                   >
-                    <path
-                      d="M15 18L9 12L15 6"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-                <button
-                  className={styles.navButtonNext}
-                  onClick={() => swiperRef.current?.slideNext()}
-                  aria-label="Próximo slide"
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M15 18L9 12L15 6"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    className={styles.navButtonNext}
+                    onClick={() => swiperRef.current?.slideNext()}
+                    aria-label="Próximo slide"
                   >
-                    <path
-                      d="M9 18L15 12L9 6"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-                <Swiper
-                  modules={[Pagination]}
-                  spaceBetween={30}
-                  slidesPerView={1}
-                  pagination={{ clickable: true }}
-                  onSwiper={(swiper) => {
-                    swiperRef.current = swiper;
-                  }}
-                  breakpoints={{
-                    640: {
-                      slidesPerView: 1,
-                      spaceBetween: 20,
-                    },
-                    768: {
-                      slidesPerView: 2,
-                      spaceBetween: 30,
-                    },
-                    1024: {
-                      slidesPerView: 3,
-                      spaceBetween: 30,
-                    },
-                  }}
-                  className={styles.swiperContainer}
-                >
-                  {filteredEvents.map((event) => (
-                    <SwiperSlide key={event.id}>
-                      <div className={styles.eventCard}>
-                        <Image
-                          src={event.image}
-                          alt={event.title}
-                          width={400}
-                          height={200}
-                          className={styles.eventImage}
-                          style={{ objectFit: "cover" }}
-                        />
-                        <div className={styles.eventContent}>
-                          <div className={styles.eventDate}>{event.date}</div>
-                          <h3 className={styles.eventTitle}>{event.title}</h3>
-                          <button
-                            className={styles.eventBtn}
-                            onClick={() => handleEventClick(event)}
-                          >
-                            {event.status === "past" ? "Fotos" : "Ingressos"}
-                          </button>
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M9 18L15 12L9 6"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <Swiper
+                    modules={[Pagination]}
+                    spaceBetween={30}
+                    slidesPerView={1}
+                    pagination={{ clickable: true }}
+                    onSwiper={(swiper) => {
+                      swiperRef.current = swiper;
+                    }}
+                    breakpoints={{
+                      640: {
+                        slidesPerView: 1,
+                        spaceBetween: 20,
+                      },
+                      768: {
+                        slidesPerView: 2,
+                        spaceBetween: 30,
+                      },
+                      1024: {
+                        slidesPerView: 3,
+                        spaceBetween: 30,
+                      },
+                    }}
+                    className={styles.swiperContainer}
+                  >
+                    {filteredEvents.map((event) => (
+                      <SwiperSlide key={event.id}>
+                        <div className={styles.eventCard}>
+                          <Image
+                            src={event.image}
+                            alt={event.title}
+                            width={400}
+                            height={200}
+                            className={styles.eventImage}
+                            style={{ objectFit: "cover" }}
+                          />
+                          <div className={styles.eventContent}>
+                            <div className={styles.eventDate}>{event.date}</div>
+                            <h3 className={styles.eventTitle}>{event.title}</h3>
+                            <button
+                              className={styles.eventBtn}
+                              onClick={() => handleEventClick(event)}
+                            >
+                              {event.status === "past" ? "Fotos" : "Ingressos"}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-              </>
-            )}
-          </div>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                </>
+              )}
+            </div>
+          </AnimatedSection>
         </div>
       </section>
 

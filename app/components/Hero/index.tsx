@@ -1,9 +1,18 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import styles from "./Hero.module.css";
 
 export default function Hero() {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Trigger animation after component mounts
+    const timer = setTimeout(() => setIsLoaded(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const scrollToAbout = () => {
     const element = document.getElementById("about");
     if (element) {
@@ -33,7 +42,11 @@ export default function Hero() {
         <div className={styles.overlay}></div>
       </div>
 
-      <div className={styles.heroContent}>
+      <div
+        className={`${styles.heroContent} ${
+          isLoaded ? styles.heroContentVisible : ""
+        }`}
+      >
         <h1 className={styles.heroTitle}>Espaço de Dança Fernanda Becker</h1>
         <p className={styles.heroSlogan}>Valorizando as diferenças</p>
         <p className={styles.heroDescription}>

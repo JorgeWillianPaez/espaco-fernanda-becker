@@ -36,6 +36,11 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
       return false;
     }
     if (filters.status) {
+      // Verifica se o aluno tem pagamentos
+      if (!student.payments || student.payments.length === 0) {
+        // Se não tem pagamentos e o filtro é "pending", inclui; caso contrário, exclui
+        return filters.status === "pending";
+      }
       const currentPayment = student.payments[0];
       if (filters.status === "overdue") {
         if (currentPayment.status !== "pending") return false;
@@ -47,13 +52,17 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
         return false;
       }
     }
-    if (
-      filters.month &&
-      !student.payments[0]?.month
-        .toLowerCase()
-        .includes(filters.month.toLowerCase())
-    ) {
-      return false;
+    if (filters.month) {
+      if (!student.payments || student.payments.length === 0) {
+        return false;
+      }
+      if (
+        !student.payments[0]?.month
+          .toLowerCase()
+          .includes(filters.month.toLowerCase())
+      ) {
+        return false;
+      }
     }
     return true;
   });
@@ -85,10 +94,10 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
           <tbody>
             {currentStudents.length > 0 ? (
               currentStudents.map((student) => {
-                const currentPayment = student.payments[0];
-                const pendingCount = student.payments.filter(
-                  (p) => p.status === "pending"
-                ).length;
+                const currentPayment = student.payments?.[0];
+                const pendingCount =
+                  student.payments?.filter((p) => p.status === "pending")
+                    .length || 0;
 
                 return (
                   <tr key={student.id}>
@@ -110,8 +119,8 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
                         {student.name}
                       </div>
                     </td>
-                    <td>{student.class}</td>
-                    <td>{currentPayment?.amount}</td>
+                    <td>{student.class || "-"}</td>
+                    <td>{currentPayment?.amount || "-"}</td>
                     <td>
                       {pendingCount > 0 ? (
                         <span
@@ -129,9 +138,11 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
                       )}
                     </td>
                     <td>
-                      {currentPayment?.status === "paid"
-                        ? currentPayment.paidDate
-                        : `Vence em ${currentPayment?.dueDate}`}
+                      {currentPayment
+                        ? currentPayment.status === "paid"
+                          ? currentPayment.paidDate
+                          : `Vence em ${currentPayment.dueDate}`
+                        : "-"}
                     </td>
                     <td>
                       <div className={styles.actions}>

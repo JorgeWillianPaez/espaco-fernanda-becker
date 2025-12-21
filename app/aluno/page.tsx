@@ -155,6 +155,18 @@ export default function AlunoPage() {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [studentClasses, setStudentClasses] = useState<ClassSchedule[]>([]);
   const [isLoadingClasses, setIsLoadingClasses] = useState(false);
+  const [studentAttendances, setStudentAttendances] = useState<
+    Array<{
+      id: string;
+      studentId: string;
+      studentName: string;
+      classId: string;
+      className: string;
+      date: string;
+      status: "present" | "absent" | "late";
+    }>
+  >([]);
+  const [isLoadingAttendances, setIsLoadingAttendances] = useState(false);
 
   // Modal de alteração de senha
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -220,6 +232,45 @@ export default function AlunoPage() {
     }
   };
 
+  // Carregar presenças do aluno
+  const fetchStudentAttendances = async () => {
+    if (!user?.id || !token) return;
+
+    try {
+      setIsLoadingAttendances(true);
+      const response = (await apiService.getAttendancesByStudent(
+        user.id,
+        token
+      )) as {
+        data?: Array<{
+          id: number;
+          studentId: number;
+          classId: number;
+          date: string;
+          status: "present" | "absent" | "late";
+          class?: { name: string };
+        }>;
+      };
+
+      if (response.data && Array.isArray(response.data)) {
+        const formattedAttendances = response.data.map((att) => ({
+          id: String(att.id),
+          studentId: String(att.studentId),
+          studentName: user.name,
+          classId: String(att.classId),
+          className: att.class?.name || "Turma",
+          date: att.date,
+          status: att.status,
+        }));
+        setStudentAttendances(formattedAttendances);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar presenças:", error);
+    } finally {
+      setIsLoadingAttendances(false);
+    }
+  };
+
   // Carregar dados do aluno baseado no usuário logado
   useEffect(() => {
     if (user && user.email) {
@@ -245,6 +296,9 @@ export default function AlunoPage() {
 
       // Carregar turmas do backend
       fetchStudentClasses();
+
+      // Carregar presenças do backend
+      fetchStudentAttendances();
     }
   }, [user, token]);
 
@@ -561,8 +615,12 @@ export default function AlunoPage() {
                   Histórico de Presenças
                 </h3>
 
-                {currentStudent.attendances &&
-                currentStudent.attendances.length > 0 ? (
+                {isLoadingAttendances ? (
+                  <div className={styles.noAttendance}>
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <p>Carregando presenças...</p>
+                  </div>
+                ) : studentAttendances.length > 0 ? (
                   <>
                     {/* Resumo de Presenças */}
                     <div className={styles.attendanceSummaryStudent}>
@@ -573,7 +631,7 @@ export default function AlunoPage() {
                         <div>
                           <div className={styles.statValue}>
                             {
-                              currentStudent.attendances.filter(
+                              studentAttendances.filter(
                                 (att) => att.status === "present"
                               ).length
                             }
@@ -588,7 +646,7 @@ export default function AlunoPage() {
                         <div>
                           <div className={styles.statValue}>
                             {
-                              currentStudent.attendances.filter(
+                              studentAttendances.filter(
                                 (att) => att.status === "absent"
                               ).length
                             }
@@ -603,7 +661,7 @@ export default function AlunoPage() {
                         <div>
                           <div className={styles.statValue}>
                             {
-                              currentStudent.attendances.filter(
+                              studentAttendances.filter(
                                 (att) => att.status === "late"
                               ).length
                             }
@@ -617,7 +675,7 @@ export default function AlunoPage() {
                         <i className="fas fa-calendar-check"></i>
                         <div>
                           <div className={styles.statValue}>
-                            {currentStudent.attendances.length}
+                            {studentAttendances.length}
                           </div>
                           <div className={styles.statLabel}>Total de Aulas</div>
                         </div>
@@ -628,7 +686,7 @@ export default function AlunoPage() {
                     <div className={styles.attendanceListStudent}>
                       <h4>Registro de Presenças</h4>
                       <div className={styles.attendanceItems}>
-                        {currentStudent.attendances
+                        {studentAttendances
                           .sort(
                             (a, b) =>
                               new Date(b.date).getTime() -
