@@ -811,6 +811,7 @@ class ApiService {
 
   // Events
   async getEvents() {
+    console.log("API_URL:", API_URL);
     const response = await fetch(`${API_URL}/events`, {
       method: "GET",
       headers: {
