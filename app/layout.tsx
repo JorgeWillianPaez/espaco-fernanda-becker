@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Espaço de Dança Fernanda Becker",
   description:
     "Onde a paixão pela dança ganha vida através do movimento e da arte",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
