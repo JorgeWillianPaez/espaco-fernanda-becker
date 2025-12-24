@@ -296,6 +296,35 @@ class ApiService {
     return this.handleResponse(response);
   }
 
+  // Solicitar recuperação de senha
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_URL}/auth/forgot-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    return this.handleResponse(response);
+  }
+
+  // Redefinir senha com token
+  async resetPassword(
+    token: string,
+    newPassword: string
+  ): Promise<{ message: string }> {
+    const response = await fetch(`${API_URL}/auth/reset-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token, newPassword }),
+    });
+
+    return this.handleResponse(response);
+  }
+
   // ========== MODULES ==========
 
   async getModules(token: string): Promise<{

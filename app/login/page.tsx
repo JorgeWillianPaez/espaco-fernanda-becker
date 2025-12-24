@@ -4,6 +4,7 @@ import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "../store/authStore";
 import Header from "../components/Header";
+import ForgotPasswordModal from "../components/ForgotPasswordModal";
 import styles from "./login.module.css";
 
 export default function LoginPage() {
@@ -17,6 +18,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
 
   // Verificar se usuário já está logado e redirecionar
   useEffect(() => {
@@ -140,12 +145,26 @@ export default function LoginPage() {
             >
               {isLoading ? "Entrando..." : "Entrar"}
             </button>
+            <div className={styles.forgotPassword}>
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className={styles.forgotPasswordBtn}
+              >
+                Esqueci minha senha
+              </button>
+            </div>
           </form>
           <div className={styles.loginBack}>
             <a href="/">Voltar ao site principal</a>
           </div>
         </div>
       </div>
+
+      <ForgotPasswordModal
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+      />
     </>
   );
 }

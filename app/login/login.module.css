@@ -132,6 +132,27 @@
   box-shadow: 0 10px 25px rgba(233, 30, 99, 0.4);
 }
 
+.forgotPassword {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.forgotPasswordBtn {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.3s ease;
+  padding: 0;
+  font-family: "Open Sans", sans-serif;
+}
+
+.forgotPasswordBtn:hover {
+  color: #764ba2;
+}
+
 .loginBack {
   text-align: center;
   margin-top: 1.25rem;
