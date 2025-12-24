@@ -296,6 +296,14 @@
   box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
+.imagePreview {
+  margin-top: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0.5rem;
+  display: inline-block;
+}
+
 @media (max-width: 768px) {
   .formRow {
     grid-template-columns: 1fr;

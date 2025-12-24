@@ -67,6 +67,14 @@ export default function Header() {
                 </li>
                 <li>
                   <a
+                    onClick={() => scrollToSection("classes")}
+                    className={styles.navLink}
+                  >
+                    Modalidades
+                  </a>
+                </li>
+                <li>
+                  <a
                     onClick={() => scrollToSection("events")}
                     className={styles.navLink}
                   >

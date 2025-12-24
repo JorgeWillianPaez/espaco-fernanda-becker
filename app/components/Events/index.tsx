@@ -63,6 +63,7 @@ export default function Events() {
       : events.filter((event) => event.status === filter);
 
   const handleEventClick = async (event: Event) => {
+    // Apenas eventos passados podem ser clicados para ver fotos
     if (event.status === "past") {
       setSelectedEvent(event);
       setIsLoadingPhotos(true);
@@ -77,11 +78,6 @@ export default function Events() {
       } finally {
         setIsLoadingPhotos(false);
       }
-    } else {
-      // Evento futuro - redirecionar para ingressos
-      alert(
-        `Redirecionando para compra de ingressos: ${event.title}\n\nEm breve você será direcionado para a página de ingressos.`
-      );
     }
   };
 
@@ -250,12 +246,14 @@ export default function Events() {
                           <div className={styles.eventContent}>
                             <div className={styles.eventDate}>{event.date}</div>
                             <h3 className={styles.eventTitle}>{event.title}</h3>
-                            <button
-                              className={styles.eventBtn}
-                              onClick={() => handleEventClick(event)}
-                            >
-                              {event.status === "past" ? "Fotos" : "Ingressos"}
-                            </button>
+                            {event.status === "past" && (
+                              <button
+                                className={styles.eventBtn}
+                                onClick={() => handleEventClick(event)}
+                              >
+                                Fotos
+                              </button>
+                            )}
                           </div>
                         </div>
                       </SwiperSlide>

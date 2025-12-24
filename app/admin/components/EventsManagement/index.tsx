@@ -37,6 +37,8 @@ const EventsManagement: React.FC<EventsManagementProps> = ({
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<number | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
   const [formData, setFormData] = useState({
     title: "",
     date: "",
@@ -65,6 +67,8 @@ const EventsManagement: React.FC<EventsManagementProps> = ({
   useEffect(() => {
     if (showAddModal) {
       setEditingEvent(null);
+      setSelectedImage(null);
+      setImagePreview("");
       setFormData({
         title: "",
         date: "",
@@ -79,17 +83,21 @@ const EventsManagement: React.FC<EventsManagementProps> = ({
     e.preventDefault();
 
     try {
-      const eventData = {
-        title: formData.title,
-        date: formData.date,
-        location: formData.location,
-        image_url: formData.imageUrl,
-      };
+      // Criar FormData para enviar arquivo
+      const formDataToSend = new FormData();
+      formDataToSend.append("title", formData.title);
+      formDataToSend.append("date", formData.date);
+      formDataToSend.append("location", formData.location);
+
+      // Se uma nova imagem foi selecionada, adicionar ao FormData
+      if (selectedImage) {
+        formDataToSend.append("image", selectedImage);
+      }
 
       if (editingEvent) {
-        await apiService.updateEvent(editingEvent.id, eventData, token);
+        await apiService.updateEvent(editingEvent.id, formDataToSend, token);
       } else {
-        await apiService.createEvent(eventData, token);
+        await apiService.createEvent(formDataToSend, token);
       }
 
       await fetchEvents();
@@ -123,6 +131,8 @@ const EventsManagement: React.FC<EventsManagementProps> = ({
   const openModal = (event?: Event) => {
     if (event) {
       setEditingEvent(event);
+      setSelectedImage(null);
+      setImagePreview(event.imageUrl || "");
       setFormData({
         title: event.title,
         date: event.date,
@@ -131,6 +141,8 @@ const EventsManagement: React.FC<EventsManagementProps> = ({
       });
     } else {
       setEditingEvent(null);
+      setSelectedImage(null);
+      setImagePreview("");
       setFormData({
         title: "",
         date: "",
@@ -144,9 +156,37 @@ const EventsManagement: React.FC<EventsManagementProps> = ({
   const closeModal = () => {
     setShowModal(false);
     setEditingEvent(null);
+    setSelectedImage(null);
+    setImagePreview("");
     // Notificar o componente pai que o modal foi fechado
     if (onCloseAddModal) {
       onCloseAddModal();
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validar tipo de arquivo
+      if (!file.type.startsWith("image/")) {
+        alert("Por favor, selecione apenas arquivos de imagem");
+        return;
+      }
+
+      // Validar tamanho (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert("A imagem deve ter no máximo 5MB");
+        return;
+      }
+
+      setSelectedImage(file);
+
+      // Criar preview da imagem
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -267,16 +307,24 @@ const EventsManagement: React.FC<EventsManagementProps> = ({
               </div>
 
               <div className={styles.formGroup}>
-                <label>URL da Imagem *</label>
+                <label>Imagem do Evento *</label>
                 <input
-                  type="url"
-                  value={formData.imageUrl}
-                  onChange={(e) =>
-                    setFormData({ ...formData, imageUrl: e.target.value })
-                  }
-                  placeholder="https://..."
-                  required
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  required={!editingEvent && !imagePreview}
                 />
+                {imagePreview && (
+                  <div className={styles.imagePreview}>
+                    <Image
+                      src={imagePreview}
+                      alt="Preview"
+                      width={200}
+                      height={150}
+                      style={{ objectFit: "cover", borderRadius: "8px" }}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className={styles.modalActions}>

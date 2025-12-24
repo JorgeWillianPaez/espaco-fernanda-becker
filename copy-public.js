@@ -1,0 +1,29 @@
+const fs = require("fs");
+const path = require("path");
+
+const publicDir = path.join(__dirname, "public");
+const outDir = path.join(__dirname, "out", "public");
+
+function copyRecursiveSync(src, dest) {
+  const exists = fs.existsSync(src);
+  const stats = exists && fs.statSync(src);
+  const isDirectory = exists && stats.isDirectory();
+
+  if (isDirectory) {
+    if (!fs.existsSync(dest)) {
+      fs.mkdirSync(dest, { recursive: true });
+    }
+    fs.readdirSync(src).forEach((childItemName) => {
+      copyRecursiveSync(
+        path.join(src, childItemName),
+        path.join(dest, childItemName)
+      );
+    });
+  } else {
+    fs.copyFileSync(src, dest);
+  }
+}
+
+console.log("📁 Copiando pasta public para out/public...");
+copyRecursiveSync(publicDir, outDir);
+console.log("✅ Pasta public copiada com sucesso!");

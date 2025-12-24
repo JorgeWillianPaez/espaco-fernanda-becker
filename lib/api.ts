@@ -833,47 +833,25 @@ class ApiService {
     return this.handleResponse(response);
   }
 
-  async createEvent(
-    data: {
-      title: string;
-      date: Date | string;
-      location?: string;
-      image_url?: string;
-      status?: "past" | "open" | "upcoming";
-    },
-    token: string
-  ) {
+  async createEvent(data: FormData, token: string) {
     const response = await fetch(`${API_URL}/events`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(data),
+      body: data,
     });
 
     return this.handleResponse(response);
   }
 
-  async updateEvent(
-    id: number,
-    data: {
-      title?: string;
-      date?: Date | string;
-      location?: string;
-      image_url?: string;
-      status?: "past" | "open" | "upcoming";
-      active?: boolean;
-    },
-    token: string
-  ) {
+  async updateEvent(id: number, data: FormData, token: string) {
     const response = await fetch(`${API_URL}/events/${id}`, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(data),
+      body: data,
     });
 
     return this.handleResponse(response);
