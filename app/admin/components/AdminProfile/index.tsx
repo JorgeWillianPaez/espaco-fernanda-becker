@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { maskPhone } from "@/app/utils/masks";
 import styles from "./AdminProfile.module.css";
 
 interface User {
@@ -89,7 +90,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ user, onPhotoUpload }) => {
         {user.phone && (
           <div className={styles.profileDetailItem}>
             <i className="fas fa-phone"></i>
-            <span>{user.phone}</span>
+            <span>{maskPhone(user.phone)}</span>
           </div>
         )}
         <div className={styles.profileDetailItem}>

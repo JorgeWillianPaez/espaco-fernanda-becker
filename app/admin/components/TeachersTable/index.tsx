@@ -37,7 +37,7 @@ const TeachersTable: React.FC<TeachersTableProps> = ({ teachers }) => {
             {currentTeachers.length > 0 ? (
               currentTeachers.map((teacher) => (
                 <tr key={teacher.id}>
-                  <td>
+                  <td data-label="Nome">
                     <div className={styles.userName}>
                       <div className={styles.avatarIcon}>
                         <i className="fas fa-user-tie"></i>
@@ -45,10 +45,14 @@ const TeachersTable: React.FC<TeachersTableProps> = ({ teachers }) => {
                       {teacher.name}
                     </div>
                   </td>
-                  <td>{teacher.email}</td>
-                  <td>{teacher.phone ? maskPhone(teacher.phone) : "N/A"}</td>
-                  <td>{teacher.cpf ? maskCPF(teacher.cpf) : "N/A"}</td>
-                  <td>
+                  <td data-label="E-mail">{teacher.email}</td>
+                  <td data-label="Telefone">
+                    {teacher.phone ? maskPhone(teacher.phone) : "N/A"}
+                  </td>
+                  <td data-label="CPF">
+                    {teacher.cpf ? maskCPF(teacher.cpf) : "N/A"}
+                  </td>
+                  <td data-label="Cadastro">
                     {teacher.createdAt
                       ? new Date(teacher.createdAt).toLocaleDateString("pt-BR")
                       : "N/A"}

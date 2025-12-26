@@ -101,7 +101,7 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
 
                 return (
                   <tr key={student.id}>
-                    <td>
+                    <td data-label="Aluno">
                       <div className={styles.userName}>
                         {student.profileImage ? (
                           <Image
@@ -119,9 +119,11 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
                         {student.name}
                       </div>
                     </td>
-                    <td>{student.class || "-"}</td>
-                    <td>{currentPayment?.amount || "-"}</td>
-                    <td>
+                    <td data-label="Turma">{student.class || "-"}</td>
+                    <td data-label="Mensalidade">
+                      {currentPayment?.amount || "-"}
+                    </td>
+                    <td data-label="Status">
                       {pendingCount > 0 ? (
                         <span
                           className={`${styles.statusBadge} ${styles.statusPending}`}
@@ -137,14 +139,14 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
                         </span>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Atualização">
                       {currentPayment
                         ? currentPayment.status === "paid"
                           ? currentPayment.paidDate
                           : `Vence em ${currentPayment.dueDate}`
                         : "-"}
                     </td>
-                    <td>
+                    <td data-label="Ações">
                       <div className={styles.actions}>
                         <button
                           className={styles.actionButton}

@@ -47,7 +47,7 @@ export default function Header() {
           <ul
             className={`${styles.navMenu} ${isMenuOpen ? styles.active : ""}`}
           >
-            {!isAlunoPage && !isAdminPage && !isLoginPage && (
+            {!isAlunoPage && !isAdminPage && !isLoginPage ? (
               <>
                 <li>
                   <a
@@ -99,16 +99,30 @@ export default function Header() {
                   </Link>
                 </li>
               </>
+            ) : (
+              <li>
+                <Link
+                  href="/"
+                  className={styles.navLink}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <i className="fas fa-home"></i> Voltar ao Início
+                </Link>
+              </li>
             )}
           </ul>
-          <div
-            className={`${styles.hamburger} ${isMenuOpen ? styles.active : ""}`}
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <span className={styles.bar}></span>
-            <span className={styles.bar}></span>
-            <span className={styles.bar}></span>
-          </div>
+          {!isAlunoPage && !isAdminPage && (
+            <div
+              className={`${styles.hamburger} ${
+                isMenuOpen ? styles.active : ""
+              }`}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              <span className={styles.bar}></span>
+              <span className={styles.bar}></span>
+              <span className={styles.bar}></span>
+            </div>
+          )}
         </div>
       </nav>
     </header>

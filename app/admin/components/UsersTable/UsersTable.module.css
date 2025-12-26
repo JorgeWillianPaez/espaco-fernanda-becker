@@ -238,19 +238,78 @@
     width: 100%;
   }
 
-  .table {
-    font-size: 0.75rem;
+  /* Esconder tabela e mostrar cards no mobile */
+  .tableWrapper {
+    overflow: visible;
   }
 
-  .table th,
+  .table thead {
+    display: none;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
   .table td {
-    padding: 0.75rem 0.5rem;
+    display: block;
+  }
+
+  .table tbody tr {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .table tbody tr:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .table td {
+    padding: 0.5rem 0;
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    flex-shrink: 0;
+    width: 35%;
+  }
+
+  .table td:first-child {
+    padding-top: 0;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.75rem;
+  }
+
+  .table td:last-child {
+    padding-bottom: 0;
+    margin-top: 0.5rem;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 0.75rem;
   }
 
   .userName {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
     gap: 0.5rem;
+    justify-content: flex-end;
+    flex: 1;
+    text-align: right;
   }
 
   .avatarIcon {
@@ -260,6 +319,17 @@
   }
 
   .actions {
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex: 1;
+  }
+
+  .actionButton {
+    padding: 0.6rem 0.8rem;
+  }
+
+  .roleBadge {
+    padding: 0.35rem 0.85rem;
   }
 }

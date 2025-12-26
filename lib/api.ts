@@ -229,11 +229,11 @@ class ApiService {
   async adminRegister(
     data: {
       name: string;
-      email: string;
+      email?: string;
       phone: string;
       birth_date: string;
-      cpf: string;
-      rg: string;
+      cpf?: string;
+      rg?: string;
       role?: number;
       guardian?: string;
       guardian_id?: number;

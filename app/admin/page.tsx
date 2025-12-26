@@ -6,9 +6,6 @@ import Image from "next/image";
 import Header from "../components/Header";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useAuthStore } from "../store/authStore";
-import ClassModal from "./components/ClassModal";
-import EditClassModal from "./components/EditClassModal";
-import EditStudentModal from "./components/EditStudentModal";
 import PaymentHistoryModal from "./components/PaymentHistoryModal";
 import AdminSettingsModal from "./components/AdminSettingsModal";
 import FinancialSummary from "./components/FinancialSummary";
@@ -85,520 +82,6 @@ const formatTime = (time: string): string => {
   return time;
 };
 
-// Dados mockados
-const teacherData: Teacher = {
-  id: "prof001",
-  name: "Fernanda Becker",
-  email: "fernanda@espacobecker.com",
-  phone: "(41) 98765-4321",
-  specialty: "Ballet Clássico e Jazz",
-  profileImage: "",
-  classes: ["ballet-int", "jazz-ini", "danca-ventre"],
-  startDate: "15/01/2015",
-};
-
-const initialClasses: Class[] = [
-  {
-    id: "ballet-int",
-    name: "Ballet Intermediário",
-    level: "Intermediário",
-    maxStudents: 15,
-    currentStudents: 8,
-    schedule: [
-      {
-        day: "Segunda-feira",
-        startTime: "19:00",
-        endTime: "20:30",
-        room: "Sala 1",
-      },
-      {
-        day: "Quarta-feira",
-        startTime: "19:00",
-        endTime: "20:30",
-        room: "Sala 1",
-      },
-    ],
-    teacher: "Fernanda Becker",
-    room: "Sala 1 - Principal",
-  },
-  {
-    id: "jazz-ini",
-    name: "Jazz Iniciante",
-    level: "Iniciante",
-    maxStudents: 20,
-    currentStudents: 8,
-    schedule: [
-      {
-        day: "Terça-feira",
-        startTime: "18:00",
-        endTime: "19:30",
-        room: "Sala 2",
-      },
-      {
-        day: "Quinta-feira",
-        startTime: "18:00",
-        endTime: "19:30",
-        room: "Sala 2",
-      },
-    ],
-    teacher: "Fernanda Becker",
-    room: "Sala 2 - Espelho",
-  },
-  {
-    id: "danca-ventre",
-    name: "Dança do Ventre",
-    level: "Todos os níveis",
-    maxStudents: 12,
-    currentStudents: 5,
-    schedule: [
-      {
-        day: "Sexta-feira",
-        startTime: "20:00",
-        endTime: "21:30",
-        room: "Sala 1",
-      },
-    ],
-    teacher: "Fernanda Becker",
-    room: "Sala 1 - Principal",
-  },
-];
-
-const initialStudents: AdminStudent[] = [
-  {
-    id: "12345",
-    name: "Ana Silva",
-    email: "ana.silva@email.com",
-    phone: "(41) 98765-4321",
-    class: "Ballet Intermediário",
-    classId: "ballet-int",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "15/03/2023",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "paid",
-        amount: "R$ 280,00",
-        dueDate: "05/12/2024",
-        paidDate: "03/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12346",
-    name: "Maria Santos",
-    email: "maria.santos@email.com",
-    phone: "(41) 97654-3210",
-    class: "Jazz Iniciante",
-    classId: "jazz-ini",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "20/04/2023",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "pending",
-        amount: "R$ 320,00",
-        dueDate: "05/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12347",
-    name: "João Oliveira",
-    email: "joao.oliveira@email.com",
-    phone: "(41) 96543-2109",
-    class: "Dança do Ventre",
-    classId: "danca-ventre",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "10/05/2023",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "paid",
-        amount: "R$ 250,00",
-        dueDate: "05/12/2024",
-        paidDate: "01/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12348",
-    name: "Beatriz Costa",
-    email: "beatriz.costa@email.com",
-    phone: "(41) 98888-1111",
-    class: "Ballet Intermediário",
-    classId: "ballet-int",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "12/01/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "paid",
-        amount: "R$ 280,00",
-        dueDate: "05/12/2024",
-        paidDate: "04/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12349",
-    name: "Carlos Mendes",
-    email: "carlos.mendes@email.com",
-    phone: "(41) 98777-2222",
-    class: "Jazz Iniciante",
-    classId: "jazz-ini",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "08/02/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "pending",
-        amount: "R$ 320,00",
-        dueDate: "05/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12350",
-    name: "Daniela Lima",
-    email: "daniela.lima@email.com",
-    phone: "(41) 98666-3333",
-    class: "Ballet Intermediário",
-    classId: "ballet-int",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "22/03/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "paid",
-        amount: "R$ 280,00",
-        dueDate: "05/12/2024",
-        paidDate: "02/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12351",
-    name: "Eduardo Ferreira",
-    email: "eduardo.ferreira@email.com",
-    phone: "(41) 98555-4444",
-    class: "Dança do Ventre",
-    classId: "danca-ventre",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "15/04/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "paid",
-        amount: "R$ 250,00",
-        dueDate: "05/12/2024",
-        paidDate: "05/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12352",
-    name: "Fernanda Rocha",
-    email: "fernanda.rocha@email.com",
-    phone: "(41) 98444-5555",
-    class: "Jazz Iniciante",
-    classId: "jazz-ini",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "10/05/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "pending",
-        amount: "R$ 320,00",
-        dueDate: "05/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12353",
-    name: "Gabriel Alves",
-    email: "gabriel.alves@email.com",
-    phone: "(41) 98333-6666",
-    class: "Ballet Intermediário",
-    classId: "ballet-int",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "18/06/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "paid",
-        amount: "R$ 280,00",
-        dueDate: "05/12/2024",
-        paidDate: "03/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12354",
-    name: "Helena Martins",
-    email: "helena.martins@email.com",
-    phone: "(41) 98222-7777",
-    class: "Dança do Ventre",
-    classId: "danca-ventre",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "25/07/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "paid",
-        amount: "R$ 250,00",
-        dueDate: "05/12/2024",
-        paidDate: "01/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12355",
-    name: "Igor Souza",
-    email: "igor.souza@email.com",
-    phone: "(41) 98111-8888",
-    class: "Jazz Iniciante",
-    classId: "jazz-ini",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "05/08/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "pending",
-        amount: "R$ 320,00",
-        dueDate: "05/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12356",
-    name: "Juliana Barros",
-    email: "juliana.barros@email.com",
-    phone: "(41) 98000-9999",
-    class: "Ballet Intermediário",
-    classId: "ballet-int",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "12/09/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "paid",
-        amount: "R$ 280,00",
-        dueDate: "05/12/2024",
-        paidDate: "04/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12357",
-    name: "Karen Ribeiro",
-    email: "karen.ribeiro@email.com",
-    phone: "(41) 97999-0000",
-    class: "Dança do Ventre",
-    classId: "danca-ventre",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "20/09/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "paid",
-        amount: "R$ 250,00",
-        dueDate: "05/12/2024",
-        paidDate: "02/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12358",
-    name: "Lucas Cardoso",
-    email: "lucas.cardoso@email.com",
-    phone: "(41) 97888-1111",
-    class: "Jazz Iniciante",
-    classId: "jazz-ini",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "01/10/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "pending",
-        amount: "R$ 320,00",
-        dueDate: "05/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12359",
-    name: "Marina Pereira",
-    email: "marina.pereira@email.com",
-    phone: "(41) 97777-2222",
-    class: "Ballet Intermediário",
-    classId: "ballet-int",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "15/10/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "paid",
-        amount: "R$ 280,00",
-        dueDate: "05/12/2024",
-        paidDate: "03/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12360",
-    name: "Nicolas Teixeira",
-    email: "nicolas.teixeira@email.com",
-    phone: "(41) 97666-3333",
-    class: "Dança do Ventre",
-    classId: "danca-ventre",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "22/10/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "paid",
-        amount: "R$ 250,00",
-        dueDate: "05/12/2024",
-        paidDate: "05/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12361",
-    name: "Olivia Nunes",
-    email: "olivia.nunes@email.com",
-    phone: "(41) 97555-4444",
-    class: "Jazz Iniciante",
-    classId: "jazz-ini",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "05/11/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "pending",
-        amount: "R$ 320,00",
-        dueDate: "05/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12362",
-    name: "Pedro Castro",
-    email: "pedro.castro@email.com",
-    phone: "(41) 97444-5555",
-    class: "Ballet Intermediário",
-    classId: "ballet-int",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "12/11/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "paid",
-        amount: "R$ 280,00",
-        dueDate: "05/12/2024",
-        paidDate: "04/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12363",
-    name: "Rafaela Gomes",
-    email: "rafaela.gomes@email.com",
-    phone: "(41) 97333-6666",
-    class: "Dança do Ventre",
-    classId: "danca-ventre",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "20/11/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "paid",
-        amount: "R$ 250,00",
-        dueDate: "05/12/2024",
-        paidDate: "01/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12364",
-    name: "Sofia Azevedo",
-    email: "sofia.azevedo@email.com",
-    phone: "(41) 97222-7777",
-    class: "Jazz Iniciante",
-    classId: "jazz-ini",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "25/11/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "pending",
-        amount: "R$ 320,00",
-        dueDate: "05/12/2024",
-      },
-    ],
-  },
-  {
-    id: "12365",
-    name: "Thiago Moreira",
-    email: "thiago.moreira@email.com",
-    phone: "(41) 97111-8888",
-    class: "Ballet Intermediário",
-    classId: "ballet-int",
-    status: "Inativo",
-    profileImage: "",
-    enrollmentDate: "01/12/2024",
-    schedule: [],
-    payments: [
-      {
-        month: "Dezembro 2024",
-        status: "pending",
-        amount: "R$ 280,00",
-        dueDate: "05/12/2024",
-      },
-    ],
-  },
-];
-
 export default function AdminPage() {
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
@@ -660,7 +143,6 @@ export default function AdminPage() {
     | "events"
     | "access"
   >(getFirstAvailableTab());
-  const [classes, setClasses] = useState<Class[]>([]);
   const [realClasses, setRealClasses] = useState<ClassData[]>([]);
   const [isLoadingClasses, setIsLoadingClasses] = useState(false);
   const [showClassModal, setShowClassModal] = useState(false);
@@ -701,16 +183,9 @@ export default function AdminPage() {
     description: "",
     permissions: [],
   });
-  const [attendances, setAttendances] = useState<Attendance[]>([]);
-  const [showModal, setShowModal] = useState<
-    "class" | "payment" | "attendance" | "editClass" | "editStudent" | null
-  >(null);
+  const [showModal, setShowModal] = useState<"payment" | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
-  const [selectedClass, setSelectedClass] = useState<Class | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
   const [selectedStudent, setSelectedStudent] = useState<AdminStudent | null>(
     null
   );
@@ -720,7 +195,6 @@ export default function AdminPage() {
   const [studentsPerPage, setStudentsPerPage] = useState(10);
   const [showAdminSettings, setShowAdminSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
-  const [expandedClassId, setExpandedClassId] = useState<string | null>(null);
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [selectedClassForAttendance, setSelectedClassForAttendance] = useState<{
     id: number;
@@ -734,10 +208,6 @@ export default function AdminPage() {
   } | null>(null);
   const [classAttendanceDate, setClassAttendanceDate] = useState<string>(
     new Date().toISOString().split("T")[0]
-  );
-  const [editingClass, setEditingClass] = useState<Class | null>(null);
-  const [editingStudent, setEditingStudent] = useState<AdminStudent | null>(
-    null
   );
   const [paymentFilters, setPaymentFilters] = useState({
     name: "",
@@ -768,35 +238,6 @@ export default function AdminPage() {
   };
 
   // Estados para formulários
-  const [newClass, setNewClass] = useState<Partial<Class>>({
-    name: "",
-    level: "",
-    maxStudents: 15,
-    currentStudents: 0,
-    schedule: [],
-    teacher: teacher?.name || "",
-    room: "",
-  });
-
-  const [newStudent, setNewStudent] = useState<Partial<AdminStudent>>({
-    name: "",
-    email: "",
-    phone: "",
-    classId: "",
-    status: "Ativo",
-    enrollmentDate: new Date().toLocaleDateString("pt-BR"),
-    profileImage: "",
-    birthDate: "",
-    address: "",
-    cpf: "",
-    rg: "",
-    hasDisability: false,
-    disabilityDescription: "",
-    takesMedication: false,
-    medicationDescription: "",
-    paymentMethods: [],
-    guardian: "",
-  });
 
   const [addressData, setAddressData] = useState({
     cep: "",
@@ -823,12 +264,6 @@ export default function AdminPage() {
   const [showDeleteClassConfirm, setShowDeleteClassConfirm] = useState(false);
   const [classToDelete, setClassToDelete] = useState<number | null>(null);
   const [classToDeleteStudentCount, setClassToDeleteStudentCount] = useState(0);
-  const [showDeleteOldClassConfirm, setShowDeleteOldClassConfirm] =
-    useState(false);
-  const [oldClassToDelete, setOldClassToDelete] = useState<string | null>(null);
-  const [showDeleteStudentConfirm, setShowDeleteStudentConfirm] =
-    useState(false);
-  const [studentToDelete, setStudentToDelete] = useState<string | null>(null);
   const [showDeleteRoleConfirm, setShowDeleteRoleConfirm] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<number | null>(null);
 
@@ -946,505 +381,6 @@ export default function AdminPage() {
         toast.success("Foto atualizada com sucesso!");
       };
       reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAddSchedule = () => {
-    if (
-      scheduleInput.day &&
-      scheduleInput.startTime &&
-      scheduleInput.endTime &&
-      scheduleInput.room
-    ) {
-      setNewClass({
-        ...newClass,
-        schedule: [...(newClass.schedule || []), scheduleInput],
-      });
-      setScheduleInput({ day: "", startTime: "", endTime: "", room: "" });
-    }
-  };
-
-  const handleRemoveSchedule = (index: number) => {
-    const updatedSchedule = [...(newClass.schedule || [])];
-    updatedSchedule.splice(index, 1);
-    setNewClass({ ...newClass, schedule: updatedSchedule });
-  };
-
-  const handleCreateClass = () => {
-    if (newClass.name && newClass.level && newClass.room) {
-      const classToAdd: Class = {
-        id: `class-${Date.now()}`,
-        name: newClass.name!,
-        level: newClass.level!,
-        maxStudents: newClass.maxStudents || 15,
-        currentStudents: 0,
-        schedule: newClass.schedule || [],
-        teacher: teacher?.name || "Sem professor",
-        room: newClass.room!,
-      };
-      setClasses([...classes, classToAdd]);
-      setShowModal(null);
-      setNewClass({
-        name: "",
-        level: "",
-        maxStudents: 15,
-        currentStudents: 0,
-        schedule: [],
-        teacher: teacher?.name || "",
-        room: "",
-      });
-    } else {
-      toast.warning("Por favor, preencha todos os campos obrigatórios");
-    }
-  };
-
-  const handleCreateStudent = () => {
-    if (
-      newStudent.name &&
-      newStudent.email &&
-      newStudent.phone &&
-      newStudent.classId &&
-      newStudent.birthDate &&
-      newStudent.cpf &&
-      newStudent.rg &&
-      addressData.cep &&
-      addressData.street &&
-      addressData.number &&
-      addressData.neighborhood &&
-      addressData.city &&
-      addressData.state
-    ) {
-      const selectedClass = classes.find((c) => c.id === newStudent.classId);
-
-      // Concatenar endereço completo
-      const fullAddress = `${addressData.street}, ${addressData.number}${
-        addressData.complement ? ", " + addressData.complement : ""
-      }, ${addressData.neighborhood}, ${addressData.city} - ${
-        addressData.state
-      }, CEP: ${addressData.cep}`;
-
-      // Remover máscaras antes de enviar ao backend
-      const cleanData = {
-        ...newStudent,
-        phone: removeMask(newStudent.phone!),
-        cpf: removeMask(newStudent.cpf!),
-        rg: removeMask(newStudent.rg!),
-        address: {
-          ...addressData,
-          zip_code: removeMask(addressData.cep),
-        },
-      };
-
-      const studentToAdd: AdminStudent = {
-        id: `student-${Date.now()}`,
-        name: newStudent.name!,
-        email: newStudent.email!,
-        phone: newStudent.phone!,
-        class: selectedClass?.name || "",
-        classId: newStudent.classId!,
-        status: "Ativo",
-        profileImage: "",
-        enrollmentDate:
-          newStudent.enrollmentDate || new Date().toLocaleDateString("pt-BR"),
-        schedule: [],
-        payments: [],
-        birthDate: newStudent.birthDate,
-        address: fullAddress,
-        cpf: newStudent.cpf,
-        rg: newStudent.rg,
-        hasDisability: newStudent.hasDisability,
-        disabilityDescription: newStudent.disabilityDescription,
-        takesMedication: newStudent.takesMedication,
-        medicationDescription: newStudent.medicationDescription,
-        paymentMethods: newStudent.paymentMethods || [],
-        guardian: newStudent.guardian,
-      };
-      setStudents([...students, studentToAdd]);
-
-      // Atualizar contador de alunos na turma
-      setClasses(
-        classes.map((c) =>
-          c.id === newStudent.classId
-            ? { ...c, currentStudents: c.currentStudents + 1 }
-            : c
-        )
-      );
-
-      setShowModal(null);
-      setNewStudent({
-        name: "",
-        email: "",
-        phone: "",
-        classId: "",
-        status: "Ativo",
-        enrollmentDate: new Date().toLocaleDateString("pt-BR"),
-        profileImage: "",
-        birthDate: "",
-        address: "",
-        cpf: "",
-        rg: "",
-        hasDisability: false,
-        disabilityDescription: "",
-        takesMedication: false,
-        medicationDescription: "",
-        paymentMethods: [],
-        guardian: "",
-      });
-      setAddressData({
-        cep: "",
-        street: "",
-        number: "",
-        complement: "",
-        neighborhood: "",
-        city: "",
-        state: "",
-      });
-    } else {
-      toast.warning("Por favor, preencha todos os campos obrigatórios");
-    }
-  };
-
-  const handleDeleteOldClass = (classId: string) => {
-    setOldClassToDelete(classId);
-    setShowDeleteOldClassConfirm(true);
-  };
-
-  const confirmDeleteOldClass = () => {
-    if (!oldClassToDelete) return;
-    setClasses(classes.filter((c) => c.id !== oldClassToDelete));
-    toast.success("Turma excluída com sucesso!");
-    setShowDeleteOldClassConfirm(false);
-    setOldClassToDelete(null);
-  };
-
-  const handleEditClass = (classItem: Class) => {
-    setEditingClass(classItem);
-    // Formatar os horários para remover os segundos (HH:MM:SS -> HH:MM)
-    const formattedSchedule = classItem.schedule.map((sch) => ({
-      ...sch,
-      startTime: formatTime(sch.startTime),
-      endTime: formatTime(sch.endTime),
-    }));
-    setNewClass({
-      name: classItem.name,
-      level: classItem.level,
-      maxStudents: classItem.maxStudents,
-      currentStudents: classItem.currentStudents,
-      schedule: formattedSchedule,
-      teacher: classItem.teacher,
-      room: classItem.room,
-    });
-    setShowModal("editClass");
-  };
-
-  const handleUpdateClass = () => {
-    if (!editingClass) return;
-
-    if (newClass.name && newClass.level && newClass.room) {
-      const updatedClass: Class = {
-        ...editingClass,
-        name: newClass.name!,
-        level: newClass.level!,
-        maxStudents: newClass.maxStudents || 15,
-        schedule: newClass.schedule || [],
-        room: newClass.room!,
-      };
-
-      setClasses(
-        classes.map((c) => (c.id === editingClass.id ? updatedClass : c))
-      );
-
-      setShowModal(null);
-      setEditingClass(null);
-      setNewClass({
-        name: "",
-        level: "",
-        maxStudents: 15,
-        currentStudents: 0,
-        schedule: [],
-        teacher: teacherData.name,
-        room: "",
-      });
-    } else {
-      toast.warning("Por favor, preencha todos os campos obrigatórios");
-    }
-  };
-
-  const handleDeleteStudent = (studentId: string) => {
-    setStudentToDelete(studentId);
-    setShowDeleteStudentConfirm(true);
-  };
-
-  const confirmDeleteStudent = () => {
-    if (!studentToDelete) return;
-
-    const student = students.find((s) => s.id === studentToDelete);
-    if (student) {
-      setClasses(
-        classes.map((c) =>
-          c.id === student.classId
-            ? { ...c, currentStudents: Math.max(0, c.currentStudents - 1) }
-            : c
-        )
-      );
-    }
-    setStudents(students.filter((s) => s.id !== studentToDelete));
-    toast.success("Aluno excluído com sucesso!");
-    setShowDeleteStudentConfirm(false);
-    setStudentToDelete(null);
-  };
-
-  const handleEditStudent = (student: AdminStudent) => {
-    setEditingStudent(student);
-
-    // Parse do endereço
-    const addressParts = student.address?.split(", ") || [];
-    const cepMatch = student.address?.match(/CEP: ([\d-]+)/);
-
-    setNewStudent({
-      name: student.name,
-      email: student.email,
-      phone: student.phone,
-      classId: student.classId,
-      status: student.status,
-      enrollmentDate: student.enrollmentDate,
-      profileImage: student.profileImage,
-      birthDate: student.birthDate,
-      address: student.address,
-      cpf: student.cpf,
-      rg: student.rg,
-      hasDisability: student.hasDisability,
-      disabilityDescription: student.disabilityDescription,
-      takesMedication: student.takesMedication,
-      medicationDescription: student.medicationDescription,
-      paymentMethods: student.paymentMethods || [],
-      guardian: student.guardian,
-    });
-
-    if (addressParts.length > 0) {
-      setAddressData({
-        street: addressParts[0] || "",
-        number: addressParts[1] || "",
-        complement: addressParts.length > 5 ? addressParts[2] : "",
-        neighborhood: addressParts[addressParts.length > 5 ? 3 : 2] || "",
-        city:
-          addressParts[addressParts.length > 5 ? 4 : 3]?.split(" - ")[0] || "",
-        state:
-          addressParts[addressParts.length > 5 ? 4 : 3]?.split(" - ")[1] || "",
-        cep: cepMatch ? cepMatch[1] : "",
-      });
-    }
-
-    setShowModal("editStudent");
-  };
-
-  const handleUpdateStudent = () => {
-    if (!editingStudent) return;
-
-    if (
-      newStudent.name &&
-      newStudent.email &&
-      newStudent.phone &&
-      newStudent.classId &&
-      newStudent.birthDate &&
-      newStudent.cpf &&
-      newStudent.rg &&
-      addressData.cep &&
-      addressData.street &&
-      addressData.number &&
-      addressData.neighborhood &&
-      addressData.city &&
-      addressData.state
-    ) {
-      const selectedClass = classes.find((c) => c.id === newStudent.classId);
-      const fullAddress = `${addressData.street}, ${addressData.number}${
-        addressData.complement ? ", " + addressData.complement : ""
-      }, ${addressData.neighborhood}, ${addressData.city} - ${
-        addressData.state
-      }, CEP: ${addressData.cep}`;
-
-      const updatedStudent: AdminStudent = {
-        ...editingStudent,
-        name: newStudent.name!,
-        email: newStudent.email!,
-        phone: newStudent.phone!,
-        class: selectedClass?.name || "",
-        classId: newStudent.classId!,
-        birthDate: newStudent.birthDate,
-        address: fullAddress,
-        cpf: newStudent.cpf,
-        rg: newStudent.rg,
-        hasDisability: newStudent.hasDisability,
-        disabilityDescription: newStudent.disabilityDescription,
-        takesMedication: newStudent.takesMedication,
-        medicationDescription: newStudent.medicationDescription,
-        paymentMethods: newStudent.paymentMethods || [],
-        guardian: newStudent.guardian,
-      };
-
-      // Se mudou de turma, atualizar contadores
-      if (editingStudent.classId !== newStudent.classId) {
-        setClasses(
-          classes.map((c) => {
-            if (c.id === editingStudent.classId) {
-              return {
-                ...c,
-                currentStudents: Math.max(0, c.currentStudents - 1),
-              };
-            }
-            if (c.id === newStudent.classId) {
-              return { ...c, currentStudents: c.currentStudents + 1 };
-            }
-            return c;
-          })
-        );
-      }
-
-      setStudents(
-        students.map((s) => (s.id === editingStudent.id ? updatedStudent : s))
-      );
-
-      setShowModal(null);
-      setEditingStudent(null);
-      setNewStudent({
-        name: "",
-        email: "",
-        phone: "",
-        classId: "",
-        status: "Ativo",
-        enrollmentDate: new Date().toLocaleDateString("pt-BR"),
-        profileImage: "",
-        birthDate: "",
-        address: "",
-        cpf: "",
-        rg: "",
-        hasDisability: false,
-        disabilityDescription: "",
-        takesMedication: false,
-        medicationDescription: "",
-        paymentMethods: [],
-        guardian: "",
-      });
-      setAddressData({
-        cep: "",
-        street: "",
-        number: "",
-        complement: "",
-        neighborhood: "",
-        city: "",
-        state: "",
-      });
-    } else {
-      toast.warning("Por favor, preencha todos os campos obrigatórios");
-    }
-  };
-
-  const handleMarkAttendance = (
-    studentId: string,
-    status: "present" | "absent" | "late"
-  ) => {
-    if (!selectedClass) return;
-
-    const student = students.find((s) => s.id === studentId);
-    if (!student) return;
-
-    const attendanceId = `att-${Date.now()}-${studentId}`;
-    const newAttendance: Attendance = {
-      id: attendanceId,
-      studentId: studentId,
-      studentName: student.name,
-      classId: selectedClass.id,
-      className: selectedClass.name,
-      date: selectedDate,
-      status: status,
-    };
-
-    setAttendances([...attendances, newAttendance]);
-  };
-
-  const getStudentAttendanceForDate = (studentId: string, date: string) => {
-    return attendances.find(
-      (att) =>
-        att.studentId === studentId &&
-        att.date === date &&
-        att.classId === selectedClass?.id
-    );
-  };
-
-  const getAttendanceStats = () => {
-    const classStudents = students.filter(
-      (s) => s.classId === selectedClass?.id
-    );
-    const today = new Date().toISOString().split("T")[0];
-    const todayAttendances = attendances.filter(
-      (att) => att.date === today && att.classId === selectedClass?.id
-    );
-
-    return {
-      total: classStudents.length,
-      present: todayAttendances.filter((att) => att.status === "present")
-        .length,
-      absent: todayAttendances.filter((att) => att.status === "absent").length,
-      late: todayAttendances.filter((att) => att.status === "late").length,
-    };
-  };
-
-  const getAttendanceStatsForClass = (classId: string, date: string) => {
-    const classStudents = students.filter((s) => s.classId === classId);
-    const dateAttendances = attendances.filter(
-      (att) => att.date === date && att.classId === classId
-    );
-
-    return {
-      total: classStudents.length,
-      present: dateAttendances.filter((att) => att.status === "present").length,
-      absent: dateAttendances.filter((att) => att.status === "absent").length,
-      late: dateAttendances.filter((att) => att.status === "late").length,
-    };
-  };
-
-  const getStudentAttendanceForClassDate = (
-    studentId: string,
-    classId: string,
-    date: string
-  ) => {
-    return attendances.find(
-      (att) =>
-        att.studentId === studentId &&
-        att.date === date &&
-        att.classId === classId
-    );
-  };
-
-  const handleMarkClassAttendance = (
-    studentId: string,
-    classId: string,
-    status: "present" | "absent" | "late"
-  ) => {
-    const student = students.find((s) => s.id === studentId);
-    const classItem = classes.find((c) => c.id === classId);
-    if (!student || !classItem) return;
-
-    const attendanceId = `att-${Date.now()}-${studentId}`;
-    const newAttendance: Attendance = {
-      id: attendanceId,
-      studentId: studentId,
-      studentName: student.name,
-      classId: classId,
-      className: classItem.name,
-      date: classAttendanceDate,
-      status: status,
-    };
-
-    setAttendances([...attendances, newAttendance]);
-  };
-
-  const toggleClassAttendance = (classId: string) => {
-    if (expandedClassId === classId) {
-      setExpandedClassId(null);
-    } else {
-      setExpandedClassId(classId);
-      setClassAttendanceDate(new Date().toISOString().split("T")[0]);
     }
   };
 
@@ -1572,11 +508,8 @@ export default function AdminPage() {
     // Validar campos obrigatórios
     if (
       !userData.name ||
-      !userData.email ||
       !userData.phone ||
       !userData.birthDate ||
-      !userData.cpf ||
-      !userData.rg ||
       !userData.role ||
       !addressData.cep ||
       !addressData.street ||
@@ -1628,27 +561,49 @@ export default function AdminPage() {
 
       if (editingUser) {
         // Atualizar usuário existente
-        const updatePayload = {
+        const updatePayload: any = {
           name: userData.name,
-          email: userData.email,
           phone: removeMask(userData.phone),
           birth_date: userData.birthDate,
-          cpf: removeMask(userData.cpf),
-          rg: removeMask(userData.rg),
           role_id: roleId,
-          guardian_id: userData.guardian ? parseInt(userData.guardian) : null,
           has_disability: userData.hasDisability,
-          disability_description: userData.hasDisability
-            ? userData.disabilityDescription
-            : null,
-          takes_medication: userData.takesMedication,
-          medication_description: userData.takesMedication
-            ? userData.medicationDescription
-            : null,
           allowed_payment_methods: userData.paymentMethods,
           address,
-          class_id: userData.classId ? parseInt(userData.classId) : undefined,
         };
+
+        // Adicionar campos opcionais apenas se preenchidos
+        if (userData.email) {
+          updatePayload.email = userData.email;
+        }
+        if (userData.cpf) {
+          updatePayload.cpf = removeMask(userData.cpf);
+        }
+        if (userData.rg) {
+          updatePayload.rg = removeMask(userData.rg);
+        }
+        if (userData.guardian) {
+          updatePayload.guardian_id = parseInt(userData.guardian);
+        } else {
+          updatePayload.guardian_id = null;
+        }
+        if (userData.hasDisability && userData.disabilityDescription) {
+          updatePayload.disability_description = userData.disabilityDescription;
+        } else {
+          updatePayload.disability_description = null;
+        }
+        if (userData.takesMedication) {
+          updatePayload.takes_medication = true;
+          if (userData.medicationDescription) {
+            updatePayload.medication_description =
+              userData.medicationDescription;
+          }
+        } else {
+          updatePayload.takes_medication = false;
+          updatePayload.medication_description = null;
+        }
+        if (userData.classId) {
+          updatePayload.class_id = parseInt(userData.classId);
+        }
 
         await apiService.updateUser(editingUser.id, updatePayload, token);
 
@@ -1685,42 +640,60 @@ export default function AdminPage() {
         // Criar novo usuário
         // Preparar dados do usuário para registro pelo admin
         // A senha será gerada automaticamente e enviada por email
-        const userPayload = {
+        const userPayload: any = {
           name: userData.name,
-          email: userData.email,
           phone: removeMask(userData.phone),
           birth_date: userData.birthDate,
-          cpf: removeMask(userData.cpf),
-          rg: removeMask(userData.rg),
           role: roleId,
-          guardian: userData.guardian || undefined,
-          guardian_id: userData.guardian
-            ? parseInt(userData.guardian)
-            : undefined,
           allowed_payment_methods: userData.paymentMethods,
           has_disability: userData.hasDisability,
-          disability_description: userData.hasDisability
-            ? userData.disabilityDescription
-            : undefined,
-          takes_medication: userData.takesMedication,
-          medication_description: userData.takesMedication
-            ? userData.medicationDescription
-            : undefined,
           address,
-          class_id: userData.classId ? parseInt(userData.classId) : undefined,
-          plan_id: userData.planId ? parseInt(userData.planId) : undefined,
-          // Dados de desconto para o grupo
-          discount_type: userData.discountType || "none",
-          discount_percentage: userData.discountPercentage
-            ? parseFloat(userData.discountPercentage)
-            : 0,
-          discount_value: userData.discountValue
-            ? parseFloat(userData.discountValue)
-            : 0,
-          // Opção de cobrança proporcional para matrícula no meio do mês
-          proportional_payment_option:
-            userData.proportionalPaymentOption || "immediate",
         };
+
+        // Adicionar campos opcionais apenas se preenchidos
+        if (userData.email) {
+          userPayload.email = userData.email;
+        }
+        if (userData.cpf) {
+          userPayload.cpf = removeMask(userData.cpf);
+        }
+        if (userData.rg) {
+          userPayload.rg = removeMask(userData.rg);
+        }
+        if (userData.guardian) {
+          userPayload.guardian = userData.guardian;
+          userPayload.guardian_id = parseInt(userData.guardian);
+        }
+        if (userData.hasDisability && userData.disabilityDescription) {
+          userPayload.disability_description = userData.disabilityDescription;
+        }
+        if (userData.takesMedication) {
+          userPayload.takes_medication = true;
+          if (userData.medicationDescription) {
+            userPayload.medication_description = userData.medicationDescription;
+          }
+        }
+        if (userData.classId) {
+          userPayload.class_id = parseInt(userData.classId);
+        }
+        if (userData.planId) {
+          userPayload.plan_id = parseInt(userData.planId);
+        }
+
+        // Dados de desconto para o grupo
+        userPayload.discount_type = userData.discountType || "none";
+        if (userData.discountPercentage) {
+          userPayload.discount_percentage = parseFloat(
+            userData.discountPercentage
+          );
+        }
+        if (userData.discountValue) {
+          userPayload.discount_value = parseFloat(userData.discountValue);
+        }
+
+        // Opção de cobrança proporcional para matrícula no meio do mês
+        userPayload.proportional_payment_option =
+          userData.proportionalPaymentOption || "immediate";
 
         await apiService.adminRegister(userPayload, token);
 
@@ -3237,35 +2210,6 @@ export default function AdminPage() {
           student={selectedStudent}
         />
 
-        {/* Modal Nova Turma */}
-        <ClassModal
-          isOpen={showModal === "class"}
-          onClose={() => setShowModal(null)}
-          newClass={newClass}
-          setNewClass={setNewClass}
-          scheduleInput={scheduleInput}
-          setScheduleInput={setScheduleInput}
-          onAddSchedule={handleAddSchedule}
-          onRemoveSchedule={handleRemoveSchedule}
-          onCreateClass={handleCreateClass}
-        />
-
-        {/* Modal Editar Turma */}
-        <EditClassModal
-          isOpen={showModal === "editClass" && editingClass !== null}
-          onClose={() => {
-            setShowModal(null);
-            setEditingClass(null);
-          }}
-          newClass={newClass}
-          setNewClass={setNewClass}
-          scheduleInput={scheduleInput}
-          setScheduleInput={setScheduleInput}
-          onAddSchedule={handleAddSchedule}
-          onRemoveSchedule={handleRemoveSchedule}
-          onUpdateClass={handleUpdateClass}
-        />
-
         {/* Modal de Gerenciamento de Turmas */}
         <ClassManagementModal
           isOpen={showClassModal}
@@ -3276,20 +2220,6 @@ export default function AdminPage() {
           onSave={handleSaveClass}
           classData={editingRealClass}
           teachers={allTeachers}
-        />
-
-        {/* Modal Editar Aluno */}
-        <EditStudentModal
-          isOpen={showModal === "editStudent"}
-          onClose={() => setShowModal(null)}
-          newStudent={newStudent}
-          setNewStudent={setNewStudent}
-          addressData={addressData}
-          setAddressData={setAddressData}
-          loadingCep={loadingCep}
-          onCepSearch={handleCepSearch}
-          classes={classes}
-          onUpdateStudent={handleUpdateStudent}
         />
 
         {/* Modal de Configurações do Admin */}
@@ -3391,36 +2321,6 @@ export default function AdminPage() {
             setShowDeleteClassConfirm(false);
             setClassToDelete(null);
             setClassToDeleteStudentCount(0);
-          }}
-          danger={true}
-        />
-
-        {/* Modal de Confirmação de Exclusão de Turma (Mock) */}
-        <ConfirmModal
-          isOpen={showDeleteOldClassConfirm}
-          title="Confirmar Exclusão"
-          message="Tem certeza que deseja excluir esta turma? Esta ação não pode ser desfeita."
-          confirmText="Excluir"
-          cancelText="Cancelar"
-          onConfirm={confirmDeleteOldClass}
-          onCancel={() => {
-            setShowDeleteOldClassConfirm(false);
-            setOldClassToDelete(null);
-          }}
-          danger={true}
-        />
-
-        {/* Modal de Confirmação de Exclusão de Aluno */}
-        <ConfirmModal
-          isOpen={showDeleteStudentConfirm}
-          title="Confirmar Exclusão"
-          message="Tem certeza que deseja excluir este aluno? Esta ação não pode ser desfeita."
-          confirmText="Excluir"
-          cancelText="Cancelar"
-          onConfirm={confirmDeleteStudent}
-          onCancel={() => {
-            setShowDeleteStudentConfirm(false);
-            setStudentToDelete(null);
           }}
           danger={true}
         />

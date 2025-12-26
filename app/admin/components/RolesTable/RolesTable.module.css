@@ -274,23 +274,96 @@
     padding: 1rem;
   }
 
+  /* Esconder cabeçalho e transformar em cards */
   .tableWrapper {
-    overflow-x: auto;
+    overflow: visible;
   }
 
-  .table {
-    font-size: 0.75rem;
-    min-width: 600px;
+  .table thead {
+    display: none;
   }
 
-  .table th,
+  .table,
+  .table tbody {
+    display: block;
+  }
+
+  .table tbody tr:not(.detailsRow) {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "expand name"
+      "expand desc"
+      "expand perms"
+      "expand actions";
+    gap: 0.5rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .table tbody tr.expandedRow:not(.detailsRow) {
+    border-color: #e91e63;
+    background: #fdf2f8;
+  }
+
+  .table tbody tr:hover:not(.detailsRow) {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
   .table td {
-    padding: 0.75rem 0.5rem;
+    padding: 0.25rem 0;
+    border: none;
+  }
+
+  .table td:first-child {
+    grid-area: expand;
+    display: flex;
+    align-items: flex-start;
+    padding-top: 0.5rem;
+  }
+
+  .table td:nth-child(2) {
+    grid-area: name;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .table td:nth-child(3) {
+    grid-area: desc;
+  }
+
+  .table td:nth-child(4) {
+    grid-area: perms;
+  }
+
+  .table td:nth-child(5) {
+    grid-area: actions;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .table td:first-child::before {
+    display: none;
   }
 
   .roleName {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
     gap: 0.5rem;
   }
 
@@ -300,15 +373,30 @@
     font-size: 1rem;
   }
 
+  .description {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .actions {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.75rem;
+  }
+
+  .detailsRow {
+    display: table-row !important;
+  }
+
+  .detailsRow td {
+    display: table-cell !important;
+  }
+
   .permissionsGrid {
     grid-template-columns: 1fr;
   }
 
-  .description {
-    max-width: 150px;
-  }
-
-  .actions {
-    flex-direction: column;
+  .permissionsContainer {
+    padding: 1rem;
   }
 }

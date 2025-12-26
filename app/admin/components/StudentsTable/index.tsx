@@ -38,7 +38,7 @@ const StudentsTable: React.FC<StudentsTableProps> = ({ students }) => {
             {currentStudents.length > 0 ? (
               currentStudents.map((student) => (
                 <tr key={student.id}>
-                  <td>
+                  <td data-label="Nome">
                     <div className={styles.userName}>
                       <div className={styles.avatarIcon}>
                         <i className="fas fa-user-circle"></i>
@@ -46,10 +46,10 @@ const StudentsTable: React.FC<StudentsTableProps> = ({ students }) => {
                       {student.name}
                     </div>
                   </td>
-                  <td>{student.email}</td>
-                  <td>{maskPhone(student.phone)}</td>
-                  <td>{student.class || "Sem turma"}</td>
-                  <td>
+                  <td data-label="E-mail">{student.email}</td>
+                  <td data-label="Telefone">{maskPhone(student.phone)}</td>
+                  <td data-label="Turma">{student.class || "Sem turma"}</td>
+                  <td data-label="Status">
                     <span
                       className={`${styles.statusBadge} ${
                         student.status === "Ativo"
@@ -60,7 +60,7 @@ const StudentsTable: React.FC<StudentsTableProps> = ({ students }) => {
                       {student.status}
                     </span>
                   </td>
-                  <td>{student.enrollmentDate}</td>
+                  <td data-label="Matrícula">{student.enrollmentDate}</td>
                 </tr>
               ))
             ) : (

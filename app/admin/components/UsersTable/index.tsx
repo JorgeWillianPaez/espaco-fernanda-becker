@@ -116,7 +116,7 @@ const UsersTable: React.FC<UsersTableProps> = ({
             {currentUsers.length > 0 ? (
               currentUsers.map((user) => (
                 <tr key={user.id}>
-                  <td>
+                  <td data-label="Nome">
                     <div className={styles.userName}>
                       <div className={styles.avatarIcon}>
                         <i className="fas fa-user-circle"></i>
@@ -124,10 +124,10 @@ const UsersTable: React.FC<UsersTableProps> = ({
                       {user.name}
                     </div>
                   </td>
-                  <td>{user.email}</td>
-                  <td>{maskPhone(user.phone)}</td>
-                  <td>{maskCPF(user.cpf)}</td>
-                  <td>
+                  <td data-label="E-mail">{user.email}</td>
+                  <td data-label="Telefone">{maskPhone(user.phone)}</td>
+                  <td data-label="CPF">{maskCPF(user.cpf)}</td>
+                  <td data-label="Função">
                     <span
                       className={`${styles.roleBadge} ${getRoleClass(
                         user.role
@@ -137,7 +137,7 @@ const UsersTable: React.FC<UsersTableProps> = ({
                     </span>
                   </td>
                   {canWrite && (
-                    <td>
+                    <td data-label="Ações">
                       <div className={styles.actions}>
                         <button
                           className={styles.actionButton}

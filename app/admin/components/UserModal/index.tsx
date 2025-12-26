@@ -177,7 +177,7 @@ const UserModal: React.FC<UserModalProps> = ({
               />
             </div>
             <div>
-              <label className={styles.formLabel}>E-mail *</label>
+              <label className={styles.formLabel}>E-mail</label>
               <input
                 type="email"
                 className={styles.formInput}
@@ -185,7 +185,7 @@ const UserModal: React.FC<UserModalProps> = ({
                 onChange={(e) =>
                   setUserData({ ...userData, email: e.target.value })
                 }
-                placeholder="email@exemplo.com"
+                placeholder="email@espacodancafernandabecker.com"
               />
             </div>
           </div>
@@ -201,7 +201,7 @@ const UserModal: React.FC<UserModalProps> = ({
                   const maskedValue = maskPhone(e.target.value);
                   setUserData({ ...userData, phone: maskedValue });
                 }}
-                placeholder="(41) 98765-4321"
+                placeholder="(41) 99999-9999"
                 maxLength={15}
               />
             </div>
@@ -249,7 +249,7 @@ const UserModal: React.FC<UserModalProps> = ({
 
           <div className={styles.formGrid}>
             <div>
-              <label className={styles.formLabel}>CPF *</label>
+              <label className={styles.formLabel}>CPF</label>
               <input
                 type="text"
                 className={styles.formInput}
@@ -263,7 +263,7 @@ const UserModal: React.FC<UserModalProps> = ({
               />
             </div>
             <div>
-              <label className={styles.formLabel}>RG *</label>
+              <label className={styles.formLabel}>RG</label>
               <input
                 type="text"
                 className={styles.formInput}

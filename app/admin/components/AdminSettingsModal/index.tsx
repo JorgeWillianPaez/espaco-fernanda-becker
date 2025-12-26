@@ -76,7 +76,7 @@ const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
               <input
                 type="tel"
                 className={styles.formInput}
-                value={adminData.phone}
+                value={maskPhone(adminData.phone)}
                 onChange={(e) =>
                   setAdminData({
                     ...adminData,

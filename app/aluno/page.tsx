@@ -13,139 +13,6 @@ import { maskPhone } from "../utils/masks";
 import apiService from "@/lib/api";
 import styles from "./aluno.module.css";
 
-const studentsData: StudentsData = {
-  "fernanda.becker@email.com": {
-    name: "Fernanda Becker",
-    email: "fernanda.becker@email.com",
-    phone: "(41) 98765-4321",
-    class: "Dança do Ventre",
-    status: "Ativo",
-    profileImage: "",
-    enrollmentDate: "15/03/2023",
-    schedule: [
-      {
-        day: "Segunda-feira",
-        startTime: "19:00",
-        endTime: "20:30",
-        room: "Sala 1 - Principal",
-      },
-      {
-        day: "Quarta-feira",
-        startTime: "19:00",
-        endTime: "20:30",
-        room: "Sala 1 - Principal",
-      },
-      {
-        day: "Sexta-feira",
-        startTime: "18:00",
-        endTime: "19:30",
-        room: "Sala 2 - Espelho",
-      },
-    ],
-    payments: [
-      {
-        month: "Dezembro 2025",
-        status: "pending",
-        amount: "R$ 150,00",
-        dueDate: "10/12/2025",
-      },
-      {
-        month: "Novembro 2025",
-        status: "paid",
-        amount: "R$ 150,00",
-        dueDate: "10/11/2025",
-        paidDate: "08/11/2025",
-      },
-      {
-        month: "Outubro 2025",
-        status: "paid",
-        amount: "R$ 150,00",
-        dueDate: "10/10/2025",
-        paidDate: "05/10/2025",
-      },
-      {
-        month: "Setembro 2025",
-        status: "paid",
-        amount: "R$ 150,00",
-        dueDate: "10/09/2025",
-        paidDate: "08/09/2025",
-      },
-      {
-        month: "Agosto 2025",
-        status: "paid",
-        amount: "R$ 150,00",
-        dueDate: "10/08/2025",
-        paidDate: "05/08/2025",
-      },
-    ],
-    attendances: [
-      {
-        id: "att-001",
-        studentId: "12345",
-        studentName: "Fernanda Becker",
-        classId: "danca-ventre",
-        className: "Dança do Ventre",
-        date: "2025-12-02",
-        status: "present",
-      },
-      {
-        id: "att-002",
-        studentId: "12345",
-        studentName: "Fernanda Becker",
-        classId: "danca-ventre",
-        className: "Dança do Ventre",
-        date: "2025-11-29",
-        status: "present",
-      },
-      {
-        id: "att-003",
-        studentId: "12345",
-        studentName: "Fernanda Becker",
-        classId: "danca-ventre",
-        className: "Dança do Ventre",
-        date: "2025-11-27",
-        status: "late",
-      },
-      {
-        id: "att-004",
-        studentId: "12345",
-        studentName: "Fernanda Becker",
-        classId: "danca-ventre",
-        className: "Dança do Ventre",
-        date: "2025-11-25",
-        status: "present",
-      },
-      {
-        id: "att-005",
-        studentId: "12345",
-        studentName: "Fernanda Becker",
-        classId: "danca-ventre",
-        className: "Dança do Ventre",
-        date: "2025-11-22",
-        status: "present",
-      },
-      {
-        id: "att-006",
-        studentId: "12345",
-        studentName: "Fernanda Becker",
-        classId: "danca-ventre",
-        className: "Dança do Ventre",
-        date: "2025-11-20",
-        status: "absent",
-      },
-      {
-        id: "att-007",
-        studentId: "12345",
-        studentName: "Fernanda Becker",
-        classId: "danca-ventre",
-        className: "Dança do Ventre",
-        date: "2025-11-18",
-        status: "present",
-      },
-    ],
-  },
-};
-
 export default function AlunoPage() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
@@ -274,25 +141,19 @@ export default function AlunoPage() {
   // Carregar dados do aluno baseado no usuário logado
   useEffect(() => {
     if (user && user.email) {
-      // Por enquanto usando dados mockados, mas você pode buscar do backend
-      if (studentsData[user.email]) {
-        setCurrentStudent(studentsData[user.email]);
-      } else {
-        // Se não encontrar nos dados mockados, criar um objeto básico
-        setCurrentStudent({
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          class: "Sem turma",
-          status: "Ativo",
-          profileImage: "",
-          enrollmentDate: user.createdAt
-            ? new Date(user.createdAt).toLocaleDateString("pt-BR")
-            : new Date().toLocaleDateString("pt-BR"),
-          schedule: [],
-          payments: [],
-        });
-      }
+      setCurrentStudent({
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        class: "Sem turma",
+        status: "Ativo",
+        profileImage: "",
+        enrollmentDate: user.createdAt
+          ? new Date(user.createdAt).toLocaleDateString("pt-BR")
+          : new Date().toLocaleDateString("pt-BR"),
+        schedule: [],
+        payments: [],
+      });
 
       // Carregar turmas do backend
       fetchStudentClasses();

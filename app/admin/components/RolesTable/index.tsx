@@ -61,7 +61,7 @@ const RolesTable: React.FC<RolesTableProps> = ({
                       expandedRoleId === role.id ? styles.expandedRow : ""
                     }
                   >
-                    <td>
+                    <td data-label="">
                       <button
                         className={styles.expandButton}
                         onClick={() => toggleExpand(role.id)}
@@ -76,7 +76,7 @@ const RolesTable: React.FC<RolesTableProps> = ({
                         ></i>
                       </button>
                     </td>
-                    <td>
+                    <td data-label="Nome">
                       <div className={styles.roleName}>
                         <div className={styles.roleIcon}>
                           <i className="fas fa-user-shield"></i>
@@ -84,20 +84,20 @@ const RolesTable: React.FC<RolesTableProps> = ({
                         {role.name}
                       </div>
                     </td>
-                    <td className={styles.description}>
+                    <td data-label="Descrição" className={styles.description}>
                       {role.description || (
                         <span className={styles.noDescription}>
                           Sem descrição
                         </span>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Permissões">
                       <span className={styles.permissionBadge}>
                         {getPermissionSummary(role.permissions)}
                       </span>
                     </td>
                     {canWrite && (
-                      <td>
+                      <td data-label="Ações">
                         <div className={styles.actions}>
                           <button
                             className={styles.actionButton}
