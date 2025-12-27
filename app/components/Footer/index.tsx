@@ -15,14 +15,16 @@ export default function Footer() {
             </div>
             <div className={styles.footerSection}>
               <h4>Contato</h4>
-              <p>
+              <p className={styles.contactItem}>
                 <i className="fas fa-phone"></i> (41) 99999-9999
               </p>
-              <p>
+              <p className={styles.contactItem}>
                 <i className="fas fa-envelope"></i>{" "}
-                contato@espacofernandabecker.com
+                <span className={styles.emailText}>
+                  contato@espacodancafernandabecker.com
+                </span>
               </p>
-              <p>
+              <p className={styles.contactItem}>
                 <i className="fas fa-map-marker-alt"></i> Curitiba, PR
               </p>
             </div>

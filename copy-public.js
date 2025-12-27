@@ -24,6 +24,4 @@ function copyRecursiveSync(src, dest) {
   }
 }
 
-console.log("📁 Copiando pasta public para out/public...");
 copyRecursiveSync(publicDir, outDir);
-console.log("✅ Pasta public copiada com sucesso!");

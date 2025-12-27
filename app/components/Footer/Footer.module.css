@@ -7,7 +7,7 @@
 
 .footerContent {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 1.5fr 2fr 1fr;
   gap: 3rem;
   margin-bottom: 2rem;
 }
@@ -36,6 +36,21 @@
   color: #e91e63;
   width: 20px;
   display: inline-block;
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.contactItem i {
+  flex-shrink: 0;
+}
+
+.emailText {
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .socialLinks {

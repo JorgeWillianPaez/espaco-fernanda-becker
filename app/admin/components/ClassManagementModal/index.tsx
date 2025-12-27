@@ -72,11 +72,21 @@ export default function ClassManagementModal({
 
   useEffect(() => {
     if (classData) {
+      // Função para remover segundos do horário (HH:MM:SS -> HH:MM)
+      const formatTimeWithoutSeconds = (time: string) => {
+        if (!time) return "";
+        const parts = time.split(":");
+        if (parts.length >= 2) {
+          return `${parts[0]}:${parts[1]}`;
+        }
+        return time;
+      };
+
       setFormData({
         name: classData.name,
         roomId: classData.roomId ?? undefined,
-        startTime: classData.startTime,
-        endTime: classData.endTime,
+        startTime: formatTimeWithoutSeconds(classData.startTime),
+        endTime: formatTimeWithoutSeconds(classData.endTime),
         dayOfWeek: classData.dayOfWeek,
         teacherId: classData.teacherId ?? undefined,
         maxStudents: classData.maxStudents,

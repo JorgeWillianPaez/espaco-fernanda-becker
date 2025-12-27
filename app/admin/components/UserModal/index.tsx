@@ -42,6 +42,14 @@ interface UserFormData {
   discountPercentage?: string;
   discountValue?: string;
   proportionalPaymentOption?: "immediate" | "next_month";
+  // Campos do Responsável Financeiro
+  financialResponsibleType?: "self" | "existing" | "new";
+  financialResponsibleId?: string;
+  financialResponsibleName?: string;
+  financialResponsibleEmail?: string;
+  financialResponsiblePhone?: string;
+  financialResponsibleBirthDate?: string;
+  financialResponsibleCpf?: string;
 }
 
 interface Plan {
@@ -185,7 +193,7 @@ const UserModal: React.FC<UserModalProps> = ({
                 onChange={(e) =>
                   setUserData({ ...userData, email: e.target.value })
                 }
-                placeholder="email@espacodancafernandabecker.com"
+                placeholder="email@exemplo.com"
               />
             </div>
           </div>
@@ -222,29 +230,220 @@ const UserModal: React.FC<UserModalProps> = ({
 
           {/* Mostrar campo de responsável apenas para alunos */}
           {isStudent && (
-            <div className={styles.formGrid}>
-              <div>
-                <label className={styles.formLabel}>Responsável</label>
-                <select
-                  className={styles.formSelect}
-                  value={userData.guardian || ""}
-                  onChange={(e) => handleGuardianChange(e.target.value)}
-                >
-                  <option value="">Selecione um responsável (opcional)</option>
-                  {allStudents.map((student) => (
-                    <option key={student.id} value={student.id}>
-                      {student.name}
-                    </option>
-                  ))}
-                </select>
-                {userData.guardian && (
-                  <p className={styles.helperText}>
-                    <i className="fas fa-info-circle"></i> O desconto do grupo
-                    do responsável será aplicado automaticamente
-                  </p>
-                )}
+            <>
+              {/* Seção Responsável Financeiro */}
+              <div className={styles.sectionDivider}>
+                <h4 className={styles.sectionTitle}>
+                  <i className="fas fa-wallet"></i> Responsável Financeiro
+                </h4>
               </div>
-            </div>
+
+              <div className={`${styles.formGrid} ${styles.full}`}>
+                <div>
+                  <label className={styles.formLabel}>
+                    Quem é o responsável financeiro? *
+                  </label>
+                  <div className={styles.radioGroup}>
+                    <label className={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="financialResponsibleType"
+                        checked={userData.financialResponsibleType === "self"}
+                        onChange={() =>
+                          setUserData({
+                            ...userData,
+                            financialResponsibleType: "self",
+                            financialResponsibleId: undefined,
+                            financialResponsibleName: undefined,
+                            financialResponsibleEmail: undefined,
+                            financialResponsiblePhone: undefined,
+                            financialResponsibleBirthDate: undefined,
+                            financialResponsibleCpf: undefined,
+                          })
+                        }
+                      />
+                      O próprio aluno
+                    </label>
+                    <label className={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="financialResponsibleType"
+                        checked={
+                          userData.financialResponsibleType === "existing"
+                        }
+                        onChange={() =>
+                          setUserData({
+                            ...userData,
+                            financialResponsibleType: "existing",
+                            financialResponsibleName: undefined,
+                            financialResponsibleEmail: undefined,
+                            financialResponsiblePhone: undefined,
+                            financialResponsibleBirthDate: undefined,
+                            financialResponsibleCpf: undefined,
+                          })
+                        }
+                      />
+                      Outro (já cadastrado)
+                    </label>
+                    <label className={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="financialResponsibleType"
+                        checked={userData.financialResponsibleType === "new"}
+                        onChange={() =>
+                          setUserData({
+                            ...userData,
+                            financialResponsibleType: "new",
+                            financialResponsibleId: undefined,
+                          })
+                        }
+                      />
+                      Outro (novo cadastro)
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dropdown de responsável existente */}
+              {userData.financialResponsibleType === "existing" && (
+                <div className={styles.formGrid}>
+                  <div>
+                    <label className={styles.formLabel}>
+                      Selecione o Responsável Financeiro *
+                    </label>
+                    <select
+                      className={styles.formSelect}
+                      value={userData.financialResponsibleId || ""}
+                      onChange={(e) =>
+                        setUserData({
+                          ...userData,
+                          financialResponsibleId: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">Selecione um responsável</option>
+                      {allStudents.map((student) => (
+                        <option key={student.id} value={student.id}>
+                          {student.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Campos para novo responsável financeiro */}
+              {userData.financialResponsibleType === "new" && (
+                <>
+                  <div className={styles.formGrid}>
+                    <div>
+                      <label className={styles.formLabel}>
+                        Nome Completo do Responsável *
+                      </label>
+                      <input
+                        type="text"
+                        className={styles.formInput}
+                        value={userData.financialResponsibleName || ""}
+                        onChange={(e) =>
+                          setUserData({
+                            ...userData,
+                            financialResponsibleName: e.target.value,
+                          })
+                        }
+                        placeholder="Nome completo do responsável"
+                      />
+                    </div>
+                    <div>
+                      <label className={styles.formLabel}>
+                        E-mail do Responsável
+                      </label>
+                      <input
+                        type="email"
+                        className={styles.formInput}
+                        value={userData.financialResponsibleEmail || ""}
+                        onChange={(e) =>
+                          setUserData({
+                            ...userData,
+                            financialResponsibleEmail: e.target.value,
+                          })
+                        }
+                        placeholder="email@exemplo.com"
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formGrid}>
+                    <div>
+                      <label className={styles.formLabel}>
+                        Telefone do Responsável *
+                      </label>
+                      <input
+                        type="tel"
+                        className={styles.formInput}
+                        value={userData.financialResponsiblePhone || ""}
+                        onChange={(e) => {
+                          const maskedValue = maskPhone(e.target.value);
+                          setUserData({
+                            ...userData,
+                            financialResponsiblePhone: maskedValue,
+                          });
+                        }}
+                        placeholder="(41) 99999-9999"
+                        maxLength={15}
+                      />
+                    </div>
+                    <div>
+                      <label className={styles.formLabel}>
+                        Data de Nascimento do Responsável *
+                      </label>
+                      <DatePicker
+                        value={userData.financialResponsibleBirthDate || ""}
+                        onChange={(value) =>
+                          setUserData({
+                            ...userData,
+                            financialResponsibleBirthDate: value,
+                          })
+                        }
+                        placeholder="Selecione a data de nascimento"
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formGrid}>
+                    <div>
+                      <label className={styles.formLabel}>
+                        CPF do Responsável *
+                      </label>
+                      <input
+                        type="text"
+                        className={styles.formInput}
+                        value={userData.financialResponsibleCpf || ""}
+                        onChange={(e) => {
+                          const maskedValue = maskCPF(e.target.value);
+                          setUserData({
+                            ...userData,
+                            financialResponsibleCpf: maskedValue,
+                          });
+                        }}
+                        placeholder="000.000.000-00"
+                        maxLength={14}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.infoBox}>
+                    <i className="fas fa-info-circle"></i>
+                    <p>
+                      O endereço do responsável financeiro será o mesmo
+                      cadastrado para o aluno.
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* Divisor após seção de Responsável Financeiro */}
+              <div className={styles.sectionDivider}></div>
+            </>
           )}
 
           <div className={styles.formGrid}>
@@ -589,7 +788,9 @@ const UserModal: React.FC<UserModalProps> = ({
                         <label className={styles.formLabel}>
                           Desconto (R$)
                         </label>
-                        <div className={styles.inputWithIcon}>
+                        <div
+                          className={`${styles.inputWithIcon} ${styles.hasPrefix}`}
+                        >
                           <span className={styles.inputPrefix}>R$</span>
                           <input
                             type="number"

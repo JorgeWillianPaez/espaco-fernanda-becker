@@ -71,7 +71,7 @@ export default function EditStudentModal({
               onChange={(e) =>
                 setNewStudent({ ...newStudent, email: e.target.value })
               }
-              placeholder="email@espacodancafernandabecker.com"
+              placeholder="email@exemplo.com"
             />
           </div>
         </div>
