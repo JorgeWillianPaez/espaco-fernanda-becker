@@ -25,16 +25,18 @@ export default function LoginPage() {
 
   // Verificar se usuário já está logado e redirecionar
   useEffect(() => {
-    if (isAuthenticated() && user) {
+    // Só redireciona automaticamente se o usuário já está logado
+    // Não interfere durante o processo de login
+    if (isAuthenticated() && user && !isLoading) {
       // Redirecionar baseado na role do usuário
-      // 1 = Administrador, 2 = Professor, 3 = Aluno
-      if (user.roleId === 3) {
+      // 1 = Administrador, 2 = Professor, 3 = Aluno, 4 = Responsável Financeiro
+      if (user.roleId === 3 || user.roleId === 4) {
         router.push("/aluno");
       } else if (user.roleId === 1 || user.roleId === 2) {
         router.push("/admin");
       }
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, router, isLoading]);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -48,8 +50,8 @@ export default function LoginPage() {
       const user = useAuthStore.getState().user;
       if (user) {
         // Redirecionar baseado no tipo de usuário e roleId
-        // 1 = Administrador, 2 = Professor, 3 = Aluno
-        if (userType === "aluno" && user.roleId === 3) {
+        // 1 = Administrador, 2 = Professor, 3 = Aluno, 4 = Responsável Financeiro
+        if (userType === "aluno" && (user.roleId === 3 || user.roleId === 4)) {
           router.push("/aluno");
         } else if (
           userType === "professor" &&
@@ -57,9 +59,11 @@ export default function LoginPage() {
         ) {
           router.push("/admin");
         } else {
-          setError("Tipo de usuário incorreto para este login");
-          // Fazer logout se o tipo não corresponder
+          // Tipo incorreto - fazer logout e mostrar erro
           logout();
+          setIsLoading(false);
+          setError("Tipo de usuário incorreto para este login");
+          return;
         }
       }
     } catch (error: any) {

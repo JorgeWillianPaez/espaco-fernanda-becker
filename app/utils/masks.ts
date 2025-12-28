@@ -1,6 +1,7 @@
 // Utilitários de máscaras para inputs
 
-export const maskCPF = (value: string): string => {
+export const maskCPF = (value: string | null | undefined): string => {
+  if (!value) return "";
   return value
     .replace(/\D/g, "")
     .replace(/(\d{3})(\d)/, "$1.$2")
@@ -9,7 +10,8 @@ export const maskCPF = (value: string): string => {
     .replace(/(-\d{2})\d+?$/, "$1");
 };
 
-export const maskRG = (value: string): string => {
+export const maskRG = (value: string | null | undefined): string => {
+  if (!value) return "";
   return value
     .replace(/\D/g, "")
     .replace(/(\d{2})(\d)/, "$1.$2")
@@ -18,7 +20,8 @@ export const maskRG = (value: string): string => {
     .replace(/(-\d{1})\d+?$/, "$1");
 };
 
-export const maskPhone = (value: string): string => {
+export const maskPhone = (value: string | null | undefined): string => {
+  if (!value) return "";
   return value
     .replace(/\D/g, "")
     .replace(/(\d{2})(\d)/, "($1) $2")
@@ -26,7 +29,8 @@ export const maskPhone = (value: string): string => {
     .replace(/(-\d{4})\d+?$/, "$1");
 };
 
-export const maskCEP = (value: string): string => {
+export const maskCEP = (value: string | null | undefined): string => {
+  if (!value) return "";
   return value
     .replace(/\D/g, "")
     .replace(/(\d{5})(\d)/, "$1-$2")
@@ -99,6 +103,7 @@ export const maskTime = (value: string): string => {
 };
 
 // Funções para remover máscaras (limpar antes de enviar ao backend)
-export const removeMask = (value: string): string => {
+export const removeMask = (value: string | null | undefined): string => {
+  if (!value) return "";
   return value.replace(/\D/g, "");
 };

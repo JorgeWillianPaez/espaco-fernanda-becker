@@ -202,4 +202,11 @@ export interface UserFormData {
   discountPercentage?: string;
   discountValue?: string;
   proportionalPaymentOption?: "immediate" | "next_month";
+  financialResponsibleType?: "self" | "existing" | "new";
+  financialResponsibleId?: string;
+  financialResponsibleName?: string;
+  financialResponsibleEmail?: string;
+  financialResponsiblePhone?: string;
+  financialResponsibleBirthDate?: string;
+  financialResponsibleCpf?: string;
 }

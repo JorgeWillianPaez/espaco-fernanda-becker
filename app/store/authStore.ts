@@ -39,6 +39,7 @@ interface AuthState {
   isAdmin: () => boolean;
   isTeacher: () => boolean;
   isStudent: () => boolean;
+  isFinancialResponsible: () => boolean;
   hasModuleAccess: (
     moduleName: string,
     accessType?: "read" | "write"
@@ -101,7 +102,12 @@ export const useAuthStore = create<AuthState>()(
 
       isStudent: () => {
         const state = get();
-        return state.user?.roleId === 3;
+        return state.user?.roleId === 3 || state.user?.roleId === 4;
+      },
+
+      isFinancialResponsible: () => {
+        const state = get();
+        return state.user?.roleId === 4;
       },
 
       hasModuleAccess: (

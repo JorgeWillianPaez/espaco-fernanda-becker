@@ -522,6 +522,18 @@ export default function AdminPage() {
       return;
     }
 
+    // Validar email e CPF obrigatórios para admin e professor
+    if (userData.role === "admin" || userData.role === "professor") {
+      if (!userData.email || !userData.email.trim()) {
+        toast.error("Email é obrigatório para administradores e professores");
+        return;
+      }
+      if (!userData.cpf || !userData.cpf.trim()) {
+        toast.error("CPF é obrigatório para administradores e professores");
+        return;
+      }
+    }
+
     // Validar campos específicos para alunos
     if (userData.role === "aluno") {
       if (
@@ -694,6 +706,44 @@ export default function AdminPage() {
         // Opção de cobrança proporcional para matrícula no meio do mês
         userPayload.proportional_payment_option =
           userData.proportionalPaymentOption || "immediate";
+
+        // Dados do responsável financeiro (se for aluno e tiver responsável)
+        if (roleId === 3 && userData.financialResponsibleType) {
+          userPayload.financial_responsible_type =
+            userData.financialResponsibleType;
+
+          if (
+            userData.financialResponsibleType === "existing" &&
+            userData.financialResponsibleId
+          ) {
+            userPayload.financial_responsible_id = parseInt(
+              userData.financialResponsibleId
+            );
+          } else if (userData.financialResponsibleType === "new") {
+            if (userData.financialResponsibleName) {
+              userPayload.financial_responsible_name =
+                userData.financialResponsibleName;
+            }
+            if (userData.financialResponsibleEmail) {
+              userPayload.financial_responsible_email =
+                userData.financialResponsibleEmail;
+            }
+            if (userData.financialResponsiblePhone) {
+              userPayload.financial_responsible_phone = removeMask(
+                userData.financialResponsiblePhone
+              );
+            }
+            if (userData.financialResponsibleBirthDate) {
+              userPayload.financial_responsible_birth_date =
+                userData.financialResponsibleBirthDate;
+            }
+            if (userData.financialResponsibleCpf) {
+              userPayload.financial_responsible_cpf = removeMask(
+                userData.financialResponsibleCpf
+              );
+            }
+          }
+        }
 
         await apiService.adminRegister(userPayload, token);
 

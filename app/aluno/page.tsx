@@ -276,7 +276,7 @@ export default function AlunoPage() {
   if (!currentStudent) return null;
 
   return (
-    <ProtectedRoute allowedRoles={[3]}>
+    <ProtectedRoute allowedRoles={[3, 4]}>
       <Header />
       <div className={styles.alunoPage}>
         <div className={styles.alunoContainer}>

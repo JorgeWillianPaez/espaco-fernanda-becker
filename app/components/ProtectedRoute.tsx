@@ -9,7 +9,7 @@ export default function ProtectedRoute({
   allowedRoles,
 }: {
   children: React.ReactNode;
-  allowedRoles: number[]; // 1 = Administrador, 2 = Professor, 3 = Aluno
+  allowedRoles: number[]; // 1 = Administrador, 2 = Professor, 3 = Aluno, 4 = Responsável Financeiro
 }) {
   const router = useRouter();
   const { user, isLoading, isAuthenticated } = useAuthStore();
@@ -20,7 +20,7 @@ export default function ProtectedRoute({
         router.push("/login");
       } else if (user && !allowedRoles.includes(user.roleId)) {
         // Redirecionar para a área correta baseado na roleId
-        if (user.roleId === 3) {
+        if (user.roleId === 3 || user.roleId === 4) {
           router.push("/aluno");
         } else if (user.roleId === 1 || user.roleId === 2) {
           router.push("/admin");
