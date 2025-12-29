@@ -84,7 +84,7 @@ export default function Contact() {
               </p>
               <div className={styles.contactMethods}>
                 <a
-                  href="https://wa.me/5511999999999"
+                  href="https://wa.me/5541996568473"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`${styles.contactBtn} ${styles.whatsapp}`}

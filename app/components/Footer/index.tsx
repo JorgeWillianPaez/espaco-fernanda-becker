@@ -16,7 +16,7 @@ export default function Footer() {
             <div className={styles.footerSection}>
               <h4>Contato</h4>
               <p className={styles.contactItem}>
-                <i className="fas fa-phone"></i> (41) 99999-9999
+                <i className="fas fa-phone"></i> (41) 99656-8473
               </p>
               <p className={styles.contactItem}>
                 <i className="fas fa-envelope"></i>{" "}
