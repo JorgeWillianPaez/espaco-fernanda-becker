@@ -5,14 +5,15 @@ import apiService from "@/lib/api";
 import ConfirmModal from "@/app/components/ConfirmModal";
 import styles from "./PlansManagement.module.css";
 
-type PlanType = "individual" | "family" | "premium";
+type DurationType = "day" | "week" | "month";
 
 interface Plan {
   id: number;
   name: string;
-  description?: string;
-  type: PlanType;
+  duration: number;
+  durationType: DurationType;
   price: number;
+  totalPrice: number;
   active: boolean;
   createdAt: string;
 }
@@ -39,9 +40,10 @@ const PlansManagement: React.FC<PlansManagementProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    description: "",
-    type: "individual" as PlanType,
+    duration: "1",
+    durationType: "month" as DurationType,
     price: "",
+    totalPrice: "",
     active: true,
   });
 
@@ -68,14 +70,26 @@ const PlansManagement: React.FC<PlansManagementProps> = ({
       setEditingPlan(null);
       setFormData({
         name: "",
-        description: "",
-        type: "individual",
+        duration: "1",
+        durationType: "month",
         price: "",
+        totalPrice: "",
         active: true,
       });
       setShowModal(true);
     }
   }, [showAddModal]);
+
+  // Calcular total price automaticamente
+  useEffect(() => {
+    const duration = parseInt(formData.duration) || 0;
+    const price = parseFloat(formData.price) || 0;
+    const total = duration * price;
+    setFormData((prev) => ({
+      ...prev,
+      totalPrice: total > 0 ? total.toFixed(2) : "",
+    }));
+  }, [formData.duration, formData.price]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,9 +99,10 @@ const PlansManagement: React.FC<PlansManagementProps> = ({
 
       const planData = {
         name: formData.name,
-        description: formData.description || undefined,
-        type: formData.type,
+        duration: parseInt(formData.duration),
+        durationType: formData.durationType,
         price: parseFloat(formData.price),
+        totalPrice: parseFloat(formData.totalPrice),
         active: formData.active,
       };
 
@@ -134,18 +149,20 @@ const PlansManagement: React.FC<PlansManagementProps> = ({
       setEditingPlan(plan);
       setFormData({
         name: plan.name,
-        description: plan.description || "",
-        type: plan.type,
+        duration: plan.duration.toString(),
+        durationType: plan.durationType,
         price: plan.price.toString(),
+        totalPrice: plan.totalPrice.toString(),
         active: plan.active,
       });
     } else {
       setEditingPlan(null);
       setFormData({
         name: "",
-        description: "",
-        type: "individual",
+        duration: "1",
+        durationType: "month",
         price: "",
+        totalPrice: "",
         active: true,
       });
     }
@@ -161,10 +178,16 @@ const PlansManagement: React.FC<PlansManagementProps> = ({
     }
   };
 
-  const typeLabels: Record<PlanType, string> = {
-    individual: "Individual",
-    family: "Família",
-    premium: "Premium",
+  const durationTypeLabels: Record<DurationType, string> = {
+    day: "dia",
+    week: "semana",
+    month: "mês",
+  };
+
+  const durationTypePlaceholders: Record<DurationType, string> = {
+    day: "Valor por dia",
+    week: "Valor por semana",
+    month: "Valor por mês",
   };
 
   const formatPrice = (price: number) => {
@@ -203,37 +226,22 @@ const PlansManagement: React.FC<PlansManagementProps> = ({
                   !plan.active ? styles.inactive : ""
                 }`}
               >
-                <div className={styles.planHeader}>
-                  <span className={`${styles.typeBadge} ${styles[plan.type]}`}>
-                    {typeLabels[plan.type]}
-                  </span>
-                  {!plan.active && (
-                    <span className={styles.inactiveBadge}>Inativo</span>
-                  )}
-                </div>
                 <div className={styles.planContent}>
-                  <h3>{plan.name}</h3>
+                  <div className={styles.planTitleRow}>
+                    <h3>{plan.name}</h3>
+                    {!plan.active && (
+                      <span className={styles.inactiveBadge}>Inativo</span>
+                    )}
+                  </div>
                   <div className={styles.planPrice}>
                     {formatPrice(plan.price)}
                   </div>
-                  <p className={styles.perMonth}>por mês</p>
-                  {plan.description && (
-                    <p className={styles.planDescription}>{plan.description}</p>
-                  )}
+                  <p className={styles.perMonth}>
+                    por {durationTypeLabels[plan.durationType]}
+                  </p>
                 </div>
                 {canWrite && (
                   <div className={styles.planActions}>
-                    <button
-                      className={styles.toggleButton}
-                      onClick={() => handleToggleActive(plan)}
-                      title={plan.active ? "Desativar" : "Ativar"}
-                    >
-                      <i
-                        className={`fas ${
-                          plan.active ? "fa-toggle-on" : "fa-toggle-off"
-                        }`}
-                      ></i>
-                    </button>
                     <button
                       className={styles.editButton}
                       onClick={() => openModal(plan)}
@@ -280,24 +288,40 @@ const PlansManagement: React.FC<PlansManagementProps> = ({
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label>Tipo *</label>
+                  <label>Tipo de Duração *</label>
                   <select
-                    value={formData.type}
+                    value={formData.durationType}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        type: e.target.value as PlanType,
+                        durationType: e.target.value as DurationType,
                       })
                     }
                   >
-                    <option value="individual">Individual</option>
-                    <option value="family">Família</option>
-                    <option value="premium">Premium</option>
+                    <option value="day">Dia</option>
+                    <option value="week">Semana</option>
+                    <option value="month">Mês</option>
                   </select>
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Duração *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.duration}
+                    onChange={(e) =>
+                      setFormData({ ...formData, duration: e.target.value })
+                    }
+                    placeholder="1"
+                    required
+                  />
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label>Preço Mensal (R$) *</label>
+                  <label>Valor (R$) *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -306,21 +330,26 @@ const PlansManagement: React.FC<PlansManagementProps> = ({
                     onChange={(e) =>
                       setFormData({ ...formData, price: e.target.value })
                     }
-                    placeholder="0,00"
+                    placeholder={
+                      durationTypePlaceholders[formData.durationType]
+                    }
                     required
                   />
                 </div>
               </div>
 
               <div className={styles.formGroup}>
-                <label>Descrição</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
+                <label>Valor Total (R$)</label>
+                <input
+                  type="text"
+                  value={
+                    formData.totalPrice
+                      ? `R$ ${parseFloat(formData.totalPrice).toFixed(2)}`
+                      : ""
                   }
-                  rows={3}
-                  placeholder="Descrição do plano (opcional)"
+                  disabled
+                  placeholder="Calculado automaticamente"
+                  className={styles.readOnlyInput}
                 />
               </div>
 

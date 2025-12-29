@@ -1015,9 +1015,11 @@ class ApiService {
   async createPlan(
     data: {
       name: string;
-      description?: string;
-      type: "individual" | "family" | "premium";
+      duration: number;
+      durationType: "day" | "week" | "month";
       price: number;
+      totalPrice: number;
+      active?: boolean;
     },
     token: string
   ) {
@@ -1037,9 +1039,10 @@ class ApiService {
     id: number,
     data: {
       name?: string;
-      description?: string;
-      type?: "individual" | "family" | "premium";
+      duration?: number;
+      durationType?: "day" | "week" | "month";
       price?: number;
+      totalPrice?: number;
       active?: boolean;
     },
     token: string
