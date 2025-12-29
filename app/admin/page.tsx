@@ -324,24 +324,71 @@ export default function AdminPage() {
     room: "",
   });
 
-  const handleTeacherPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTeacherPhotoUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.warning("A imagem deve ter no máximo 5MB");
-        return;
+    if (!file || !user || !token) return;
+
+    // Validar tamanho (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB");
+      return;
+    }
+
+    // Validar tipo
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Apenas imagens são permitidas (JPEG, PNG, GIF, WebP)");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/profile-image`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Erro ao fazer upload da imagem");
       }
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result as string;
+      const data = await response.json();
+      const imageUrl = data.data.profileImage;
+
+      // Atualizar user no auth store
+      useAuthStore.getState().setUser({
+        ...user,
+        profileImage: imageUrl,
+      });
+
+      // Atualizar teacher local se for professor
+      if (teacher) {
         setTeacher((prev) => {
           if (!prev) return prev;
           return { ...prev, profileImage: imageUrl };
         });
-        toast.success("Foto atualizada com sucesso!");
-      };
-      reader.readAsDataURL(file);
+      }
+
+      toast.success("Foto atualizada com sucesso!");
+    } catch (error) {
+      console.error("Erro ao fazer upload da foto:", error);
+      toast.error("Erro ao atualizar foto de perfil");
     }
   };
 
@@ -365,22 +412,63 @@ export default function AdminPage() {
     setShowAdminSettings(false);
   };
 
-  const handleAdminPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAdminPhotoUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result as string;
-        // Atualizar user no auth store
-        if (user) {
-          useAuthStore.getState().setUser({
-            ...user,
-            profileImage: imageUrl,
-          });
+    if (!file || !user || !token) return;
+
+    // Validar tamanho (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB");
+      return;
+    }
+
+    // Validar tipo
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Apenas imagens são permitidas (JPEG, PNG, GIF, WebP)");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/profile-image`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
         }
-        toast.success("Foto atualizada com sucesso!");
-      };
-      reader.readAsDataURL(file);
+      );
+
+      if (!response.ok) {
+        throw new Error("Erro ao fazer upload da imagem");
+      }
+
+      const data = await response.json();
+      const imageUrl = data.data.profileImage;
+
+      // Atualizar user no auth store
+      useAuthStore.getState().setUser({
+        ...user,
+        profileImage: imageUrl,
+      });
+
+      toast.success("Foto atualizada com sucesso!");
+    } catch (error) {
+      console.error("Erro ao fazer upload da foto:", error);
+      toast.error("Erro ao atualizar foto de perfil");
     }
   };
 

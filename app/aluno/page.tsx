@@ -251,25 +251,70 @@ export default function AlunoPage() {
     return currentStudent.payments.filter((p) => p.status === "paid").length;
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert("A imagem deve ter no máximo 5MB");
-        return;
+    if (!file || !user || !token) return;
+
+    // Validar tamanho (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("A imagem deve ter no máximo 5MB");
+      return;
+    }
+
+    // Validar tipo
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Apenas imagens são permitidas (JPEG, PNG, GIF, WebP)");
+      return;
+    }
+
+    try {
+      setIsUploadingPhoto(true);
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/profile-image`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Erro ao fazer upload da imagem");
       }
 
-      setIsUploadingPhoto(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result as string;
-        setCurrentStudent((prev) =>
-          prev ? { ...prev, profileImage: imageUrl } : null
-        );
-        setIsUploadingPhoto(false);
-        alert("Foto atualizada com sucesso!");
-      };
-      reader.readAsDataURL(file);
+      const data = await response.json();
+      const imageUrl = data.data.profileImage;
+
+      // Atualizar user no auth store
+      useAuthStore.getState().setUser({
+        ...user,
+        profileImage: imageUrl,
+      });
+
+      // Atualizar student local
+      setCurrentStudent((prev) =>
+        prev ? { ...prev, profileImage: imageUrl } : null
+      );
+
+      alert("Foto atualizada com sucesso!");
+    } catch (error) {
+      console.error("Erro ao fazer upload da foto:", error);
+      alert("Erro ao atualizar foto de perfil");
+    } finally {
+      setIsUploadingPhoto(false);
     }
   };
 
