@@ -103,7 +103,7 @@ const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
             </div>
 
             <div className="form-group">
-              <label className={styles.formLabel}>Nova Senha *</label>
+              <label className={styles.formLabel}>Nova Senha (opcional)</label>
               <input
                 type="password"
                 className={styles.formInput}
@@ -111,16 +111,14 @@ const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                 onChange={(e) =>
                   setAdminData({ ...adminData, password: e.target.value })
                 }
-                placeholder="Digite uma nova senha"
               />
             </div>
           </div>
 
           <div className={styles.formNote}>
             <i className="fas fa-info-circle"></i>
-            <strong>Nota:</strong> As configurações serão salvas localmente
-            neste navegador. Use o e-mail e nova senha para fazer login nas
-            próximas vezes.
+            <strong>Nota:</strong> Preencha a nova senha apenas se desejar
+            alterá-la. Deixe em branco para manter sua senha atual.
           </div>
         </div>
 

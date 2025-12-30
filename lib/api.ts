@@ -278,6 +278,28 @@ class ApiService {
     return this.handleResponse(response);
   }
 
+  // Atualizar perfil do usuário logado
+  async updateProfile(
+    data: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      birth_date?: string;
+    },
+    token: string
+  ): Promise<{ message: string; data: any }> {
+    const response = await fetch(`${API_URL}/auth/update-profile`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    return this.handleResponse(response);
+  }
+
   // Alterar senha do usuário logado
   async changePassword(
     currentPassword: string,

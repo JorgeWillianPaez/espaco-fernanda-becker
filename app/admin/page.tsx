@@ -392,10 +392,10 @@ export default function AdminPage() {
     }
   };
 
-  const handleSaveAdminSettings = () => {
-    // Validar campos
-    if (!adminData.name || !adminData.email || !adminData.password) {
-      toast.warning("Por favor, preencha todos os campos obrigatórios.");
+  const handleSaveAdminSettings = async () => {
+    // Validar campos obrigatórios
+    if (!adminData.name || !adminData.email) {
+      toast.warning("Por favor, preencha nome e email.");
       return;
     }
 
@@ -406,10 +406,66 @@ export default function AdminPage() {
       return;
     }
 
-    // Salvar no sessionStorage
-    sessionStorage.setItem("adminData", JSON.stringify(adminData));
-    toast.success("Configurações salvas com sucesso!");
-    setShowAdminSettings(false);
+    if (!token) {
+      toast.error("Token de autenticação não encontrado");
+      return;
+    }
+
+    try {
+      // Atualizar dados do perfil
+      const profileData: any = {
+        name: adminData.name,
+        email: adminData.email,
+      };
+
+      if (adminData.phone) {
+        profileData.phone = removeMask(adminData.phone);
+      }
+
+      if (adminData.birthDate) {
+        profileData.birth_date = adminData.birthDate;
+      }
+
+      await apiService.updateProfile(profileData, token);
+
+      // Se uma nova senha foi fornecida, alterar a senha
+      if (adminData.password && adminData.password.trim() !== "") {
+        // Para alterar senha, precisamos pedir a senha atual
+        const currentPassword = prompt(
+          "Para alterar a senha, digite sua senha atual:"
+        );
+
+        if (!currentPassword) {
+          toast.warning("Senha atual necessária para alterar a senha.");
+          return;
+        }
+
+        try {
+          await apiService.changePassword(
+            currentPassword,
+            adminData.password,
+            token
+          );
+          toast.success("Perfil e senha atualizados com sucesso!");
+        } catch (error: any) {
+          toast.error(
+            error.message || "Erro ao alterar senha. Verifique sua senha atual."
+          );
+          return;
+        }
+      } else {
+        toast.success("Perfil atualizado com sucesso!");
+      }
+
+      // Atualizar dados locais
+      setShowAdminSettings(false);
+
+      // Recarregar dados do usuário
+      fetchAdminData();
+    } catch (error: any) {
+      console.error("Erro ao atualizar perfil:", error);
+      toast.error(error.message || "Erro ao atualizar perfil");
+    }
   };
 
   const handleAdminPhotoUpload = async (
