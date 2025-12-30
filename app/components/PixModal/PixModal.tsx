@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import styles from "./PixModal.module.css";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+
 interface PixModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -56,16 +58,13 @@ const PixModal = ({
 
     try {
       const token = getToken();
-      const response = await fetch(
-        `http://localhost:3001/api/mercadopago/pix/${paymentId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_URL}/mercadopago/pix/${paymentId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const result = await response.json();
 
@@ -88,7 +87,7 @@ const PixModal = ({
       setCheckingStatus(true);
       const token = getToken();
       const response = await fetch(
-        `http://localhost:3001/api/mercadopago/status/${paymentId}`,
+        `${API_URL}/mercadopago/status/${paymentId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
