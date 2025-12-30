@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import styles from "./AdminSettingsModal.module.css";
 import { maskPhone } from "@/app/utils/masks";
 import DatePicker from "@/app/components/DatePicker";
@@ -10,6 +10,7 @@ interface AdminData {
   email: string;
   phone: string;
   password: string;
+  currentPassword: string;
   birthDate: string;
 }
 
@@ -28,6 +29,91 @@ const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
   setAdminData,
   onSave,
 }) => {
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    feedback: "",
+    color: "#ccc",
+  });
+
+  // Validar força da senha
+  const validatePasswordStrength = (password: string) => {
+    if (!password) {
+      setPasswordStrength({ score: 0, feedback: "", color: "#ccc" });
+      return;
+    }
+
+    let score = 0;
+    const feedback: string[] = [];
+
+    // Mínimo 8 caracteres
+    if (password.length >= 8) {
+      score += 20;
+    } else {
+      feedback.push("mínimo 8 caracteres");
+    }
+
+    // Letra maiúscula
+    if (/[A-Z]/.test(password)) {
+      score += 20;
+    } else {
+      feedback.push("uma letra maiúscula");
+    }
+
+    // Letra minúscula
+    if (/[a-z]/.test(password)) {
+      score += 20;
+    } else {
+      feedback.push("uma letra minúscula");
+    }
+
+    // Número
+    if (/[0-9]/.test(password)) {
+      score += 20;
+    } else {
+      feedback.push("um número");
+    }
+
+    // Caractere especial
+    if (/[^A-Za-z0-9]/.test(password)) {
+      score += 20;
+    } else {
+      feedback.push("um caractere especial");
+    }
+
+    let strengthText = "";
+    let color = "#ccc";
+
+    if (score < 40) {
+      strengthText = "Senha muito fraca";
+      color = "#f44336";
+    } else if (score < 60) {
+      strengthText = "Senha fraca";
+      color = "#ff9800";
+    } else if (score < 80) {
+      strengthText = "Senha média";
+      color = "#ffc107";
+    } else if (score < 100) {
+      strengthText = "Senha forte";
+      color = "#8bc34a";
+    } else {
+      strengthText = "Senha muito forte";
+      color = "#4caf50";
+    }
+
+    if (feedback.length > 0) {
+      strengthText += ` - Falta: ${feedback.join(", ")}`;
+    }
+
+    setPasswordStrength({ score, feedback: strengthText, color });
+  };
+
+  const handlePasswordChange = (newPassword: string) => {
+    setAdminData({ ...adminData, password: newPassword });
+    validatePasswordStrength(newPassword);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -103,22 +189,116 @@ const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
             </div>
 
             <div className="form-group">
-              <label className={styles.formLabel}>Nova Senha (opcional)</label>
-              <input
-                type="password"
-                className={styles.formInput}
-                value={adminData.password}
-                onChange={(e) =>
-                  setAdminData({ ...adminData, password: e.target.value })
-                }
-              />
+              <label className={styles.formLabel}>Senha Atual</label>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showCurrentPassword ? "text" : "password"}
+                  className={styles.formInput}
+                  value={adminData.currentPassword}
+                  onChange={(e) =>
+                    setAdminData({
+                      ...adminData,
+                      currentPassword: e.target.value,
+                    })
+                  }
+                  placeholder="Digite sua senha atual"
+                  style={{ paddingRight: "40px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "10px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#666",
+                    fontSize: "16px",
+                  }}
+                >
+                  <i
+                    className={`fas ${
+                      showCurrentPassword ? "fa-eye-slash" : "fa-eye"
+                    }`}
+                  ></i>
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className={styles.formLabel}>Nova Senha</label>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  className={styles.formInput}
+                  value={adminData.password}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  placeholder="Digite a nova senha"
+                  style={{ paddingRight: "40px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "10px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#666",
+                    fontSize: "16px",
+                  }}
+                >
+                  <i
+                    className={`fas ${
+                      showNewPassword ? "fa-eye-slash" : "fa-eye"
+                    }`}
+                  ></i>
+                </button>
+              </div>
+              {adminData.password && (
+                <div style={{ marginTop: "8px" }}>
+                  <div
+                    style={{
+                      height: "6px",
+                      background: "#e0e0e0",
+                      borderRadius: "3px",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${passwordStrength.score}%`,
+                        background: passwordStrength.color,
+                        transition: "all 0.3s ease",
+                      }}
+                    />
+                  </div>
+                  <p
+                    style={{
+                      fontSize: "0.85rem",
+                      color: passwordStrength.color,
+                      marginTop: "4px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {passwordStrength.feedback}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
           <div className={styles.formNote}>
             <i className="fas fa-info-circle"></i>
-            <strong>Nota:</strong> Preencha a nova senha apenas se desejar
-            alterá-la. Deixe em branco para manter sua senha atual.
+            <strong>Nota:</strong> Para alterar a senha, preencha ambos os
+            campos acima. Deixe em branco para manter sua senha atual.
           </div>
         </div>
 

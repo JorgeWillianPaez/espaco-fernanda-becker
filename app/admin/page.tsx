@@ -229,12 +229,46 @@ export default function AdminPage() {
     email: user?.email || "admin@espacobecker.com",
     phone: user?.phone || "",
     password: "",
+    currentPassword: "",
     birthDate: user?.birthDate ? user.birthDate.split("T")[0] : "",
   });
 
   const handleLogout = () => {
     logout();
     router.push("/login");
+  };
+
+  // Função para validar força da senha
+  const validatePasswordStrength = (password: string) => {
+    const missingRequirements: string[] = [];
+    let isValid = true;
+
+    if (password.length < 8) {
+      missingRequirements.push("mínimo 8 caracteres");
+      isValid = false;
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      missingRequirements.push("uma letra maiúscula");
+      isValid = false;
+    }
+
+    if (!/[a-z]/.test(password)) {
+      missingRequirements.push("uma letra minúscula");
+      isValid = false;
+    }
+
+    if (!/[0-9]/.test(password)) {
+      missingRequirements.push("um número");
+      isValid = false;
+    }
+
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      missingRequirements.push("um caractere especial");
+      isValid = false;
+    }
+
+    return { isValid, missingRequirements };
   };
 
   // Estados para formulários
@@ -430,23 +464,35 @@ export default function AdminPage() {
 
       // Se uma nova senha foi fornecida, alterar a senha
       if (adminData.password && adminData.password.trim() !== "") {
-        // Para alterar senha, precisamos pedir a senha atual
-        const currentPassword = prompt(
-          "Para alterar a senha, digite sua senha atual:"
-        );
+        // Validar força da senha
+        const passwordValidation = validatePasswordStrength(adminData.password);
+        if (!passwordValidation.isValid) {
+          toast.warning(
+            `Senha não atende aos requisitos de segurança: ${passwordValidation.missingRequirements.join(
+              ", "
+            )}`
+          );
+          return;
+        }
 
-        if (!currentPassword) {
+        // Validar que a senha atual foi fornecida
+        if (
+          !adminData.currentPassword ||
+          adminData.currentPassword.trim() === ""
+        ) {
           toast.warning("Senha atual necessária para alterar a senha.");
           return;
         }
 
         try {
           await apiService.changePassword(
-            currentPassword,
+            adminData.currentPassword,
             adminData.password,
             token
           );
           toast.success("Perfil e senha atualizados com sucesso!");
+          // Limpar campos de senha após sucesso
+          setAdminData({ ...adminData, password: "", currentPassword: "" });
         } catch (error: any) {
           toast.error(
             error.message || "Erro ao alterar senha. Verifique sua senha atual."
@@ -1213,6 +1259,7 @@ export default function AdminPage() {
         email: response.data.email,
         phone: response.data.phone,
         password: "",
+        currentPassword: "",
         birthDate: response.data.birthDate
           ? response.data.birthDate.split("T")[0]
           : "",
