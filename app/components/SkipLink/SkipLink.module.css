@@ -1,0 +1,30 @@
+.skipLink {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: #e91e63;
+  color: white;
+  padding: 1rem 2rem;
+  text-decoration: none;
+  font-weight: bold;
+  z-index: 10000;
+  border-radius: 0 0 8px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: top 0.3s ease;
+}
+
+.skipLink:focus {
+  top: 0;
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Melhorar visibilidade do foco para usuários de teclado */
+:global(body.user-is-tabbing) *:focus {
+  outline: 3px solid #e91e63 !important;
+  outline-offset: 2px;
+}
+
+:global(body:not(.user-is-tabbing)) *:focus {
+  outline: none;
+}

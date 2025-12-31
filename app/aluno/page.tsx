@@ -7,6 +7,7 @@ import Image from "next/image";
 import Header from "../components/Header";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PaymentsList from "../components/PaymentsList";
+import SkipLink from "../components/SkipLink";
 import { useAuthStore } from "../store/authStore";
 import { Student, StudentsData, ClassSchedule } from "../types";
 import { maskPhone } from "../utils/masks";
@@ -34,6 +35,10 @@ export default function AlunoPage() {
     }>
   >([]);
   const [isLoadingAttendances, setIsLoadingAttendances] = useState(false);
+
+  // Estado para informações do grupo
+  const [groupDetails, setGroupDetails] = useState<any>(null);
+  const [isLoadingGroupDetails, setIsLoadingGroupDetails] = useState(false);
 
   // Modal de alteração de senha
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -138,6 +143,27 @@ export default function AlunoPage() {
     }
   };
 
+  // Carregar detalhes do grupo com membros e turmas
+  const fetchGroupDetails = async () => {
+    if (!user?.groupId || !token) return;
+
+    try {
+      setIsLoadingGroupDetails(true);
+      const response = (await apiService.getGroupDetails(
+        user.groupId,
+        token
+      )) as { data?: any };
+
+      if (response.data) {
+        setGroupDetails(response.data);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar detalhes do grupo:", error);
+    } finally {
+      setIsLoadingGroupDetails(false);
+    }
+  };
+
   // Carregar dados do aluno baseado no usuário logado
   useEffect(() => {
     if (user && user.email) {
@@ -160,6 +186,9 @@ export default function AlunoPage() {
 
       // Carregar presenças do backend
       fetchStudentAttendances();
+
+      // Carregar detalhes do grupo
+      fetchGroupDetails();
     }
   }, [user, token]);
 
@@ -322,6 +351,7 @@ export default function AlunoPage() {
 
   return (
     <ProtectedRoute allowedRoles={[3, 4]}>
+      <SkipLink />
       <Header />
       <div className={styles.alunoPage}>
         <div className={styles.alunoContainer}>
@@ -330,14 +360,22 @@ export default function AlunoPage() {
               <h1>Olá, {currentStudent.name}! 👋</h1>
               <p>Bem-vindo(a) de volta à sua área exclusiva</p>
             </div>
-            <button className="logout-button" onClick={handleLogout}>
-              <i className="fas fa-sign-out-alt"></i>
+            <button
+              className="logout-button"
+              onClick={handleLogout}
+              aria-label="Sair do sistema"
+            >
+              <i className="fas fa-sign-out-alt" aria-hidden="true"></i>
               Sair
             </button>
           </div>
 
-          <div className={styles.alunoGrid}>
-            <aside className={styles.alunoSidebar}>
+          <div className={styles.alunoGrid} id="main-content">
+            <aside
+              className={styles.alunoSidebar}
+              role="complementary"
+              aria-label="Informações do perfil"
+            >
               <div className={styles.profileCard}>
                 <div className={styles.avatarWrapper}>
                   <div
@@ -346,18 +384,34 @@ export default function AlunoPage() {
                       document.getElementById("student-photo-upload")?.click()
                     }
                     style={{ cursor: "pointer" }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Alterar foto de perfil"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        document
+                          .getElementById("student-photo-upload")
+                          ?.click();
+                      }
+                    }}
                   >
                     {currentStudent.profileImage ? (
                       <Image
                         src={currentStudent.profileImage}
-                        alt={currentStudent.name}
+                        alt={`Foto de perfil de ${currentStudent.name}`}
                         fill
                         className={styles.profileImage}
                         style={{ objectFit: "cover" }}
                       />
                     ) : (
-                      <div className={styles.profileIconPlaceholder}>
-                        <i className="fas fa-user-circle"></i>
+                      <div
+                        className={styles.profileIconPlaceholder}
+                        aria-label="Sem foto de perfil"
+                      >
+                        <i
+                          className="fas fa-user-circle"
+                          aria-hidden="true"
+                        ></i>
                       </div>
                     )}
                     <input
@@ -366,6 +420,7 @@ export default function AlunoPage() {
                       accept="image/*"
                       onChange={handlePhotoUpload}
                       style={{ display: "none" }}
+                      aria-label="Selecionar arquivo de imagem para foto de perfil"
                     />
                   </div>
                   <div
@@ -373,27 +428,37 @@ export default function AlunoPage() {
                     onClick={() =>
                       document.getElementById("student-photo-upload")?.click()
                     }
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Clique para alterar foto"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        document
+                          .getElementById("student-photo-upload")
+                          ?.click();
+                      }
+                    }}
                   >
-                    <i className="fas fa-camera"></i>
+                    <i className="fas fa-camera" aria-hidden="true"></i>
                   </div>
                 </div>
                 <h2 className={styles.profileName}>{currentStudent.name}</h2>
                 <p className={styles.profileClass}>{currentStudent.class}</p>
-                <span className={styles.profileStatus}>
-                  <i className="fas fa-check-circle"></i>{" "}
+                <span className={styles.profileStatus} role="status">
+                  <i className="fas fa-check-circle" aria-hidden="true"></i>{" "}
                   {currentStudent.status}
                 </span>
                 <div className={styles.profileDetails}>
                   <div className={styles.profileDetailItem}>
-                    <i className="fas fa-envelope"></i>
+                    <i className="fas fa-envelope" aria-hidden="true"></i>
                     <span>{currentStudent.email}</span>
                   </div>
                   <div className={styles.profileDetailItem}>
-                    <i className="fas fa-phone"></i>
+                    <i className="fas fa-phone" aria-hidden="true"></i>
                     <span>{maskPhone(currentStudent.phone || "")}</span>
                   </div>
                   <div className={styles.profileDetailItem}>
-                    <i className="fas fa-calendar"></i>
+                    <i className="fas fa-calendar" aria-hidden="true"></i>
                     <span>Matrícula desde {currentStudent.enrollmentDate}</span>
                   </div>
                 </div>
@@ -402,49 +467,74 @@ export default function AlunoPage() {
                 <button
                   className={styles.changePasswordBtn}
                   onClick={() => setShowPasswordModal(true)}
+                  aria-label="Abrir modal para alterar senha"
                 >
-                  <i className="fas fa-key"></i>
+                  <i className="fas fa-key" aria-hidden="true"></i>
                   Alterar Senha
                 </button>
               </div>
 
-              <div className={styles.scheduleCard}>
+              <div
+                className={styles.scheduleCard}
+                role="region"
+                aria-label="Horários das aulas"
+              >
                 <h3>
-                  <i className="fas fa-clock"></i>
+                  <i className="fas fa-clock" aria-hidden="true"></i>
                   Horários das Aulas
                 </h3>
-                <div className={styles.scheduleList}>
+                <div className={styles.scheduleList} role="list">
                   {isLoadingClasses ? (
-                    <div className={styles.loadingSchedule}>
-                      <i className="fas fa-spinner fa-spin"></i>
+                    <div
+                      className={styles.loadingSchedule}
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <i
+                        className="fas fa-spinner fa-spin"
+                        aria-hidden="true"
+                      ></i>
                       <span>Carregando horários...</span>
                     </div>
                   ) : studentClasses.length > 0 ? (
                     studentClasses.map((schedule, index) => (
-                      <div key={index} className={styles.scheduleItem}>
+                      <div
+                        key={index}
+                        className={styles.scheduleItem}
+                        role="listitem"
+                      >
                         {schedule.className && (
                           <div className={styles.scheduleClassName}>
-                            <i className="fas fa-graduation-cap"></i>
+                            <i
+                              className="fas fa-graduation-cap"
+                              aria-hidden="true"
+                            ></i>
                             {schedule.className}
                           </div>
                         )}
                         <div className={styles.scheduleDay}>
-                          <i className="fas fa-calendar-day"></i>
+                          <i
+                            className="fas fa-calendar-day"
+                            aria-hidden="true"
+                          ></i>
                           {schedule.day}
                         </div>
                         <div className={styles.scheduleTime}>
-                          <i className="fas fa-clock"></i> {schedule.startTime}{" "}
-                          - {schedule.endTime}
+                          <i className="fas fa-clock" aria-hidden="true"></i>{" "}
+                          {schedule.startTime} - {schedule.endTime}
                         </div>
                         <div className={styles.scheduleRoom}>
-                          <i className="fas fa-door-open"></i>
+                          <i
+                            className="fas fa-door-open"
+                            aria-hidden="true"
+                          ></i>
                           {schedule.room}
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className={styles.noSchedule}>
-                      <i className="fas fa-info-circle"></i>
+                    <div className={styles.noSchedule} role="status">
+                      <i className="fas fa-info-circle" aria-hidden="true"></i>
                       <span>Nenhuma turma vinculada</span>
                     </div>
                   )}
@@ -500,6 +590,166 @@ export default function AlunoPage() {
             </aside>
 
             <main className={styles.alunoMain}>
+              {/* Seção de Informações do Grupo */}
+              {groupDetails && (
+                <section className={styles.groupInfoSection}>
+                  <h3>
+                    <i className="fas fa-users"></i>
+                    Informações
+                  </h3>
+
+                  <div
+                    className={
+                      groupDetails.members?.length > 1
+                        ? styles.groupInfoGrid
+                        : styles.groupInfoSingle
+                    }
+                  >
+                    {/* Card do Plano */}
+                    {groupDetails.plan_name && (
+                      <div
+                        className={styles.planInfoCard}
+                        role="region"
+                        aria-label="Plano atual do grupo"
+                      >
+                        <div className={styles.planHeader}>
+                          <i className="fas fa-tag" aria-hidden="true"></i>
+                          <h4>Plano Atual</h4>
+                        </div>
+                        <div className={styles.planDetails}>
+                          <div className={styles.planName}>
+                            {groupDetails.plan_name}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Card de Membros do Grupo - Apenas se houver mais de 1 membro */}
+                    {groupDetails.members?.length > 1 && (
+                      <div
+                        className={styles.membersCard}
+                        role="region"
+                        aria-label="Membros do grupo"
+                      >
+                        <div className={styles.membersHeader}>
+                          <i
+                            className="fas fa-user-friends"
+                            aria-hidden="true"
+                          ></i>
+                          <h4>Membros do Grupo</h4>
+                          <span
+                            className={styles.memberCount}
+                            aria-label={`${
+                              groupDetails.members?.length || 0
+                            } membros no grupo`}
+                          >
+                            {groupDetails.members?.length || 0}
+                          </span>
+                        </div>
+
+                        <div className={styles.membersList} role="list">
+                          {groupDetails.members &&
+                          groupDetails.members.length > 0 ? (
+                            groupDetails.members.map((member: any) => (
+                              <div
+                                key={member.id}
+                                className={styles.memberItem}
+                                role="listitem"
+                              >
+                                <div
+                                  className={styles.memberAvatar}
+                                  aria-hidden="true"
+                                >
+                                  {member.profileImage ? (
+                                    <Image
+                                      src={member.profileImage}
+                                      alt={`Foto de ${member.name}`}
+                                      width={40}
+                                      height={40}
+                                      className={styles.memberPhoto}
+                                      style={{
+                                        objectFit: "cover",
+                                        borderRadius: "50%",
+                                      }}
+                                    />
+                                  ) : (
+                                    <i className="fas fa-user-circle"></i>
+                                  )}
+                                </div>
+                                <div className={styles.memberInfo}>
+                                  <div className={styles.memberName}>
+                                    {member.name}
+                                  </div>
+                                  <div
+                                    className={styles.memberRole}
+                                    aria-label={`Função: ${member.role}`}
+                                  >
+                                    {member.role}
+                                  </div>
+                                  {member.classes &&
+                                    member.classes.length > 0 && (
+                                      <div
+                                        className={styles.memberClasses}
+                                        role="list"
+                                        aria-label={`Turmas de ${member.name}`}
+                                      >
+                                        {member.classes.map(
+                                          (cls: any, idx: number) => (
+                                            <div
+                                              key={idx}
+                                              className={styles.classTag}
+                                              role="listitem"
+                                              aria-label={`Turma ${
+                                                cls.name
+                                              }, ${translateDayOfWeek(
+                                                cls.dayOfWeek
+                                              )}, das ${cls.startTime} às ${
+                                                cls.endTime
+                                              }`}
+                                            >
+                                              <i
+                                                className="fas fa-graduation-cap"
+                                                aria-hidden="true"
+                                              ></i>
+                                              <span
+                                                className={styles.className}
+                                              >
+                                                {cls.name}
+                                              </span>
+                                              <span className={styles.classDay}>
+                                                {translateDayOfWeek(
+                                                  cls.dayOfWeek
+                                                )}
+                                              </span>
+                                              <span
+                                                className={styles.classTime}
+                                              >
+                                                {cls.startTime} - {cls.endTime}
+                                              </span>
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                    )}
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className={styles.noMembers} role="status">
+                              <i
+                                className="fas fa-info-circle"
+                                aria-hidden="true"
+                              ></i>
+                              <p>Nenhum membro no grupo</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
+
               <section className={styles.paymentSection}>
                 <h3>
                   <i className="fas fa-credit-card"></i>

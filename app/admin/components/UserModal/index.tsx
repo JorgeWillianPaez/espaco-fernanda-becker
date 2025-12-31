@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ClassData } from "@/app/types";
 import styles from "./UserModal.module.css";
 import DatePicker from "@/app/components/DatePicker";
@@ -11,6 +11,7 @@ import {
   maskCEP,
   removeMask,
 } from "@/app/utils/masks";
+import api from "@/lib/api";
 
 interface AddressData {
   cep: string;
@@ -31,7 +32,7 @@ interface UserFormData {
   rg?: string;
   guardian?: string;
   role?: string;
-  classId?: string;
+  classIds?: string[];
   planId?: string;
   hasDisability?: boolean;
   disabilityDescription?: string;
@@ -108,9 +109,50 @@ const UserModal: React.FC<UserModalProps> = ({
   isSaving = false,
   onGetGroupDiscount,
 }) => {
+  const [hasGuardianWithPlan, setHasGuardianWithPlan] = useState(false);
+  const [remainingClassesThisMonth, setRemainingClassesThisMonth] = useState<
+    number | null
+  >(null);
+
   if (!isOpen) return null;
 
-  const isStudent = userData.role === "aluno";
+  const isStudent =
+    userData.role === "aluno" || userData.role === "responsavel_financeiro";
+
+  // Mapeamento de dias da semana
+  const daysOfWeekMap: { [key: string]: string } = {
+    sunday: "Domingo",
+    monday: "Segunda-feira",
+    tuesday: "Terça-feira",
+    wednesday: "Quarta-feira",
+    thursday: "Quinta-feira",
+    friday: "Sexta-feira",
+    saturday: "Sábado",
+  };
+
+  const translateDayOfWeek = (day: string): string => {
+    return daysOfWeekMap[day.toLowerCase()] || day;
+  };
+
+  // Função para verificar aulas restantes quando selecionar turmas
+  const checkRemainingClasses = async (classIds: string[]) => {
+    if (!classIds || classIds.length === 0) {
+      setRemainingClassesThisMonth(null);
+      return;
+    }
+
+    try {
+      // Verificar a primeira turma selecionada para simplificar
+      const response = await api.get(
+        `/classes/${classIds[0]}/remaining-classes`
+      );
+      const remainingClasses = response.data?.data?.remainingClasses ?? 0;
+      setRemainingClassesThisMonth(remainingClasses);
+    } catch (error) {
+      console.error("Erro ao verificar aulas restantes:", error);
+      setRemainingClassesThisMonth(0);
+    }
+  };
 
   // Função para lidar com a seleção de responsável
   const handleGuardianChange = async (guardianId: string) => {
@@ -121,6 +163,9 @@ const UserModal: React.FC<UserModalProps> = ({
       if (guardian?.groupId) {
         const groupDiscount = await onGetGroupDiscount(guardian.groupId);
         if (groupDiscount) {
+          const hasPlan = !!groupDiscount.planId;
+          setHasGuardianWithPlan(hasPlan);
+
           setUserData({
             ...userData,
             guardian: guardianId,
@@ -133,6 +178,64 @@ const UserModal: React.FC<UserModalProps> = ({
         }
       }
     }
+  };
+
+  // Função para lidar com mudanças no tipo de responsável financeiro
+  const handleFinancialResponsibleTypeChange = (
+    type: "self" | "existing" | "new"
+  ) => {
+    setUserData({
+      ...userData,
+      financialResponsibleType: type,
+      financialResponsibleId: undefined,
+    });
+
+    // Limpar o estado quando mudar o tipo
+    if (type !== "existing") {
+      setHasGuardianWithPlan(false);
+    }
+  };
+
+  // Função para lidar com mudanças no responsável financeiro existente
+  const handleFinancialResponsibleChange = async (responsibleId: string) => {
+    setUserData({
+      ...userData,
+      financialResponsibleId: responsibleId,
+    });
+
+    if (responsibleId && onGetGroupDiscount) {
+      const responsible = allStudents.find((s) => s.id === responsibleId);
+      if (responsible?.groupId) {
+        const groupDiscount = await onGetGroupDiscount(responsible.groupId);
+        if (groupDiscount && groupDiscount.planId) {
+          setHasGuardianWithPlan(true);
+          setUserData({
+            ...userData,
+            financialResponsibleId: responsibleId,
+            planId: groupDiscount.planId.toString(),
+            discountType: groupDiscount.discountType || "none",
+            discountPercentage:
+              groupDiscount.discountPercentage?.toString() || "",
+            discountValue: groupDiscount.discountValue?.toString() || "",
+          });
+        } else {
+          setHasGuardianWithPlan(false);
+        }
+      }
+    } else {
+      setHasGuardianWithPlan(false);
+    }
+  };
+
+  // Função para lidar com mudanças nas turmas
+  const handleClassChange = (classId: string, isChecked: boolean) => {
+    const currentClasses = userData.classIds || [];
+    const updatedClasses = isChecked
+      ? [...currentClasses, classId]
+      : currentClasses.filter((id) => id !== classId);
+
+    setUserData({ ...userData, classIds: updatedClasses });
+    checkRemainingClasses(updatedClasses);
   };
 
   return (
@@ -163,6 +266,9 @@ const UserModal: React.FC<UserModalProps> = ({
                 >
                   <option value="">Selecione uma função</option>
                   <option value="aluno">Aluno</option>
+                  <option value="responsavel_financeiro">
+                    Responsável Financeiro
+                  </option>
                   <option value="professor">Professor</option>
                   <option value="admin">Administrador</option>
                 </select>
@@ -250,16 +356,7 @@ const UserModal: React.FC<UserModalProps> = ({
                         name="financialResponsibleType"
                         checked={userData.financialResponsibleType === "self"}
                         onChange={() =>
-                          setUserData({
-                            ...userData,
-                            financialResponsibleType: "self",
-                            financialResponsibleId: undefined,
-                            financialResponsibleName: undefined,
-                            financialResponsibleEmail: undefined,
-                            financialResponsiblePhone: undefined,
-                            financialResponsibleBirthDate: undefined,
-                            financialResponsibleCpf: undefined,
-                          })
+                          handleFinancialResponsibleTypeChange("self")
                         }
                       />
                       O próprio aluno
@@ -272,15 +369,7 @@ const UserModal: React.FC<UserModalProps> = ({
                           userData.financialResponsibleType === "existing"
                         }
                         onChange={() =>
-                          setUserData({
-                            ...userData,
-                            financialResponsibleType: "existing",
-                            financialResponsibleName: undefined,
-                            financialResponsibleEmail: undefined,
-                            financialResponsiblePhone: undefined,
-                            financialResponsibleBirthDate: undefined,
-                            financialResponsibleCpf: undefined,
-                          })
+                          handleFinancialResponsibleTypeChange("existing")
                         }
                       />
                       Outro (já cadastrado)
@@ -291,11 +380,7 @@ const UserModal: React.FC<UserModalProps> = ({
                         name="financialResponsibleType"
                         checked={userData.financialResponsibleType === "new"}
                         onChange={() =>
-                          setUserData({
-                            ...userData,
-                            financialResponsibleType: "new",
-                            financialResponsibleId: undefined,
-                          })
+                          handleFinancialResponsibleTypeChange("new")
                         }
                       />
                       Outro (novo cadastro)
@@ -315,10 +400,7 @@ const UserModal: React.FC<UserModalProps> = ({
                       className={styles.formSelect}
                       value={userData.financialResponsibleId || ""}
                       onChange={(e) =>
-                        setUserData({
-                          ...userData,
-                          financialResponsibleId: e.target.value,
-                        })
+                        handleFinancialResponsibleChange(e.target.value)
                       }
                     >
                       <option value="">Selecione um responsável</option>
@@ -593,113 +675,165 @@ const UserModal: React.FC<UserModalProps> = ({
           {/* Campos específicos para aluno */}
           {isStudent && (
             <>
-              <div className={styles.formGrid}>
+              <div className={`${styles.formGrid} ${styles.full}`}>
                 <div>
-                  <label className={styles.formLabel}>Turma *</label>
-                  <select
-                    className={styles.formSelect}
-                    value={userData.classId || ""}
-                    onChange={(e) =>
-                      setUserData({ ...userData, classId: e.target.value })
-                    }
-                  >
-                    <option value="">Selecione uma turma</option>
+                  <label className={styles.formLabel}>
+                    <i className="fas fa-chalkboard-teacher"></i> Turmas *
+                  </label>
+                  <p className={styles.helperText}>
+                    Selecione uma ou mais turmas para o aluno
+                  </p>
+                  <div className={styles.classCheckboxContainer}>
                     {classes.map((classItem) => (
-                      <option
+                      <label
                         key={classItem.id}
-                        value={classItem.id.toString()}
+                        className={styles.classCheckbox}
                       >
-                        {classItem.name} ({classItem.studentCount || 0}/
-                        {classItem.maxStudents})
-                      </option>
+                        <input
+                          type="checkbox"
+                          checked={(userData.classIds || []).includes(
+                            classItem.id.toString()
+                          )}
+                          onChange={(e) =>
+                            handleClassChange(
+                              classItem.id.toString(),
+                              e.target.checked
+                            )
+                          }
+                          disabled={
+                            classItem.studentCount >= classItem.maxStudents &&
+                            !(userData.classIds || []).includes(
+                              classItem.id.toString()
+                            )
+                          }
+                        />
+                        <div className={styles.classInfo}>
+                          <span className={styles.className}>
+                            {classItem.name}
+                          </span>
+                          <span className={styles.classDetails}>
+                            {classItem.dayOfWeek &&
+                              `${translateDayOfWeek(classItem.dayOfWeek)} • `}
+                            {classItem.startTime &&
+                              classItem.endTime &&
+                              `${classItem.startTime} - ${classItem.endTime} • `}
+                            {classItem.studentCount || 0}/
+                            {classItem.maxStudents} alunos
+                          </span>
+                        </div>
+                      </label>
                     ))}
-                  </select>
+                  </div>
                 </div>
-                <div>
-                  <label className={styles.formLabel}>Plano</label>
-                  <select
-                    className={styles.formSelect}
-                    value={userData.planId || ""}
-                    onChange={(e) =>
-                      setUserData({ ...userData, planId: e.target.value })
-                    }
-                  >
-                    <option value="">Selecione um plano (opcional)</option>
-                    {plans
-                      .filter((p) => p.active)
-                      .map((plan) => (
-                        <option key={plan.id} value={plan.id.toString()}>
-                          {plan.name} -{" "}
-                          {new Intl.NumberFormat("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          }).format(plan.price)}
-                        </option>
-                      ))}
-                  </select>
-                </div>
+              </div>
+              <div className={styles.formGrid}>
+                {!hasGuardianWithPlan && (
+                  <div>
+                    <label className={styles.formLabel}>Plano</label>
+                    <select
+                      className={styles.formSelect}
+                      value={userData.planId || ""}
+                      onChange={(e) =>
+                        setUserData({ ...userData, planId: e.target.value })
+                      }
+                    >
+                      <option value="">Selecione um plano (opcional)</option>
+                      {plans
+                        .filter((p) => p.active)
+                        .map((plan) => (
+                          <option key={plan.id} value={plan.id.toString()}>
+                            {plan.name} -{" "}
+                            {new Intl.NumberFormat("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            }).format(plan.price)}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                )}
+                {hasGuardianWithPlan && userData.planId && (
+                  <div>
+                    <label className={styles.formLabel}>Plano</label>
+                    <div className={styles.readOnlyField}>
+                      <i className="fas fa-link"></i>
+                      {plans.find((p) => p.id.toString() === userData.planId)
+                        ?.name || "Plano herdado do responsável financeiro"}
+                    </div>
+                    <p className={styles.helperText}>
+                      <i className="fas fa-info-circle"></i> Este aluno herdará
+                      o plano do responsável financeiro
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Opção de cobrança proporcional para matrícula no meio do mês */}
-              {!isEditing && userData.classId && userData.planId && (
-                <div className={styles.proportionalPaymentSection}>
-                  <label className={styles.formLabel}>
-                    <i className="fas fa-calendar-alt"></i> Cobrança das Aulas
-                    Restantes do Mês
-                  </label>
-                  <p className={styles.helperText}>
-                    Como deseja cobrar o valor proporcional das aulas restantes
-                    deste mês?
-                  </p>
-                  <div className={styles.radioGroup}>
-                    <label className={styles.radioLabel}>
-                      <input
-                        type="radio"
-                        name="proportionalPaymentOption"
-                        value="immediate"
-                        checked={
-                          userData.proportionalPaymentOption !== "next_month"
-                        }
-                        onChange={() =>
-                          setUserData({
-                            ...userData,
-                            proportionalPaymentOption: "immediate",
-                          })
-                        }
-                      />
-                      <span>
-                        <strong>Gerar cobrança imediata</strong>
-                        <small>
-                          Um pagamento separado será gerado com vencimento em 3
-                          dias
-                        </small>
-                      </span>
+              {!isEditing &&
+                userData.classIds &&
+                userData.classIds.length > 0 &&
+                userData.planId &&
+                remainingClassesThisMonth !== null &&
+                remainingClassesThisMonth > 0 && (
+                  <div className={styles.proportionalPaymentSection}>
+                    <label className={styles.formLabel}>
+                      <i className="fas fa-calendar-alt"></i> Cobrança das Aulas
+                      Restantes do Mês ({remainingClassesThisMonth} aula
+                      {remainingClassesThisMonth !== 1 ? "s" : ""})
                     </label>
-                    <label className={styles.radioLabel}>
-                      <input
-                        type="radio"
-                        name="proportionalPaymentOption"
-                        value="next_month"
-                        checked={
-                          userData.proportionalPaymentOption === "next_month"
-                        }
-                        onChange={() =>
-                          setUserData({
-                            ...userData,
-                            proportionalPaymentOption: "next_month",
-                          })
-                        }
-                      />
-                      <span>
-                        <strong>Somar com a próxima mensalidade</strong>
-                        <small>
-                          O valor será adicionado à mensalidade do próximo mês
-                        </small>
-                      </span>
-                    </label>
+                    <p className={styles.helperText}>
+                      Como deseja cobrar o valor proporcional das aulas
+                      restantes deste mês?
+                    </p>
+                    <div className={styles.radioGroup}>
+                      <label className={styles.radioLabel}>
+                        <input
+                          type="radio"
+                          name="proportionalPaymentOption"
+                          value="immediate"
+                          checked={
+                            userData.proportionalPaymentOption !== "next_month"
+                          }
+                          onChange={() =>
+                            setUserData({
+                              ...userData,
+                              proportionalPaymentOption: "immediate",
+                            })
+                          }
+                        />
+                        <span>
+                          <strong>Gerar cobrança imediata</strong>
+                          <small>
+                            Um pagamento separado será gerado com vencimento em
+                            3 dias
+                          </small>
+                        </span>
+                      </label>
+                      <label className={styles.radioLabel}>
+                        <input
+                          type="radio"
+                          name="proportionalPaymentOption"
+                          value="next_month"
+                          checked={
+                            userData.proportionalPaymentOption === "next_month"
+                          }
+                          onChange={() =>
+                            setUserData({
+                              ...userData,
+                              proportionalPaymentOption: "next_month",
+                            })
+                          }
+                        />
+                        <span>
+                          <strong>Somar com a próxima mensalidade</strong>
+                          <small>
+                            O valor será adicionado à mensalidade do próximo mês
+                          </small>
+                        </span>
+                      </label>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Campos de Desconto */}
               {userData.planId && (

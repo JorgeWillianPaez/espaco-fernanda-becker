@@ -140,6 +140,11 @@
   color: #9f1239;
 }
 
+.roleFinancial {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
 .actions {
   display: flex;
   gap: 0.5rem;

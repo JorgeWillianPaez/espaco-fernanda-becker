@@ -310,7 +310,7 @@ export default function AdminPage() {
     rg: "",
     guardian: "",
     role: "",
-    classId: "",
+    classIds: [],
     hasDisability: false,
     disabilityDescription: "",
     takesMedication: false,
@@ -727,12 +727,13 @@ export default function AdminPage() {
     // Validar campos específicos para alunos
     if (userData.role === "aluno") {
       if (
-        !userData.classId ||
+        !userData.classIds ||
+        userData.classIds.length === 0 ||
         !userData.paymentMethods ||
         userData.paymentMethods.length === 0
       ) {
         toast.error(
-          "Para alunos, é necessário selecionar uma turma e ao menos um método de pagamento"
+          "Para alunos, é necessário selecionar ao menos uma turma e um método de pagamento"
         );
         return;
       }
@@ -746,6 +747,7 @@ export default function AdminPage() {
         admin: 1,
         professor: 2,
         aluno: 3,
+        responsavel_financeiro: 4,
       };
 
       const roleId = roleIdMap[userData.role];
@@ -803,8 +805,10 @@ export default function AdminPage() {
           updatePayload.takes_medication = false;
           updatePayload.medication_description = null;
         }
-        if (userData.classId) {
-          updatePayload.class_id = parseInt(userData.classId);
+        if (userData.classIds && userData.classIds.length > 0) {
+          updatePayload.class_ids = userData.classIds.map((id: string) =>
+            parseInt(id)
+          );
         }
 
         await apiService.updateUser(editingUser.id, updatePayload, token);
@@ -875,8 +879,10 @@ export default function AdminPage() {
             userPayload.medication_description = userData.medicationDescription;
           }
         }
-        if (userData.classId) {
-          userPayload.class_id = parseInt(userData.classId);
+        if (userData.classIds && userData.classIds.length > 0) {
+          userPayload.class_ids = userData.classIds.map((id: string) =>
+            parseInt(id)
+          );
         }
         if (userData.planId) {
           userPayload.plan_id = parseInt(userData.planId);
@@ -955,7 +961,7 @@ export default function AdminPage() {
         rg: "",
         guardian: "",
         role: "",
-        classId: "",
+        classIds: [],
         planId: "",
         hasDisability: false,
         disabilityDescription: "",
@@ -1010,6 +1016,7 @@ export default function AdminPage() {
       1: "admin",
       2: "professor",
       3: "aluno",
+      4: "responsavel_financeiro",
     };
 
     // Buscar plano do grupo se o usuário for aluno
@@ -1042,10 +1049,10 @@ export default function AdminPage() {
       rg: maskRG(user.rg || ""),
       guardian: user.guardianId ? user.guardianId.toString() : "",
       role: roleMap[user.roleId] || "",
-      classId:
+      classIds:
         user.classIds && user.classIds.length > 0
-          ? user.classIds[0].toString()
-          : "",
+          ? user.classIds.map((id) => id.toString())
+          : [],
       planId: userPlanId,
       hasDisability: user.hasDisability || false,
       disabilityDescription: user.disabilityDescription || "",
@@ -1597,6 +1604,8 @@ export default function AdminPage() {
                     ? "admin"
                     : u.roleId === 2
                     ? "professor"
+                    : u.roleId === 4
+                    ? "responsavel_financeiro"
                     : "aluno",
                 profileImage: "",
               }))}
@@ -1829,7 +1838,7 @@ export default function AdminPage() {
                           rg: "",
                           guardian: "",
                           role: "",
-                          classId: "",
+                          classIds: [],
                           planId: "",
                           hasDisability: false,
                           disabilityDescription: "",
@@ -1882,6 +1891,8 @@ export default function AdminPage() {
                           ? "admin"
                           : u.roleId === 2
                           ? "professor"
+                          : u.roleId === 4
+                          ? "responsavel_financeiro"
                           : "aluno",
                       createdAt: u.createdAt.toString(),
                     }))}
@@ -2490,7 +2501,7 @@ export default function AdminPage() {
           onSave={handleCreateUser}
           isEditing={!!editingUser}
           allStudents={allUsers
-            .filter((u) => u.roleId === 3)
+            .filter((u) => u.roleId === 3 || u.roleId === 4)
             .map((u) => ({
               id: String(u.id),
               name: u.name,

@@ -84,12 +84,16 @@ const PlansManagement: React.FC<PlansManagementProps> = ({
   useEffect(() => {
     const duration = parseInt(formData.duration) || 0;
     const price = parseFloat(formData.price) || 0;
-    const total = duration * price;
+
+    // Se o tipo de duração for 'day', o total é igual ao valor unitário
+    // Caso contrário, multiplica duração × valor
+    const total = formData.durationType === "day" ? price : duration * price;
+
     setFormData((prev) => ({
       ...prev,
       totalPrice: total > 0 ? total.toFixed(2) : "",
     }));
-  }, [formData.duration, formData.price]);
+  }, [formData.duration, formData.price, formData.durationType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

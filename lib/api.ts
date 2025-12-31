@@ -1119,6 +1119,18 @@ class ApiService {
     return this.handleResponse(response);
   }
 
+  async getGroupDetails(id: number, token: string) {
+    const response = await fetch(`${API_URL}/groups/${id}/details`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return this.handleResponse(response);
+  }
+
   async updateGroup(
     id: number,
     data: {

@@ -191,7 +191,7 @@ export interface UserFormData {
   rg?: string;
   guardian?: string;
   role?: string;
-  classId?: string;
+  classIds?: string[];
   planId?: string;
   hasDisability?: boolean;
   disabilityDescription?: string;

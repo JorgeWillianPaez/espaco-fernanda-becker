@@ -55,6 +55,7 @@ const UsersTable: React.FC<UsersTableProps> = ({
       aluno: "Aluno",
       professor: "Professor",
       admin: "Administrador",
+      responsavel_financeiro: "Responsável Financeiro",
     };
     return roleMap[role] || role;
   };
@@ -64,6 +65,7 @@ const UsersTable: React.FC<UsersTableProps> = ({
       aluno: styles.roleStudent,
       professor: styles.roleTeacher,
       admin: styles.roleAdmin,
+      responsavel_financeiro: styles.roleFinancial,
     };
     return roleClassMap[role] || "";
   };
@@ -96,6 +98,7 @@ const UsersTable: React.FC<UsersTableProps> = ({
           <option value="aluno">Aluno</option>
           <option value="professor">Professor</option>
           <option value="admin">Administrador</option>
+          <option value="responsavel_financeiro">Responsável Financeiro</option>
         </select>
       </div>
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import SkipLink from "./components/SkipLink";
 
 export const metadata: Metadata = {
   title: "Espaço de Dança Fernanda Becker",
@@ -23,7 +24,10 @@ export default function RootLayout({
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
         />
       </head>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <SkipLink />
+        {children}
+      </body>
     </html>
   );
 }
