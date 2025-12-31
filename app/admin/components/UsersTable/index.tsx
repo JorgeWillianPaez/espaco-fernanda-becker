@@ -36,8 +36,9 @@ const UsersTable: React.FC<UsersTableProps> = ({
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.cpf.includes(searchTerm);
+      (user.email &&
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.cpf && user.cpf.includes(searchTerm));
 
     const matchesRole = roleFilter === "" || user.role === roleFilter;
 

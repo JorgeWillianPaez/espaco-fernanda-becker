@@ -866,10 +866,47 @@ export default function AdminPage() {
         if (userData.rg) {
           userPayload.rg = removeMask(userData.rg);
         }
-        if (userData.guardian) {
-          userPayload.guardian = userData.guardian;
-          userPayload.guardian_id = parseInt(userData.guardian);
+
+        // Dados do responsável financeiro (se for aluno)
+        if (roleId === 3 && userData.financialResponsibleType) {
+          userPayload.financial_responsible_type =
+            userData.financialResponsibleType;
+
+          if (
+            userData.financialResponsibleType === "existing" &&
+            userData.financialResponsibleId
+          ) {
+            userPayload.financial_responsible_id = parseInt(
+              userData.financialResponsibleId
+            );
+            // Também definir guardian_id quando selecionar responsável existente
+            userPayload.guardian_id = parseInt(userData.financialResponsibleId);
+          } else if (userData.financialResponsibleType === "new") {
+            if (userData.financialResponsibleName) {
+              userPayload.financial_responsible_name =
+                userData.financialResponsibleName;
+            }
+            if (userData.financialResponsibleEmail) {
+              userPayload.financial_responsible_email =
+                userData.financialResponsibleEmail;
+            }
+            if (userData.financialResponsiblePhone) {
+              userPayload.financial_responsible_phone = removeMask(
+                userData.financialResponsiblePhone
+              );
+            }
+            if (userData.financialResponsibleBirthDate) {
+              userPayload.financial_responsible_birth_date =
+                userData.financialResponsibleBirthDate;
+            }
+            if (userData.financialResponsibleCpf) {
+              userPayload.financial_responsible_cpf = removeMask(
+                userData.financialResponsibleCpf
+              );
+            }
+          }
         }
+
         if (userData.hasDisability && userData.disabilityDescription) {
           userPayload.disability_description = userData.disabilityDescription;
         }
@@ -902,44 +939,6 @@ export default function AdminPage() {
         // Opção de cobrança proporcional para matrícula no meio do mês
         userPayload.proportional_payment_option =
           userData.proportionalPaymentOption || "immediate";
-
-        // Dados do responsável financeiro (se for aluno e tiver responsável)
-        if (roleId === 3 && userData.financialResponsibleType) {
-          userPayload.financial_responsible_type =
-            userData.financialResponsibleType;
-
-          if (
-            userData.financialResponsibleType === "existing" &&
-            userData.financialResponsibleId
-          ) {
-            userPayload.financial_responsible_id = parseInt(
-              userData.financialResponsibleId
-            );
-          } else if (userData.financialResponsibleType === "new") {
-            if (userData.financialResponsibleName) {
-              userPayload.financial_responsible_name =
-                userData.financialResponsibleName;
-            }
-            if (userData.financialResponsibleEmail) {
-              userPayload.financial_responsible_email =
-                userData.financialResponsibleEmail;
-            }
-            if (userData.financialResponsiblePhone) {
-              userPayload.financial_responsible_phone = removeMask(
-                userData.financialResponsiblePhone
-              );
-            }
-            if (userData.financialResponsibleBirthDate) {
-              userPayload.financial_responsible_birth_date =
-                userData.financialResponsibleBirthDate;
-            }
-            if (userData.financialResponsibleCpf) {
-              userPayload.financial_responsible_cpf = removeMask(
-                userData.financialResponsibleCpf
-              );
-            }
-          }
-        }
 
         await apiService.adminRegister(userPayload, token);
 
@@ -1019,25 +1018,71 @@ export default function AdminPage() {
       4: "responsavel_financeiro",
     };
 
-    // Buscar plano do grupo se o usuário for aluno
+    // Buscar plano e desconto do grupo se o usuário for aluno ou responsável financeiro
     let userPlanId = "";
-    if (user.roleId === 3 && user.groupId && token) {
+    let userDiscountType: "percentage" | "value" | "none" = "none";
+    let userDiscountPercentage = "";
+    let userDiscountValue = "";
+    if ((user.roleId === 3 || user.roleId === 4) && user.groupId && token) {
       try {
         const groupResponse = (await apiService.getGroupById(
           user.groupId,
           token
         )) as {
-          data?: { planId?: number | null };
+          data?: {
+            planId?: number | null;
+            discountType?: "percentage" | "value" | "none";
+            discountPercentage?: number;
+            discountValue?: number;
+          };
         };
-        if (
-          groupResponse.data?.planId !== undefined &&
-          groupResponse.data?.planId !== null
-        ) {
-          userPlanId = groupResponse.data.planId.toString();
+        if (groupResponse.data) {
+          if (
+            groupResponse.data.planId !== undefined &&
+            groupResponse.data.planId !== null
+          ) {
+            userPlanId = groupResponse.data.planId.toString();
+          }
+          if (groupResponse.data.discountType) {
+            userDiscountType = groupResponse.data.discountType;
+          }
+          if (groupResponse.data.discountPercentage) {
+            userDiscountPercentage =
+              groupResponse.data.discountPercentage.toString();
+          }
+          if (groupResponse.data.discountValue) {
+            userDiscountValue = groupResponse.data.discountValue.toString();
+          }
         }
       } catch (error) {
         console.error("Erro ao buscar plano do grupo:", error);
       }
+    }
+
+    // Determinar o tipo de responsável financeiro e carregar dados se necessário
+    let financialResponsibleType: "self" | "existing" | "new" | undefined;
+    let guardianData: any = {};
+
+    if (user.guardianId) {
+      // Tem um responsável financeiro
+      const guardian = allUsers.find((u) => u.id === user.guardianId);
+      if (guardian) {
+        // Responsável já cadastrado
+        financialResponsibleType = "existing";
+        guardianData = {
+          financialResponsibleId: guardian.id.toString(),
+          financialResponsibleName: guardian.name,
+          financialResponsibleEmail: guardian.email,
+          financialResponsiblePhone: maskPhone(guardian.phone || ""),
+          financialResponsibleBirthDate: guardian.birthDate
+            ? guardian.birthDate.split("T")[0]
+            : "",
+          financialResponsibleCpf: maskCPF(guardian.cpf || ""),
+        };
+      }
+    } else {
+      // O próprio aluno é o responsável financeiro
+      financialResponsibleType = "self";
     }
 
     setUserData({
@@ -1059,6 +1104,11 @@ export default function AdminPage() {
       takesMedication: user.takesMedication || false,
       medicationDescription: user.medicationDescription || "",
       paymentMethods: user.paymentMethods || [],
+      discountType: userDiscountType,
+      discountPercentage: userDiscountPercentage,
+      discountValue: userDiscountValue,
+      financialResponsibleType,
+      ...guardianData,
     });
 
     if (user.address) {
