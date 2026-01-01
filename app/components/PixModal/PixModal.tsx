@@ -15,12 +15,11 @@ interface PixModalProps {
 }
 
 interface PixData {
-  id: number;
+  correlationID: string;
   status: string;
-  qrCode: string;
-  qrCodeBase64: string;
-  expirationDate: string;
-  ticketUrl: string;
+  brCode: string;
+  qrCodeImage: string;
+  expiresIn: number;
 }
 
 const PixModal = ({
@@ -58,7 +57,7 @@ const PixModal = ({
 
     try {
       const token = getToken();
-      const response = await fetch(`${API_URL}/mercadopago/pix/${paymentId}`, {
+      const response = await fetch(`${API_URL}/openpix/charge/${paymentId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -87,7 +86,7 @@ const PixModal = ({
       setCheckingStatus(true);
       const token = getToken();
       const response = await fetch(
-        `${API_URL}/mercadopago/status/${paymentId}`,
+        `${API_URL}/openpix/charge/${paymentId}/status`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -98,7 +97,7 @@ const PixModal = ({
       const result = await response.json();
 
       if (
-        result.data?.status === "approved" ||
+        result.data?.status === "COMPLETED" ||
         result.data?.internalStatus === "paid"
       ) {
         onPaymentConfirmed();
@@ -137,9 +136,9 @@ const PixModal = ({
   }, [isOpen]);
 
   const handleCopyCode = async () => {
-    if (pixData?.qrCode) {
+    if (pixData?.brCode) {
       try {
-        await navigator.clipboard.writeText(pixData.qrCode);
+        await navigator.clipboard.writeText(pixData.brCode);
         setCopied(true);
         setTimeout(() => setCopied(false), 3000);
       } catch (err) {
@@ -200,9 +199,9 @@ const PixModal = ({
               </div>
 
               <div className={styles.qrCodeContainer}>
-                {pixData.qrCodeBase64 && (
+                {pixData.qrCodeImage && (
                   <img
-                    src={`data:image/png;base64,${pixData.qrCodeBase64}`}
+                    src={pixData.qrCodeImage}
                     alt="QR Code PIX"
                     className={styles.qrCode}
                   />
@@ -223,7 +222,7 @@ const PixModal = ({
 
               <div className={styles.copySection}>
                 <div className={styles.pixCode}>
-                  <code>{pixData.qrCode?.substring(0, 50)}...</code>
+                  <code>{pixData.brCode?.substring(0, 50)}...</code>
                 </div>
                 <button
                   onClick={handleCopyCode}

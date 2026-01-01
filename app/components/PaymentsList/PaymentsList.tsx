@@ -82,7 +82,10 @@ const PaymentsList = ({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR");
+    const date = new Date(dateString);
+    // Adicionar um dia para compensar o timezone (evita mostrar dia anterior)
+    date.setDate(date.getDate() + 1);
+    return date.toLocaleDateString("pt-BR");
   };
 
   const getStatusLabel = (status: string) => {

@@ -127,10 +127,10 @@ export const tuitionService = {
     return response.data;
   },
 
-  // Gerar PIX via Mercado Pago
+  // Gerar PIX via OpenPix
   async generatePix(paymentId: number): Promise<PixPaymentResponse> {
     const response = await api.post<PixPaymentResponse>(
-      `/mercadopago/pix/${paymentId}`
+      `/openpix/charge/${paymentId}`
     );
     return response;
   },
@@ -138,7 +138,7 @@ export const tuitionService = {
   // Verificar status do pagamento PIX
   async checkPixStatus(paymentId: number): Promise<PixStatusResponse> {
     const response = await api.get<PixStatusResponse>(
-      `/mercadopago/status/${paymentId}`
+      `/openpix/charge/${paymentId}/status`
     );
     return response;
   },
@@ -146,19 +146,16 @@ export const tuitionService = {
 
 // Interface para resposta do PIX
 export interface PixPaymentResponse {
-  id: number;
-  qrCode: string;
-  qrCodeBase64: string;
-  expirationDate: string;
-  amount: number;
+  correlationID: string;
+  brCode: string;
+  qrCodeImage: string;
+  expiresIn: number;
   status: string;
 }
 
 export interface PixStatusResponse {
-  paymentId: number;
   status: string;
-  externalPaymentId: string | null;
-  isPaid: boolean;
+  internalStatus: string;
 }
 
 export default tuitionService;

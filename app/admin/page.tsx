@@ -1250,9 +1250,17 @@ export default function AdminPage() {
                   amount: `R$ ${Number(p.amount).toLocaleString("pt-BR", {
                     minimumFractionDigits: 2,
                   })}`,
-                  dueDate: new Date(p.due_date).toLocaleDateString("pt-BR"),
+                  dueDate: (() => {
+                    const date = new Date(p.due_date);
+                    date.setDate(date.getDate() + 1);
+                    return date.toLocaleDateString("pt-BR");
+                  })(),
                   paidDate: p.payment_date
-                    ? new Date(p.payment_date).toLocaleDateString("pt-BR")
+                    ? (() => {
+                        const date = new Date(p.payment_date);
+                        date.setDate(date.getDate() + 1);
+                        return date.toLocaleDateString("pt-BR");
+                      })()
                     : undefined,
                 }));
               }
